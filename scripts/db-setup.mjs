@@ -24,7 +24,8 @@ try {
   await client.connect();
 } catch (error) {
   console.log(`❌ 连接数据库失败：${error.message}`);
-  console.log("   请检查：1) 用的是 Session pooler 地址；2) 密码正确；3) 网络正常。");
+  console.log("   请检查：1) 密码正确（忘记可在 Project Settings → Database 重置）；");
+  console.log("          2) 如果提示网络/地址错误，改用 Connect → Direct → Session pooler 的地址。");
   process.exit(1);
 }
 console.log("✅ 已连接到数据库");

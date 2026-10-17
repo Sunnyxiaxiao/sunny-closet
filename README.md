@@ -47,27 +47,29 @@
    - **Region**：选离你的顾客最近的，例如 **East US (North Virginia)**。
 3. 点 **Create new project**，等待 1–2 分钟直到项目准备好。
 
-### 2. 建表并导入演示数据
-
-左侧菜单点 **SQL Editor**，然后**按顺序**对下面 4 个文件各做一次：点 **New query** → 在 Cursor 里打开文件、全选复制 → 粘贴到 SQL Editor → 点 **Run**，看到 `Success` 再做下一个。
-
-1. `supabase/migrations/20261017000001_schema.sql`
-2. `supabase/migrations/20261017000002_security.sql`
-3. `supabase/migrations/20261017000003_storage.sql`
-4. `supabase/seed.sql`
-
-> 如果 Supabase 提示 “This query has destructive operations”，那是因为文件中有 `revoke`（收回权限）语句，属于正常的安全设置，点 **Run this query** 继续即可。
-
-### 3. 填写密钥
+### 2. 填写密钥
 
 1. 在 Cursor 左侧文件列表中打开项目根目录的 `.env.local`（如果没有，就把 `.env.example` 复制一份并改名为 `.env.local`）。
-2. 回到 Supabase，点左上角项目名旁边的 **Connect** 按钮（或 **Project Settings → Data API**），复制 **Project URL**，粘贴到 `NEXT_PUBLIC_SUPABASE_URL=` 后面。
-3. 打开 **Project Settings → API Keys**：
-   - 复制 **Publishable key**（以 `sb_publishable_` 开头）→ 粘贴到 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=` 后面。
-   - 在 **Secret keys** 区域点眼睛图标显示并复制（以 `sb_secret_` 开头）→ 粘贴到 `SUPABASE_SECRET_KEY=` 后面。
-4. 保存文件。等号前后不要加空格，也不要加引号。
+2. 回到 Supabase，点顶部绿色的 **Connect** 按钮，在 **Framework** 选项卡里能看到现成的 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 两行，复制到 `.env.local` 中对应位置。
+3. 打开 **Project Settings → API Keys**，在 **Secret keys** 区域点眼睛图标显示并复制（以 `sb_secret_` 开头）→ 粘贴到 `SUPABASE_SECRET_KEY=` 后面。
+4. 点 **Connect → Direct（Connection string）**，复制以 `postgresql://` 开头的地址 → 粘贴到 `SUPABASE_DB_URL=` 后面，并把 `[YOUR-PASSWORD]`（连同方括号）换成你的数据库密码。
+   - 忘记密码：**Project Settings → Database → Reset database password**，建议只用字母和数字。
+   - 如果后面建表时报网络/地址错误，改用同一页面中 **Session pooler** 的地址。
+5. 保存文件。等号前后不要加空格，也不要加引号。
 
 > ⚠️ `.env.local` 已被 `.gitignore` 排除，不会被提交到 git。请不要把里面的内容发到聊天、截图或任何公开的地方。
+
+### 3. 建表并导入演示数据
+
+在终端运行：
+
+```bash
+npm run db:setup
+```
+
+它会按顺序执行 `supabase/migrations/` 下的建表文件和 `supabase/seed.sql`。已执行过的文件会自动跳过，重复运行是安全的。
+
+> 备选方式：也可以在 Supabase 左侧 **SQL Editor** 中新建查询（注意不要选到 Logs），按文件名顺序粘贴并运行上述文件。
 
 ### 4. 检查配置
 
@@ -94,6 +96,7 @@ npm run dev
 | `npm run dev` | 本地开发预览 |
 | `npm run build` | 生产构建（部署前检查） |
 | `npm test` | 运行全部自动化测试 |
+| `npm run db:setup` | 把建表文件和演示数据写入 Supabase |
 | `npm run check:supabase` | 检查 Supabase 配置 |
 
 ## 业务规则速查
