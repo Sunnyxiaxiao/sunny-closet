@@ -48,6 +48,7 @@ export type Database = {
           daily_price_cents: number;
           deposit_cents: number;
           image_urls: string[];
+          source_url: string;
           is_active: boolean;
           sort_order: number;
           created_at: string;
@@ -63,6 +64,7 @@ export type Database = {
           daily_price_cents: number;
           deposit_cents: number;
           image_urls?: string[];
+          source_url?: string;
           is_active?: boolean;
           sort_order?: number;
         };
@@ -75,6 +77,7 @@ export type Database = {
           daily_price_cents?: number;
           deposit_cents?: number;
           image_urls?: string[];
+          source_url?: string;
           is_active?: boolean;
           sort_order?: number;
         };

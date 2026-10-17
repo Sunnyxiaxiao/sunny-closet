@@ -1,6 +1,6 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createTestDb, withRole } from "../helpers/test-db";
+import { createTestDb, demoSeedPath, withRole } from "../helpers/test-db";
 
 let db: PGlite;
 
@@ -45,8 +45,7 @@ describe("迁移与种子数据", () => {
 
   it("种子数据可重复执行而不重复插入", async () => {
     const { readFileSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    await db.exec(readFileSync(join(process.cwd(), "supabase", "seed.sql"), "utf8"));
+    await db.exec(readFileSync(demoSeedPath, "utf8"));
     const items = await db.query<{ n: number }>("select count(*)::int as n from public.inventory_items");
     const bookings = await db.query<{ n: number }>("select count(*)::int as n from public.bookings");
     expect(items.rows[0].n).toBe(8);

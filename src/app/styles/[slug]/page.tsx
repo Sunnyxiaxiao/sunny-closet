@@ -5,6 +5,7 @@ import { BookingPanel } from "@/components/booking-panel";
 import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
 import { getAvailability, getSettings, getStyleBySlug, getToday, listStyles } from "@/lib/catalog";
+import { parseDescription, type DescriptionBlock } from "@/lib/description";
 import { formatMoney } from "@/lib/money";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
 import { messages } from "@/messages/zh-CN";
@@ -84,11 +85,11 @@ async function StyleDetail({ params, searchParams }: PageProps<"/styles/[slug]">
           </div>
 
           <div className="mt-8 border-t border-neutral-200">
-            {style.description && (
-              <Accordion title={t.description} defaultOpen>
-                <p className="whitespace-pre-line">{style.description}</p>
+            {parseDescription(style.description).map((section, index) => (
+              <Accordion key={index} title={section.title ?? t.description} defaultOpen={index === 0}>
+                <DescriptionBlocks blocks={section.blocks} />
               </Accordion>
-            )}
+            ))}
             <Accordion title={t.rentalNotes}>
               <ul className="list-disc space-y-1 pl-5">
                 {t.rentalNotesBody.map((line) => (
@@ -106,6 +107,20 @@ async function StyleDetail({ params, searchParams }: PageProps<"/styles/[slug]">
               </Link>
             </Accordion>
           </div>
+
+          {style.source_url && (
+            <p className="mt-4 text-xs text-neutral-400">
+              {t.sourceCredit}
+              <a
+                href={style.source_url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="underline underline-offset-2 hover:text-neutral-600"
+              >
+                {style.brand || new URL(style.source_url).hostname} {t.officialSite}
+              </a>
+            </p>
+          )}
         </div>
       </div>
 
@@ -122,6 +137,26 @@ async function StyleDetail({ params, searchParams }: PageProps<"/styles/[slug]">
         </section>
       )}
     </>
+  );
+}
+
+function DescriptionBlocks({ blocks }: { blocks: DescriptionBlock[] }) {
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, index) =>
+        block.type === "list" ? (
+          <ul key={index} className="list-disc space-y-1 pl-5">
+            {block.items.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p key={index} className="whitespace-pre-line">
+            {block.text}
+          </p>
+        ),
+      )}
+    </div>
   );
 }
 
@@ -148,7 +183,7 @@ function Accordion({
 function DetailSkeleton() {
   return (
     <div className="md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-12" aria-busy="true">
-      <div className="aspect-[3/4] animate-pulse bg-neutral-100" />
+      <div className="aspect-[3/5] animate-pulse bg-neutral-100" />
       <div className="space-y-3 px-4 pt-5 md:px-0 md:pt-0">
         <div className="h-8 w-2/3 animate-pulse bg-neutral-100" />
         <div className="h-6 w-1/3 animate-pulse bg-neutral-100" />

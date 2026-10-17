@@ -22,10 +22,11 @@ export type PublicStyle = Pick<
   | "daily_price_cents"
   | "deposit_cents"
   | "image_urls"
+  | "source_url"
 >;
 
 const STYLE_COLUMNS =
-  "id, slug, brand, category, name, description, daily_price_cents, deposit_cents, image_urls";
+  "id, slug, brand, category, name, description, daily_price_cents, deposit_cents, image_urls, source_url";
 
 export interface ShopSettings {
   bufferDays: number;

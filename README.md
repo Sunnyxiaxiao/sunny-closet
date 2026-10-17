@@ -18,7 +18,7 @@
 | `src/messages/zh-CN.ts` | 界面文字（以后加英文从这里扩展） |
 | `src/lib/supabase/` | 连接数据库的代码 |
 | `supabase/migrations/` | 数据库建表文件（按文件名顺序执行） |
-| `supabase/seed.sql` | 演示数据 |
+| `catalog/` | 要导入的商品清单（`npm run import:catalog`） |
 | `tests/` | 自动化测试 |
 
 ## 一、本地准备
@@ -59,7 +59,7 @@
 
 > ⚠️ `.env.local` 已被 `.gitignore` 排除，不会被提交到 git。请不要把里面的内容发到聊天、截图或任何公开的地方。
 
-### 3. 建表并导入演示数据
+### 3. 建表并导入商品
 
 在终端运行：
 
@@ -67,7 +67,13 @@
 npm run db:setup
 ```
 
-它会按顺序执行 `supabase/migrations/` 下的建表文件和 `supabase/seed.sql`。已执行过的文件会自动跳过，重复运行是安全的。
+它会按顺序执行 `supabase/migrations/` 下的建表文件。已执行过的文件会自动跳过，重复运行是安全的。
+
+然后导入商品（图片会自动上传到 Supabase Storage）：
+
+```bash
+npm run import:catalog
+```
 
 > 备选方式：也可以在 Supabase 左侧 **SQL Editor** 中新建查询（注意不要选到 Logs），按文件名顺序粘贴并运行上述文件。
 
@@ -96,20 +102,33 @@ npm run dev
 | `npm run dev` | 本地开发预览 |
 | `npm run build` | 生产构建（部署前检查） |
 | `npm test` | 运行全部自动化测试 |
-| `npm run db:setup` | 把建表文件和演示数据写入 Supabase |
+| `npm run db:setup` | 把建表文件写入 Supabase |
+| `npm run import:catalog` | 导入 `catalog/` 里的商品（已存在的跳过；加 `-- --update` 覆盖更新） |
 | `npm run check:supabase` | 检查 Supabase 配置 |
 
 ## 商品怎么组织
 
 - **每套雪服 = 一个“款式” = 一个展示页**。你的每套雪服都不一样，所以每套单独建一个款式，下面挂 1 件库存（填尺码和编号）。只有一个尺码时，详情页直接显示“尺码 M”，不用顾客选。
 - 每个款式有 **品牌**（可留空，例如 ISEE MIGGA）和 **品类**：成套 / 连体服 / 上衣 / 裤子。列表页可以按品类筛选。
-- 演示数据里有 8 套示意图（`public/demo/`），上线前请在后台换成你自己拍的照片。
+- 商品清单放在 `catalog/*.json`（目前是 `catalog/iseemigga.json`），运行 `npm run import:catalog` 会下载图片、上传到 Supabase Storage，并写入款式和库存。
+- 图片和参数取自品牌官网的款式，详情页底部会自动注明“图片与参数来源：ISEE MIGGA 官网”并链接到原商品页。
+
+### 商品介绍怎么写
+
+`description` 里用两条简单规则排版，详情页会自动变成可展开的段落：
+
+```text
+官方款名：……            ← 第一个标题之前的内容显示为“商品介绍”
+一句话介绍颜色和款式。
+
+## 面料与科技             ← “## ”开头：新的一段，标题是“面料与科技”
+- 防水指数 ＞20000mmH₂O   ← “- ”开头：一条列表项
+```
 
 ### 换图片
 
-- **商品图**：建议竖版 3:4（例如 1200×1600），第一张作为封面。后台上线后可以直接上传。
+- **商品图**：竖版 3:5（例如 930×1550 或 1200×2000），第一张作为封面。
 - **首页大图**：把照片放到 `public` 文件夹（例如 `public/hero.jpg`），再把 `src/config/shop.ts` 里的 `heroImage` 改成 `"/hero.jpg"`。
-- **版权提醒**：品牌官网的照片和文案属于品牌方，请用自己拍的照片；如果想用官方图，先取得品牌授权。
 
 ## 业务规则速查
 

@@ -6,6 +6,7 @@ import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const migrationsDir = join(root, "supabase", "migrations");
+export const demoSeedPath = join(root, "tests", "fixtures", "demo-seed.sql");
 
 function readSql(path: string) {
   return readFileSync(path, "utf8");
@@ -25,7 +26,7 @@ export async function createTestDb(options: { seed?: boolean } = {}) {
     await db.exec(readSql(file));
   }
   if (options.seed) {
-    await db.exec(readSql(join(root, "supabase", "seed.sql")));
+    await db.exec(readSql(demoSeedPath));
   }
   return db;
 }

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check:supabase": "node --env-file=.env.local scripts/check-supabase.mjs",
-    "db:setup": "node --env-file=.env.local scripts/db-setup.mjs"
+    "db:setup": "node --env-file=.env.local scripts/db-setup.mjs",
+    "import:catalog": "node --env-file=.env.local scripts/import-catalog.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

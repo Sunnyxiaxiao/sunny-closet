@@ -49,7 +49,7 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
     <div className="grid grid-cols-2 gap-x-2 gap-y-8 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4" aria-busy="true">
       {Array.from({ length: count }, (_, i) => (
         <div key={i}>
-          <div className="aspect-[3/4] animate-pulse bg-neutral-100" />
+          <div className="aspect-[3/5] animate-pulse bg-neutral-100" />
           <div className="mt-2.5 h-4 w-2/3 animate-pulse bg-neutral-100" />
           <div className="mt-1.5 h-4 w-1/3 animate-pulse bg-neutral-100" />
         </div>

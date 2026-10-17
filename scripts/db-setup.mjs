@@ -1,4 +1,5 @@
-// 把 supabase/migrations 下的迁移文件和 seed.sql 写入 Supabase 数据库。用法：npm run db:setup
+// 把 supabase/migrations 下的迁移文件写入 Supabase 数据库。用法：npm run db:setup
+// 商品数据另用 npm run import:catalog 导入。
 // 已执行过的迁移会记录在 supabase_migrations.schema_migrations 中，重复运行会自动跳过。
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -67,9 +68,6 @@ try {
       throw new Error(`${file} 执行失败：${error.message}`);
     }
   }
-
-  await client.query(readFileSync(join(root, "supabase", "seed.sql"), "utf8"));
-  console.log("✅ 已导入演示数据：seed.sql");
 
   const { rows } = await client.query(
     "select (select count(*) from public.styles)::int as styles, (select count(*) from public.inventory_items)::int as items",

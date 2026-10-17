@@ -56,7 +56,7 @@ export function ProductGallery({ images, alt }: { images: string[]; alt: string 
             type="button"
             onClick={() => goTo(i)}
             aria-label={`查看第 ${i + 1} 张图`}
-            className={`relative aspect-[3/4] overflow-hidden bg-neutral-100 ring-offset-2 ${i === index ? "ring-1 ring-neutral-900" : "opacity-70 hover:opacity-100"}`}
+            className={`relative aspect-[3/5] overflow-hidden bg-neutral-100 ring-offset-2 ${i === index ? "ring-1 ring-neutral-900" : "opacity-70 hover:opacity-100"}`}
           >
             <Image src={src} alt="" fill sizes="10vw" unoptimized className="object-cover" />
           </button>

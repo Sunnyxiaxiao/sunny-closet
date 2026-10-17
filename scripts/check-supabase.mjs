@@ -29,7 +29,7 @@ const styles = await anon.from("styles").select("slug");
 if (styles.error) {
   bad(`读取款式失败：${styles.error.message}（是否已在 SQL Editor 中运行全部迁移文件？）`);
 } else if (styles.data.length === 0) {
-  bad("款式表是空的（是否已运行 supabase/seed.sql？）");
+  bad("还没有上架任何款式（运行 npm run import:catalog 导入商品）");
 } else {
   ok(`访客可以读取款式：共 ${styles.data.length} 个`);
 }

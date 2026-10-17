@@ -45,6 +45,8 @@ export const messages = {
     questions: "有疑问？",
     questionsBody: "尺码拿不准、想看更多细节图，欢迎联系我们。",
     related: "你可能还喜欢",
+    sourceCredit: "图片与参数来源：",
+    officialSite: "官网",
   },
   footer: {
     rights: "保留所有权利。",
