@@ -31,13 +31,13 @@ const sections = [
 
 export default function RentalInfoPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
-      <h1 className="text-2xl font-bold">租赁须知</h1>
-      <div className="mt-6 space-y-4">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
+      <h1 className="text-3xl font-black">租赁须知</h1>
+      <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">
         {sections.map((s) => (
-          <section key={s.title} className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="font-semibold">{s.title}</h2>
-            <p className="mt-2 text-slate-700">{s.body}</p>
+          <section key={s.title} className="py-5">
+            <h2 className="font-bold">{s.title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-700">{s.body}</p>
           </section>
         ))}
       </div>

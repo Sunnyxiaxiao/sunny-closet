@@ -10,6 +10,8 @@ export const shop = {
   /** 用于计算“今天”是哪一天（例如禁止选择过去的日期）。 */
   timeZone: "America/New_York",
   fulfillmentMethods: ["pickup", "shipping"] as const,
+  /** 首页大图。换成自己的照片：放到 public 文件夹，例如 public/hero.jpg，再把这里改成 "/hero.jpg" */
+  heroImage: "/hero.svg",
   contact: {
     email: "hello@example.com",
     phone: "(000) 000-0000",

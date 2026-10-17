@@ -17,9 +17,30 @@ describe("迁移与种子数据", () => {
     const styles = await db.query<{ n: number }>("select count(*)::int as n from public.styles");
     const items = await db.query<{ n: number }>("select count(*)::int as n from public.inventory_items");
     const bookings = await db.query<{ n: number }>("select count(*)::int as n from public.bookings");
-    expect(styles.rows[0].n).toBe(4);
-    expect(items.rows[0].n).toBe(26);
+    expect(styles.rows[0].n).toBe(8);
+    expect(items.rows[0].n).toBe(8);
     expect(bookings.rows[0].n).toBe(2);
+  });
+
+  it("每套演示雪服都只有一件库存，并带品牌和品类", async () => {
+    const res = await db.query<{ slug: string; brand: string; category: string; n: number }>(
+      `select s.slug, s.brand, s.category, count(i.id)::int as n
+       from public.styles s left join public.inventory_items i on i.style_id = s.id
+       group by s.id`,
+    );
+    for (const row of res.rows) expect(row.n).toBe(1);
+    expect(new Set(res.rows.map((r) => r.category))).toEqual(
+      new Set(["suit", "one_piece", "jacket", "pants"]),
+    );
+    expect(res.rows.some((r) => r.brand === "ISEE MIGGA")).toBe(true);
+  });
+
+  it("品类只能是 成套/连体服/上衣/裤子", async () => {
+    await expect(
+      db.query(
+        "insert into public.styles (slug, name, category, daily_price_cents, deposit_cents) values ('bad', 'x', 'kids', 0, 0)",
+      ),
+    ).rejects.toThrow(/check constraint/);
   });
 
   it("种子数据可重复执行而不重复插入", async () => {
@@ -28,7 +49,7 @@ describe("迁移与种子数据", () => {
     await db.exec(readFileSync(join(process.cwd(), "supabase", "seed.sql"), "utf8"));
     const items = await db.query<{ n: number }>("select count(*)::int as n from public.inventory_items");
     const bookings = await db.query<{ n: number }>("select count(*)::int as n from public.bookings");
-    expect(items.rows[0].n).toBe(26);
+    expect(items.rows[0].n).toBe(8);
     expect(bookings.rows[0].n).toBe(2);
   });
 
@@ -62,13 +83,13 @@ describe("权限（RLS）", () => {
   });
 
   it("匿名访客只能看到上架的款式", async () => {
-    await db.exec("update public.styles set is_active = false where slug = 'adult-ski-pants'");
+    await db.exec("update public.styles set is_active = false where slug = 'black-wide-pants'");
     const rows = await withRole(db, "anon", async () =>
       (await db.query<{ slug: string }>("select slug from public.styles")).rows,
     );
-    expect(rows.map((r) => r.slug)).not.toContain("adult-ski-pants");
-    expect(rows).toHaveLength(3);
-    await db.exec("update public.styles set is_active = true where slug = 'adult-ski-pants'");
+    expect(rows.map((r) => r.slug)).not.toContain("black-wide-pants");
+    expect(rows).toHaveLength(7);
+    await db.exec("update public.styles set is_active = true where slug = 'black-wide-pants'");
   });
 
   it("匿名访客不能修改款式", async () => {

@@ -13,10 +13,19 @@ import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 export type PublicStyle = Pick<
   StyleRow,
-  "id" | "slug" | "name" | "description" | "daily_price_cents" | "deposit_cents" | "image_urls"
+  | "id"
+  | "slug"
+  | "brand"
+  | "category"
+  | "name"
+  | "description"
+  | "daily_price_cents"
+  | "deposit_cents"
+  | "image_urls"
 >;
 
-const STYLE_COLUMNS = "id, slug, name, description, daily_price_cents, deposit_cents, image_urls";
+const STYLE_COLUMNS =
+  "id, slug, brand, category, name, description, daily_price_cents, deposit_cents, image_urls";
 
 export interface ShopSettings {
   bufferDays: number;

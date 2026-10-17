@@ -2,15 +2,8 @@
 
 @theme {
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
-  --color-brand-50: #eff8ff;
-  --color-brand-100: #dbeefe;
-  --color-brand-200: #bfe2fe;
-  --color-brand-500: #2f8fe6;
-  --color-brand-600: #1f72c7;
-  --color-brand-700: #1b5ba1;
-  --color-brand-900: #173a63;
+    -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
 }
 
 html {
@@ -18,5 +11,13 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-white text-neutral-900 antialiased;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

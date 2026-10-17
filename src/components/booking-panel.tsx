@@ -48,10 +48,11 @@ export function BookingPanel({
   /** 选好且有货时渲染的下一步（预订表单） */
   renderCheckout?: (selection: BookingSelection) => ReactNode;
 }) {
+  const singleSize = sizes.length === 1 ? sizes[0].size : null;
   const [start, setStart] = useState(initial.start ?? "");
   const [end, setEnd] = useState(initial.end ?? "");
   const [size, setSize] = useState(
-    initial.size && sizes.some((s) => s.size === initial.size) ? initial.size : "",
+    singleSize ?? (initial.size && sizes.some((s) => s.size === initial.size) ? initial.size : ""),
   );
   const [result, setResult] = useState<{ query: string; state: AvailabilityState } | null>(null);
 
@@ -94,12 +95,12 @@ export function BookingPanel({
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    for (const [key, value] of Object.entries({ start, end, size })) {
+    for (const [key, value] of Object.entries({ start, end, size: singleSize ? "" : size })) {
       if (value) url.searchParams.set(key, value);
       else url.searchParams.delete(key);
     }
     window.history.replaceState(window.history.state, "", url);
-  }, [start, end, size]);
+  }, [start, end, size, singleSize]);
 
   const availableFor = (s: string) =>
     availability.status === "ok"
@@ -115,29 +116,70 @@ export function BookingPanel({
 
   const showRangeHint = Boolean(start || end) && rangeError;
 
+  const dateInputClass =
+    "h-12 w-full border border-neutral-300 bg-white px-3 text-base focus:border-neutral-900 focus:outline-none";
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {singleSize ? (
+        <p className="text-sm">
+          <span className="text-neutral-500">尺码</span>
+          <span className="ml-3 inline-flex min-w-12 justify-center border border-neutral-900 px-3 py-1.5 font-semibold">
+            {singleSize}
+          </span>
+        </p>
+      ) : (
+        <fieldset>
+          <legend className="text-sm text-neutral-500">
+            尺码{size ? <span className="ml-2 font-semibold text-neutral-900">{size}</span> : null}
+          </legend>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {sizes.map((s) => {
+              const soldOut = availableFor(s.size) === 0;
+              const selected = size === s.size;
+              return (
+                <button
+                  key={s.size}
+                  type="button"
+                  onClick={() => setSize(s.size)}
+                  aria-pressed={selected}
+                  className={[
+                    "min-w-14 border px-4 py-2.5 text-sm font-semibold transition",
+                    selected
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-300 bg-white hover:border-neutral-900",
+                    soldOut && !selected ? "border-dashed text-neutral-400 line-through" : "",
+                  ].join(" ")}
+                >
+                  {s.size}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+
       <fieldset>
-        <legend className="text-sm font-medium text-slate-700">1. 选择日期</legend>
-        <div className="mt-2 grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-600">取件日期</span>
+        <legend className="text-sm text-neutral-500">租用日期</legend>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <label className="flex flex-col gap-1 text-xs text-neutral-500">
+            取件日期
             <input
               type="date"
               value={start}
               min={today}
               onChange={(e) => onStartChange(e.target.value)}
-              className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-base"
+              className={dateInputClass}
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-600">归还日期</span>
+          <label className="flex flex-col gap-1 text-xs text-neutral-500">
+            归还日期
             <input
               type="date"
               value={end}
               min={start || today}
               onChange={(e) => setEnd(e.target.value)}
-              className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-base"
+              className={dateInputClass}
             />
           </label>
         </div>
@@ -148,75 +190,51 @@ export function BookingPanel({
               : rangeErrorMessages[rangeError]}
           </p>
         )}
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-neutral-500">
           取件日和归还日都计入租期。每次归还后需 {bufferDays} 天清洁整理。
         </p>
       </fieldset>
 
-      <fieldset>
-        <legend className="text-sm font-medium text-slate-700">2. 选择尺码</legend>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {sizes.map((s) => {
-            const count = availableFor(s.size);
-            const soldOut = count === 0;
-            const selected = size === s.size;
-            return (
-              <button
-                key={s.size}
-                type="button"
-                onClick={() => setSize(s.size)}
-                aria-pressed={selected}
-                className={[
-                  "min-w-14 rounded-xl border px-4 py-2.5 text-base font-medium transition",
-                  selected
-                    ? "border-brand-600 bg-brand-600 text-white"
-                    : "border-slate-300 bg-white text-slate-800 hover:border-brand-500",
-                  soldOut && !selected ? "border-dashed text-slate-400 line-through" : "",
-                ].join(" ")}
-              >
-                {s.size}
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
-
-      <div className="rounded-2xl bg-slate-50 p-4" aria-live="polite">
+      <div className="bg-neutral-50 p-4" aria-live="polite">
         {quote ? (
           <dl className="space-y-1.5 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-slate-600">
+            <div className="flex justify-between gap-3">
+              <dt className="text-neutral-600">
                 租金（{formatShortDateZh(start)} – {formatShortDateZh(end)}，{quote.rentalDays} 天 ×{" "}
                 {formatMoney(quote.dailyPriceCents)}）
               </dt>
               <dd className="font-medium">{formatMoney(quote.rentalCents)}</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-600">押金（归还后退还）</dt>
+            <div className="flex justify-between gap-3">
+              <dt className="text-neutral-600">押金（归还后退还）</dt>
               <dd className="font-medium">{formatMoney(quote.depositCents)}</dd>
             </div>
-            <div className="flex justify-between border-t border-slate-200 pt-2 text-base">
+            <div className="flex justify-between gap-3 border-t border-neutral-200 pt-2 text-base">
               <dt className="font-semibold">合计</dt>
-              <dd className="font-bold text-brand-700">{formatMoney(quote.totalCents)}</dd>
+              <dd className="font-bold">{formatMoney(quote.totalCents)}</dd>
             </div>
           </dl>
         ) : (
-          <p className="text-sm text-slate-500">
-            日租 {formatMoney(dailyPriceCents)} · 押金 {formatMoney(depositCents)}。选择日期后显示总价。
-          </p>
+          <p className="text-sm text-neutral-500">选择日期后显示总价。</p>
         )}
 
         <div className="mt-3 text-sm">
           {!rangeValid || !size ? (
-            <p className="text-slate-500">选择日期和尺码后查看是否有货。</p>
+            <p className="text-neutral-500">
+              {singleSize ? "选择日期后查看这段时间是否可租。" : "选择日期和尺码后查看是否有货。"}
+            </p>
           ) : availability.status === "loading" ? (
-            <p className="text-slate-500">正在查询库存…</p>
+            <p className="text-neutral-500">正在查询…</p>
           ) : availability.status === "error" ? (
             <p className="text-red-600">{availability.message}</p>
           ) : selectedAvailable && selectedAvailable > 0 ? (
-            <p className="font-medium text-emerald-700">✓ 有货：该尺码这段时间可租</p>
+            <p className="font-semibold text-emerald-700">
+              ✓ {singleSize ? "这段时间可租" : "有货：该尺码这段时间可租"}
+            </p>
           ) : (
-            <p className="font-medium text-red-600">✗ 该尺码这段时间已租满，换个日期或尺码试试</p>
+            <p className="font-semibold text-red-600">
+              ✗ {singleSize ? "这段时间已被预订，换个日期试试" : "该尺码这段时间已租满，换个日期或尺码试试"}
+            </p>
           )}
         </div>
       </div>

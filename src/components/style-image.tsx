@@ -12,11 +12,11 @@ export function StyleImage({
   priority?: boolean;
 }) {
   return (
-    <div className="relative aspect-square w-full overflow-hidden bg-brand-50">
+    <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-100">
       {src ? (
         <Image src={src} alt={alt} fill sizes={sizes} priority={priority} unoptimized className="object-cover" />
       ) : (
-        <div className="flex h-full items-center justify-center text-4xl text-brand-200">❄</div>
+        <div className="flex h-full items-center justify-center text-4xl text-neutral-300">❄</div>
       )}
     </div>
   );

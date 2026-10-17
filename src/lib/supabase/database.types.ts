@@ -13,6 +13,8 @@ export type BookingStatus =
 
 export type InventoryStatus = "available" | "inactive";
 
+export type StyleCategory = "suit" | "one_piece" | "jacket" | "pants";
+
 export type Database = {
   public: {
     Tables: {
@@ -39,6 +41,8 @@ export type Database = {
         Row: {
           id: string;
           slug: string;
+          brand: string;
+          category: StyleCategory;
           name: string;
           description: string;
           daily_price_cents: number;
@@ -52,6 +56,8 @@ export type Database = {
         Insert: {
           id?: string;
           slug: string;
+          brand?: string;
+          category?: StyleCategory;
           name: string;
           description?: string;
           daily_price_cents: number;
@@ -62,6 +68,8 @@ export type Database = {
         };
         Update: {
           slug?: string;
+          brand?: string;
+          category?: StyleCategory;
           name?: string;
           description?: string;
           daily_price_cents?: number;

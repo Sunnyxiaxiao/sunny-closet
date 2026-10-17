@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { BookingPanel } from "@/components/booking-panel";
-import { StyleImage } from "@/components/style-image";
-import { getAvailability, getSettings, getStyleBySlug, getToday } from "@/lib/catalog";
+import { ProductCard } from "@/components/product-card";
+import { ProductGallery } from "@/components/product-gallery";
+import { getAvailability, getSettings, getStyleBySlug, getToday, listStyles } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
+import { messages } from "@/messages/zh-CN";
+
+const t = messages.product;
 
 export default function StyleDetailPage({ params, searchParams }: PageProps<"/styles/[slug]">) {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
-      <Link href="/styles" className="text-sm text-brand-700 hover:underline">
-        ← 全部款式
-      </Link>
+    <div className="mx-auto max-w-7xl md:px-4 md:py-8">
       <Suspense fallback={<DetailSkeleton />}>
         <StyleDetail params={params} searchParams={searchParams} />
       </Suspense>
@@ -25,71 +26,133 @@ async function StyleDetail({ params, searchParams }: PageProps<"/styles/[slug]">
   const style = await getStyleBySlug(slug);
   if (!style) notFound();
 
-  const [settings, today, availability] = await Promise.all([
+  const [settings, today, availability, allStyles] = await Promise.all([
     getSettings(),
     getToday(),
-    getAvailability({ styleId: style.id }),
+    getAvailability(),
+    listStyles(),
   ]);
   const sizes = availability.get(style.id) ?? [];
   const initial = rentalSearchParamsSchema.parse(raw);
+  const related = allStyles
+    .filter((s) => s.id !== style.id)
+    .sort((a, b) => Number(b.category === style.category) - Number(a.category === style.category))
+    .slice(0, 4);
 
   return (
-    <div className="mt-4 grid gap-6 md:grid-cols-2 md:gap-10">
-      <div className="space-y-3">
-        <div className="overflow-hidden rounded-2xl border border-slate-200">
-          <StyleImage src={style.image_urls[0]} alt={style.name} sizes="(min-width: 768px) 50vw, 100vw" priority />
-        </div>
-        {style.image_urls.length > 1 && (
-          <div className="grid grid-cols-4 gap-2">
-            {style.image_urls.slice(1).map((url) => (
-              <div key={url} className="overflow-hidden rounded-xl border border-slate-200">
-                <StyleImage src={url} alt={style.name} sizes="25vw" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+    <>
+      <div className="md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-12">
+        <ProductGallery images={style.image_urls} alt={style.name} />
 
-      <div>
-        <h1 className="text-2xl font-bold">{style.name}</h1>
-        <p className="mt-2 text-lg">
-          <span className="font-semibold text-brand-700">{formatMoney(style.daily_price_cents)}</span>
-          <span className="text-slate-500"> / 天</span>
-          <span className="ml-3 text-sm text-slate-500">押金 {formatMoney(style.deposit_cents)}</span>
-        </p>
-        {style.description && (
-          <p className="mt-3 whitespace-pre-line text-slate-700">{style.description}</p>
-        )}
-
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-          {sizes.length === 0 ? (
-            <p className="text-slate-500">该款式暂时没有可租的库存。</p>
-          ) : (
-            <BookingPanel
-              styleId={style.id}
-              dailyPriceCents={style.daily_price_cents}
-              depositCents={style.deposit_cents}
-              sizes={sizes}
-              today={today}
-              maxRentalDays={settings.maxRentalDays}
-              bufferDays={settings.bufferDays}
-              initial={initial}
-            />
+        <div className="px-4 pt-5 md:sticky md:top-24 md:self-start md:px-0 md:pt-0">
+          <nav className="text-xs text-neutral-500">
+            <Link href="/styles" className="hover:underline">
+              {messages.nav.styles}
+            </Link>
+            <span className="mx-1.5">/</span>
+            <Link href={`/styles?category=${style.category}`} className="hover:underline">
+              {messages.categories[style.category]}
+            </Link>
+          </nav>
+          {style.brand && (
+            <p className="mt-3 text-xs uppercase tracking-widest text-neutral-500">{style.brand}</p>
           )}
+          <h1 className="mt-1 text-2xl font-bold leading-snug sm:text-3xl">{style.name}</h1>
+          <p className="mt-3 text-xl">
+            <span className="font-bold">{formatMoney(style.daily_price_cents)}</span>
+            <span className="text-base text-neutral-500"> {t.perDay}</span>
+          </p>
+          <p className="mt-1 text-sm text-neutral-500">
+            {t.deposit} {formatMoney(style.deposit_cents)}（归还后退还）
+          </p>
+
+          <div className="mt-6 border-t border-neutral-200 pt-6">
+            {sizes.length === 0 ? (
+              <p className="text-neutral-500">这套雪服暂时不可租。</p>
+            ) : (
+              <BookingPanel
+                styleId={style.id}
+                dailyPriceCents={style.daily_price_cents}
+                depositCents={style.deposit_cents}
+                sizes={sizes}
+                today={today}
+                maxRentalDays={settings.maxRentalDays}
+                bufferDays={settings.bufferDays}
+                initial={initial}
+              />
+            )}
+          </div>
+
+          <div className="mt-8 border-t border-neutral-200">
+            {style.description && (
+              <Accordion title={t.description} defaultOpen>
+                <p className="whitespace-pre-line">{style.description}</p>
+              </Accordion>
+            )}
+            <Accordion title={t.rentalNotes}>
+              <ul className="list-disc space-y-1 pl-5">
+                {t.rentalNotesBody.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+              <Link href="/rental-info" className="mt-2 inline-block underline underline-offset-4">
+                查看完整租赁须知
+              </Link>
+            </Accordion>
+            <Accordion title={t.questions}>
+              <p>{t.questionsBody}</p>
+              <Link href="/contact" className="mt-2 inline-block underline underline-offset-4">
+                {messages.nav.contact}
+              </Link>
+            </Accordion>
+          </div>
         </div>
       </div>
-    </div>
+
+      {related.length > 0 && (
+        <section className="px-2 pt-14 md:px-0">
+          <h2 className="px-2 text-xl font-black md:px-0">{t.related}</h2>
+          <ul className="mt-5 grid grid-cols-2 gap-x-2 gap-y-8 sm:grid-cols-4 sm:gap-x-4">
+            {related.map((s) => (
+              <li key={s.id}>
+                <ProductCard style={s} sizes={(availability.get(s.id) ?? []).map((x) => x.size)} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
+  );
+}
+
+function Accordion({
+  title,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group border-b border-neutral-200" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-sm font-semibold">
+        {title}
+        <span className="text-lg leading-none transition group-open:rotate-45">+</span>
+      </summary>
+      <div className="pb-5 text-sm leading-relaxed text-neutral-700">{children}</div>
+    </details>
   );
 }
 
 function DetailSkeleton() {
   return (
-    <div className="mt-4 grid gap-6 md:grid-cols-2 md:gap-10" aria-busy="true">
-      <div className="aspect-square animate-pulse rounded-2xl bg-slate-200" />
-      <div className="space-y-3">
-        <div className="h-8 w-2/3 animate-pulse rounded bg-slate-200" />
-        <div className="h-6 w-1/3 animate-pulse rounded bg-slate-200" />
-        <div className="h-64 animate-pulse rounded-2xl bg-slate-200" />
+    <div className="md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-12" aria-busy="true">
+      <div className="aspect-[3/4] animate-pulse bg-neutral-100" />
+      <div className="space-y-3 px-4 pt-5 md:px-0 md:pt-0">
+        <div className="h-8 w-2/3 animate-pulse bg-neutral-100" />
+        <div className="h-6 w-1/3 animate-pulse bg-neutral-100" />
+        <div className="h-64 animate-pulse bg-neutral-100" />
       </div>
     </div>
   );

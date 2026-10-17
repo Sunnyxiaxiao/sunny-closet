@@ -2,15 +2,15 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-xl px-4 py-20 text-center">
-      <p className="text-5xl">❄</p>
-      <h1 className="mt-4 text-xl font-semibold">页面不存在</h1>
-      <p className="mt-2 text-slate-600">这个页面可能已下架或地址有误。</p>
+    <div className="mx-auto max-w-xl px-4 py-24 text-center">
+      <p className="text-5xl font-black">404</p>
+      <h1 className="mt-4 text-lg font-semibold">页面不存在</h1>
+      <p className="mt-2 text-sm text-neutral-600">这套雪服可能已下架，或者地址有误。</p>
       <Link
         href="/styles"
-        className="mt-6 inline-flex h-11 items-center rounded-full bg-brand-600 px-5 font-semibold text-white"
+        className="mt-8 inline-flex h-12 items-center rounded-full bg-neutral-900 px-8 text-sm font-bold tracking-wider text-white hover:bg-neutral-700"
       >
-        看看全部款式
+        看看全部雪服
       </Link>
     </div>
   );
