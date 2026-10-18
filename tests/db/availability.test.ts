@@ -1,6 +1,6 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isItemFree } from "@/lib/booking/rules";
+import { isItemFree, type Padding } from "@/lib/booking/rules";
 import { createTestDb, withRole } from "../helpers/test-db";
 
 let db: PGlite;
@@ -20,11 +20,14 @@ async function insertBooking(start: string, end: string, bufferDays: number, sta
   );
 }
 
-async function availableCount(start: string, end: string) {
+const PICKUP: Padding = { leadDays: 1, tailDays: 1 };
+const SHIPPING: Padding = { leadDays: 3, tailDays: 4 };
+
+async function availableCount(start: string, end: string, fulfillment = "pickup") {
   const res = await withRole(db, "anon", () =>
     db.query<{ available_count: number }>(
-      "select available_count from public.get_availability($1, $2, $3)",
-      [start, end, styleId],
+      "select available_count from public.get_availability($1, $2, $3, $4)",
+      [start, end, styleId, fulfillment],
     ),
   );
   return res.rows[0]?.available_count ?? 0;
@@ -41,7 +44,7 @@ beforeAll(async () => {
     [styleId],
   );
   itemId = item.rows[0].id;
-  // 已有订单：1 月 10–12 号，缓冲 1 天（占用到 13 号）
+  // 已有订单（旧订单，没有前置 / 后置天数）：1 月 10–12 号，缓冲 1 天（占用到 13 号）
   await insertBooking("2026-01-10", "2026-01-12", 1);
   // 已取消的订单不应占用
   await insertBooking("2026-01-20", "2026-01-25", 1, "cancelled");
@@ -70,11 +73,23 @@ describe("数据库可用性查询与前端规则一致", () => {
   ];
 
   for (const [label, start, end] of cases) {
-    it(`${label}（${start} → ${end}）`, async () => {
-      const expected = isItemFree({ start, end }, 1, existing) ? 1 : 0;
+    it(`到店自取：${label}（${start} → ${end}）`, async () => {
+      const expected = isItemFree({ start, end }, 1, existing, PICKUP) ? 1 : 0;
       expect(await availableCount(start, end)).toBe(expected);
     });
+    it(`邮寄：${label}（${start} → ${end}）`, async () => {
+      const expected = isItemFree({ start, end }, 1, existing, SHIPPING) ? 1 : 0;
+      expect(await availableCount(start, end, "shipping")).toBe(expected);
+    });
   }
+
+  it("取件前一晚和归还日不收费但占用库存：14 号滑雪要 13 号晚取件，撞上清洁日", async () => {
+    expect(await availableCount("2026-01-14", "2026-01-14")).toBe(0);
+    expect(await availableCount("2026-01-15", "2026-01-15")).toBe(1);
+    // 邮寄要提前 3 天寄出：17 号滑雪 → 14 号寄出
+    expect(await availableCount("2026-01-16", "2026-01-16", "shipping")).toBe(0);
+    expect(await availableCount("2026-01-17", "2026-01-17", "shipping")).toBe(1);
+  });
 
   it("不传日期时返回可租件总数", async () => {
     const res = await withRole(db, "anon", () =>

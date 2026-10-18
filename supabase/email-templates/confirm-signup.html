@@ -1,0 +1,13 @@
+<!-- Supabase → Authentication → Emails → Templates → Confirm signup
+     Subject（主题）：Confirm your Sunny Closet account -->
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#171717">
+  <p style="font-size:20px;font-weight:900;letter-spacing:0.2em">SUNNY CLOSET</p>
+  <p>Hi! Click the button below to confirm your email and finish signing up.</p>
+  <p style="margin:28px 0">
+    <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup"
+       style="background:#171717;color:#fff;padding:12px 28px;border-radius:999px;text-decoration:none;font-weight:700">
+      Confirm email
+    </a>
+  </p>
+  <p style="font-size:12px;color:#737373">If you didn't sign up, you can ignore this email.</p>
+</div>

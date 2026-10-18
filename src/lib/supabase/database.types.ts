@@ -13,7 +13,9 @@ export type BookingStatus =
 
 export type InventoryStatus = "available" | "inactive";
 
-export type StyleCategory = "suit" | "one_piece" | "jacket" | "pants";
+export type StyleCategory = "suit" | "one_piece" | "jacket" | "pants" | "helmet_cover" | "gloves";
+
+export type HelmetCoverTier = "regular" | "premium";
 
 export type Database = {
   public: {
@@ -22,18 +24,38 @@ export type Database = {
         Row: {
           id: boolean;
           buffer_days: number;
+          gloves_max_rental_days: number;
           max_rental_days: number;
+          rental_prices_cents: number[];
+          jacket_prices_cents: number[];
+          pants_prices_cents: number[];
+          shipping_min_days: number;
+          /** 滑雪日前后额外占用库存的天数（不收费）：到店自取前一晚取、次日还；邮寄提前寄出、用完寄回 */
+          pickup_lead_days: number;
+          pickup_tail_days: number;
+          shipping_lead_days: number;
+          shipping_tail_days: number;
           updated_at: string;
         };
         Insert: {
           id?: boolean;
           buffer_days?: number;
+          gloves_max_rental_days?: number;
           max_rental_days?: number;
+          rental_prices_cents?: number[];
+          jacket_prices_cents?: number[];
+          pants_prices_cents?: number[];
+          shipping_min_days?: number;
           updated_at?: string;
         };
         Update: {
           buffer_days?: number;
+          gloves_max_rental_days?: number;
           max_rental_days?: number;
+          rental_prices_cents?: number[];
+          jacket_prices_cents?: number[];
+          pants_prices_cents?: number[];
+          shipping_min_days?: number;
         };
         Relationships: [];
       };
@@ -51,6 +73,15 @@ export type Database = {
           source_url: string;
           is_active: boolean;
           sort_order: number;
+          tier: HelmetCoverTier | null;
+          tags: string[];
+          addon_price_cents: number | null;
+          replacement_value_cents: number | null;
+          /** 不为空时按款式自己的价目表计价，否则用 settings 的全店价目表 */
+          rental_prices_cents: number[] | null;
+          variant_images: Record<string, number>;
+          name_en: string;
+          description_en: string;
           created_at: string;
           updated_at: string;
         };
@@ -67,6 +98,14 @@ export type Database = {
           source_url?: string;
           is_active?: boolean;
           sort_order?: number;
+          tier?: HelmetCoverTier | null;
+          tags?: string[];
+          addon_price_cents?: number | null;
+          replacement_value_cents?: number | null;
+          rental_prices_cents?: number[] | null;
+          variant_images?: Record<string, number>;
+          name_en?: string;
+          description_en?: string;
         };
         Update: {
           slug?: string;
@@ -80,6 +119,14 @@ export type Database = {
           source_url?: string;
           is_active?: boolean;
           sort_order?: number;
+          tier?: HelmetCoverTier | null;
+          tags?: string[];
+          addon_price_cents?: number | null;
+          replacement_value_cents?: number | null;
+          rental_prices_cents?: number[] | null;
+          variant_images?: Record<string, number>;
+          name_en?: string;
+          description_en?: string;
         };
         Relationships: [];
       };
@@ -128,6 +175,9 @@ export type Database = {
           start_date: string;
           end_date: string;
           buffer_days: number;
+          /** 下单时记录的前置 / 后置天数（第一个滑雪日之前、最后一个之后占用库存的天数） */
+          lead_days: number;
+          tail_days: number;
           blocked_range: string;
           status: BookingStatus;
           fulfillment_method: "pickup" | "shipping";
@@ -142,6 +192,10 @@ export type Database = {
           deposit_cents: number;
           total_cents: number;
           admin_note: string;
+          /** 加购子订单指向它所属的雪服订单；普通订单为 null */
+          parent_booking_id: string | null;
+          /** 登录状态下提交的订单记在这个账号名下 */
+          user_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -149,6 +203,8 @@ export type Database = {
         Update: {
           status?: BookingStatus;
           admin_note?: string;
+          /** 只有服务端（service_role）会写 */
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -166,6 +222,57 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      inventory_blocks: {
+        Row: {
+          id: string;
+          inventory_item_id: string;
+          start_date: string;
+          end_date: string;
+          reason: string;
+          blocked_range: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          inventory_item_id: string;
+          start_date: string;
+          end_date: string;
+          reason?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "inventory_blocks_inventory_item_id_fkey";
+            columns: ["inventory_item_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_items";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          user_id: string;
+          full_name: string;
+          phone: string;
+          wechat: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          full_name?: string;
+          phone?: string;
+          wechat?: string;
+          updated_at?: string;
+        };
+        Update: {
+          full_name?: string;
+          phone?: string;
+          wechat?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       admin_users: {
         Row: {
@@ -185,6 +292,7 @@ export type Database = {
           p_start?: string | null;
           p_end?: string | null;
           p_style_id?: string | null;
+          p_fulfillment_method?: "pickup" | "shipping";
         };
         Returns: {
           style_id: string;
@@ -208,12 +316,23 @@ export type Database = {
           p_daily_price_cents: number;
           p_rental_cents: number;
           p_deposit_cents: number;
+          /** 加购款式 id 与服务端算好的加购价，一一对应 */
+          p_addon_style_ids?: string[];
+          p_addon_cents?: number[];
         };
         Returns: {
           booking_id: string;
           booking_no: string;
           inventory_item_id: string;
         }[];
+      };
+      rental_price_cents: {
+        Args: { p_days: number };
+        Returns: number;
+      };
+      style_rental_price_cents: {
+        Args: { p_style_id: string; p_days: number };
+        Returns: number;
       };
       hit_rate_limit: {
         Args: {
@@ -237,3 +356,6 @@ export type Database = {
 export type StyleRow = Database["public"]["Tables"]["styles"]["Row"];
 export type InventoryItemRow = Database["public"]["Tables"]["inventory_items"]["Row"];
 export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
+export type InventoryBlockRow = Database["public"]["Tables"]["inventory_blocks"]["Row"];
+export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+export type SettingsRow = Database["public"]["Tables"]["settings"]["Row"];

@@ -1,21 +1,28 @@
 import Link from "next/link";
 import type { PublicStyle } from "@/lib/catalog";
-import { formatMoney } from "@/lib/money";
-import { messages } from "@/messages/zh-CN";
+import { localePath, type Locale } from "@/i18n/config";
+import { getMessages, sizeLabel } from "@/messages";
+import { RentFrom } from "./rent-from";
 import { StyleImage } from "./style-image";
 
 export function ProductCard({
   style,
   sizes,
   query = "",
+  fromCents,
+  locale,
 }: {
   style: PublicStyle;
   sizes: string[];
   /** 带到详情页的日期/尺码参数，例如 "?start=...&end=..." */
   query?: string;
+  /** 起租价：价目表第 1 档（成套、外套、雪裤各不相同，见 stylePriceTable） */
+  fromCents: number;
+  locale: Locale;
 }) {
+  const messages = getMessages(locale);
   return (
-    <Link href={`/styles/${style.slug}${query}`} className="group block">
+    <Link href={localePath(locale, `/styles/${style.slug}${query}`)} className="group block">
       <div className="overflow-hidden">
         <div className="transition duration-500 group-hover:scale-[1.03]">
           <StyleImage
@@ -31,12 +38,11 @@ export function ProductCard({
         )}
         <p className="text-sm leading-snug">{style.name}</p>
         <p className="text-sm">
-          <span className="font-bold">{formatMoney(style.daily_price_cents)}</span>
-          <span className="text-neutral-500"> {messages.product.perDay}</span>
+          <RentFrom cents={fromCents} locale={locale} />
         </p>
         {sizes.length > 0 && (
           <p className="text-xs text-neutral-500">
-            {messages.product.size} {sizes.join(" / ")}
+            {messages.product.size} {sizes.map((s) => sizeLabel(s, locale)).join(" / ")}
           </p>
         )}
       </div>

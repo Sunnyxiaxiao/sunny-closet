@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "check:supabase": "node --env-file=.env.local scripts/check-supabase.mjs",
     "db:setup": "node --env-file=.env.local scripts/db-setup.mjs",
-    "import:catalog": "node --env-file=.env.local scripts/import-catalog.mjs"
+    "import:catalog": "node --env-file=.env.local scripts/import-catalog.mjs",
+    "admin:add": "node --env-file=.env.local scripts/add-admin.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -35,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "pg": "^8.23.1",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.5"

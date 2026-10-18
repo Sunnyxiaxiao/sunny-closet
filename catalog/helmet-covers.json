@@ -1,0 +1,149 @@
+[
+  {
+    "slug": "fluffy-cat",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "毛绒猫咪头盔套",
+    "nameEn": "Fluffy Cat Helmet Cover",
+    "tags": [
+      "cat",
+      "fluffy",
+      "cute",
+      "funny",
+      "green",
+      "blue",
+      "yellow",
+      "pink"
+    ],
+    "sortOrder": 10,
+    "description": "猫耳毛绒头盔套，圆脸颊，张着嘴的表情。四个颜色各一件，可以选：绿色（薄荷绿）、蓝色（天蓝）、黄色（奶黄）、粉色。\n\n第一张是四色合集，选了颜色会换成那一色的单品图。",
+    "descriptionEn": "Plush cat-ear helmet cover with round cheeks and an open-mouth smile. One of each in four colors: green (mint), blue (sky blue), yellow (cream) and pink.\n\nThe first photo shows all four colors — pick a color to see that one on its own.",
+    "images": [
+      "images/fluffy-cat/cover.png",
+      "images/fluffy-cat/green.png",
+      "images/fluffy-cat/blue.png",
+      "images/fluffy-cat/yellow.png",
+      "images/fluffy-cat/pink.png"
+    ],
+    "items": [
+      {
+        "code": "HC001",
+        "size": "绿色"
+      },
+      {
+        "code": "HC002",
+        "size": "蓝色"
+      },
+      {
+        "code": "HC003",
+        "size": "黄色"
+      },
+      {
+        "code": "HC004",
+        "size": "粉色"
+      }
+    ]
+  },
+  {
+    "slug": "black-cat",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "黑猫头盔套",
+    "nameEn": "Black Cat Helmet Cover",
+    "tags": [
+      "black",
+      "cat",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 20,
+    "description": "黑猫毛绒头盔套，圆圆的大眼睛，粉色内耳和脸颊。",
+    "descriptionEn": "Plush black cat helmet cover with big round eyes and pink inner ears and cheeks.",
+    "images": [
+      "images/black-cat/1.png"
+    ],
+    "items": [
+      {
+        "code": "HC005",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "hello-kitty",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "Hello Kitty 头盔套",
+    "nameEn": "Hello Kitty Helmet Cover",
+    "tags": [
+      "white",
+      "pink",
+      "cat",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 30,
+    "description": "白色毛绒头盔套，粉色蝴蝶结和粉色包边，黄色鼻子。",
+    "descriptionEn": "White plush helmet cover with a pink bow, pink trim and a yellow nose.",
+    "images": [
+      "images/hello-kitty/1.png"
+    ],
+    "items": [
+      {
+        "code": "HC006",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "kuromi",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "库洛米头盔套",
+    "nameEn": "Kuromi Helmet Cover",
+    "tags": [
+      "black",
+      "white",
+      "fluffy",
+      "cute",
+      "devil"
+    ],
+    "sortOrder": 40,
+    "description": "黑白毛绒头盔套，头顶两个黑球，紫色蝴蝶结，额头一颗粉色骷髅。",
+    "descriptionEn": "Black-and-white plush helmet cover with two black pom-poms on top, a purple bow and a pink skull on the forehead.",
+    "images": [
+      "images/kuromi/1.png"
+    ],
+    "items": [
+      {
+        "code": "HC007",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "little-pig",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "小猪头盔套",
+    "nameEn": "Little Pig Helmet Cover",
+    "tags": [
+      "pink",
+      "fluffy",
+      "cute",
+      "funny"
+    ],
+    "sortOrder": 50,
+    "description": "粉色毛绒头盔套，猪耳、猪鼻，脑后有一圈卷卷的小尾巴。",
+    "descriptionEn": "Pink plush helmet cover with piggy ears, a snout and a curly little tail at the back.",
+    "images": [
+      "images/little-pig/1.png"
+    ],
+    "items": [
+      {
+        "code": "HC008",
+        "size": "均码"
+      }
+    ]
+  }
+]

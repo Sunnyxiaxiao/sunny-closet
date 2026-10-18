@@ -2,13 +2,21 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { messages } from "@/messages/zh-CN";
+import { localePath, type Locale } from "@/i18n/config";
+import { getMessages } from "@/messages";
 
-export function MobileMenu({ links }: { links: readonly { href: string; label: string }[] }) {
+export function MobileMenu({
+  links,
+  locale,
+}: {
+  links: readonly { href: string; label: string }[];
+  locale: Locale;
+}) {
   const [open, setOpen] = useState(false);
+  const messages = getMessages(locale);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -41,7 +49,7 @@ export function MobileMenu({ links }: { links: readonly { href: string; label: s
               </svg>
             </button>
             <ul className="mt-6 divide-y divide-neutral-200 border-y border-neutral-200">
-              {[{ href: "/", label: messages.nav.home }, ...links].map((link) => (
+              {[{ href: localePath(locale, "/"), label: messages.nav.home }, ...links].map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

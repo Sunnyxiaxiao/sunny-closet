@@ -1,0 +1,119 @@
+[
+  {
+    "slug": "swagli-lace-ribbon-snow-suit-brown",
+    "brand": "SwagLi",
+    "category": "suit",
+    "name": "波点蕾丝丝带滑雪套装（咖色）",
+    "nameEn": "Lace Ribbon Polka-Dot Snow Suit (Brown)",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 240,
+    "items": [
+      {
+        "code": "SC016",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/4e7b0b2c44465012fba4ae881b87fec4.png",
+      "images/swagli-lace-ribbon-snow-suit-brown/2.jpg",
+      "images/swagli-lace-ribbon-snow-suit-brown/3.jpg"
+    ],
+    "description": "奶白底咖色小波点的滑雪套装：外套 + 雪裤。袖子和裤腿两侧缀满咖色丝带和蕾丝，胸前一圈荷叶边，复古又甜美的运动少女风。\n\n## 面料与科技\n- 防水防风滑雪面料，带保暖填充\n- 可调防风帽子，高领设计，鱼骨帽檐保暖又挺括\n\n## 设计细节\n- 两侧丝带和蕾丝装饰，胸前荷叶边显比例\n- 复古小波点\n- 腰部三段可调防雪裙，内置腰部调节带\n- 腋下透气系统\n- 3D 立体弹力防雪袖口，裤脚防滑防雪套\n- 内置雪镜口袋，加长拉链拉绳，戴手套也好拉\n- 只能手洗，不可漂白、熨烫，不用柔顺剂，阴凉处晾干",
+    "descriptionEn": "A cream snow suit with tiny brown polka dots: jacket + pants. Brown ribbons and lace run down the sleeves and legs, with a ruffle across the chest — a sweet, vintage take on sporty style.\n\n## Fabric & Tech\n- Waterproof, windproof ski fabric with insulation\n- Adjustable windproof hood with a high collar and structured boned brim\n\n## Design Details\n- Ribbon and lace trims on the sides; chest ruffle that flatters your proportions\n- Dainty vintage polka dots\n- 3-stage adjustable powder skirt and internal waist adjusters\n- Underarm ventilation\n- 3D-cut elastic snow cuffs and non-slip leg gaiters\n- Inner goggle pocket and extended zipper pulls for gloved hands\n- Hand wash only; no bleach, ironing or fabric softener; hang dry in the shade"
+  },
+  {
+    "slug": "swagli-gingham-snow-pants-light-blue",
+    "brand": "SwagLi",
+    "category": "pants",
+    "name": "浅蓝格子雪裤",
+    "nameEn": "Light Blue Gingham Snow Pants",
+    "dailyPrice": 25,
+    "deposit": 100,
+    "sortOrder": 310,
+    "items": [
+      {
+        "code": "SC020",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "images/swagli-gingham-snow-pants-light-blue/1.jpg",
+      "images/swagli-gingham-snow-pants-light-blue/2.jpg"
+    ],
+    "description": "浅蓝色法式格纹雪裤，裤腿有抽绳褶皱设计，还配一只可拆卸的小熊挂件，复古又可爱。版型宽松，单板、双板都适合。\n\n## 面料与科技\n- Teflon™ 三防面料：防风、防水、防油污\n- 防水指数 20000mmH₂O，接缝 ≥20mm 宽压胶\n- 耐磨 >60000 次\n- 20D 经编内衬 + 高分子防水膜\n- 适合 -30℃ 到 -20℃\n\n## 设计细节\n- 法式格纹（Vichy），复古运动风\n- 裤腿抽绳褶皱，轻盈有层次\n- 腰部三段可调防雪裙，内置腰带\n- 可拆卸小熊挂件\n- 加长拉链拉绳，戴手套也好拉\n- 裤脚防雪套\n- 只能手洗，不可漂白、熨烫，不用柔顺剂，阴凉处晾干",
+    "descriptionEn": "Baby-blue French gingham snow pants with drawstring ruching down the legs and a detachable teddy bear charm — vintage and cute. Relaxed fit, great for snowboarding or skiing.\n\n## Fabric & Tech\n- Teflon™ triple-defense fabric: wind, water and oil resistant\n- Waterproof rating 20,000 mmH₂O with ≥20 mm seam tape\n- Abrasion resistance >60,000 cycles\n- 20D tricot lining with a high-molecular waterproof membrane\n- Built for −30°C to −20°C\n\n## Design Details\n- Classic French gingham (Vichy) check\n- Drawstring ruching on the legs for a light, textured look\n- 3-stage adjustable powder skirt and built-in belt\n- Detachable teddy bear charm\n- Extended zipper pulls for gloved hands\n- Leg gaiters to keep snow out\n- Hand wash only; no bleach, ironing or fabric softener; hang dry in the shade"
+  },
+  {
+    "slug": "swagli-ice-cream-snow-suit-brown",
+    "brand": "SwagLi",
+    "category": "suit",
+    "name": "巧克力冰淇淋滑雪套装（咖色）",
+    "nameEn": "Frosty Ice-Cream Snow Suit (Chocolate)",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 250,
+    "items": [
+      {
+        "code": "SC017",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/8e559c41fe5739b61746b93958ecb35e.png",
+      "images/swagli-ice-cream-snow-suit-brown/2.jpg",
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/ef938bcda9ad96eca6ff1657e4230bcc.png"
+    ],
+    "description": "奶油白配巧克力色“融化冰淇淋”拼接的滑雪套装：外套 + 雪裤，像淋了巧克力酱的冰淇淋。精致刺绣和立体纹理，可爱又不花哨。\n\n## 面料与科技\n- 防水指数 20000mmH₂O\n- 透湿量 20000+ g/m²·24h\n- 耐磨 >60000 次\n- 20D 经编加固层 + 纳米分子防水膜\n- 适合 -20℃ 到 -10℃\n\n## 设计细节\n- 巧克力“滴落”拼接，精致刺绣和立体纹理\n- 高领 + 可调帽子，挡风保暖\n- 腰部固定防雪裙\n- 袖口防雪口袋，随手放小东西\n- 只能手洗，不可漂白、熨烫，不用柔顺剂，阴凉处晾干",
+    "descriptionEn": "A cream snow suit with chocolate “melting ice cream” color-blocking: jacket + pants, like a scoop dipped in chocolate sauce. Refined embroidery and 3D texture keep it playful without being loud.\n\n## Fabric & Tech\n- Waterproof rating 20,000 mmH₂O\n- Breathability 20,000+ g/m²/24h\n- Abrasion resistance >60,000 cycles\n- 20D tricot reinforcement layer with a nano-molecular membrane\n- Built for −20°C to −10°C\n\n## Design Details\n- Chocolate drip color-blocking with fine embroidery and 3D texture\n- High collar and adjustable hood for wind protection\n- Fixed powder skirt at the waist\n- Snow-proof cuff pocket for quick-access essentials\n- Hand wash only; no bleach, ironing or fabric softener; hang dry in the shade"
+  },
+  {
+    "slug": "swagli-ruffle-slim-ski-suit-cream",
+    "brand": "SwagLi",
+    "category": "suit",
+    "name": "米白蛋糕裙修身滑雪套装",
+    "nameEn": "Cream Ruffle-Skirt Slim Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 260,
+    "items": [
+      {
+        "code": "SC018",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/bdf95f2dc985eeb4bdfecf3a681117a6.png",
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/f61ab0562d2a11cfb1615c83baef2892.png",
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/O1CN01M1UlPW2NJUgBmDOuW__136839942.png",
+      "images/swagli-ruffle-slim-ski-suit-cream/4.jpg",
+      "images/swagli-ruffle-slim-ski-suit-cream/5.jpg"
+    ],
+    "description": "米白色修身滑雪套装：收腰高领外套 + 浅灰雪裤。外套下摆是层层叠叠的蛋糕裙，胸前点缀浅蓝色立体蝴蝶结，芭蕾风，又甜又显身材。适合双板。\n\n## 面料与科技\n- 杜邦 Teflon™ 三防面料：防风、防水、防油污\n- 防水指数 20000mmH₂O，接缝 ≥20mm 宽压胶\n- 透湿量 20000+ g/m²·24h\n- 耐磨 >60000 次\n- 20D 经编加固层 + 纳米分子防水膜\n- 适合 -20℃ 到 -10℃\n\n## 设计细节\n- 层层蛋糕裙下摆，芭蕾风轮廓\n- 高领收腰，显比例\n- 立体蝴蝶结装饰\n- 腰部三段可调防雪裙，内置腰部调节，裤脚防雪套\n- 3D 立体弹力袖口，加长拉链拉绳，内侧隐藏口袋\n- 只能手洗，不可漂白、熨烫，不用柔顺剂，阴凉处晾干",
+    "descriptionEn": "A slim cream ski suit: waist-cinching high-collar jacket + light gray pants. The jacket ends in a tiered ruffle “cake” skirt and has baby-blue 3D bows on the chest — ballet-inspired, sweet and flattering. Best for skiing.\n\n## Fabric & Tech\n- DuPont™ Teflon™ triple-defense fabric: wind, water and oil resistant\n- Waterproof rating 20,000 mmH₂O with ≥20 mm seam tape\n- Breathability 20,000+ g/m²/24h\n- Abrasion resistance >60,000 cycles\n- 20D tricot reinforcement layer with a nano-molecular membrane\n- Built for −20°C to −10°C\n\n## Design Details\n- Tiered ruffle skirt for a ballet-style silhouette\n- High collar and cinched waist to define your shape\n- Decorative 3D ribbon bows\n- 3-stage adjustable powder skirt, internal waist adjuster and leg gaiters\n- 3D-cut elastic cuffs, extended zipper pulls and an inner hidden pocket\n- Hand wash only; no bleach, ironing or fabric softener; hang dry in the shade"
+  },
+  {
+    "slug": "swagli-cat-vs-dog-snow-pants",
+    "brand": "SwagLi",
+    "category": "pants",
+    "name": "猫狗大战雪裤",
+    "nameEn": "Cat vs Dog Snow Pants",
+    "dailyPrice": 25,
+    "deposit": 100,
+    "sortOrder": 320,
+    "items": [
+      {
+        "code": "SC021",
+        "size": "L"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/O1CN01EeA0Hr2NJUfsIRqAD__136839942.webp",
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/O1CN01suBpnH2NJUfwaHNGz__136839942.webp",
+      "https://cdn.shopify.com/s/files/1/0658/2737/3278/files/O1CN01att7OK2NJUfvAfa95__136839942.webp",
+      "images/swagli-cat-vs-dog-snow-pants/4.jpg"
+    ],
+    "description": "粉色底满印小猫小狗的雪裤，“猫狗大战”图案超有趣。弯刀版型裤腿，宽松又有型，适合单板。\n\n## 面料与科技\n- 防水指数 20000mm\n- 透湿量 20000 g/m²·24h\n- 带保暖填充\n\n## 设计细节\n- 满印小猫小狗图案\n- 弯刀版型裤腿，宽松有型\n- 3D 立体密封口袋\n- 腰部三段可调防雪裙，内置腰带\n- 裤脚防雪套\n- 只能手洗，不可漂白、熨烫，不用柔顺剂，阴凉处晾干",
+    "descriptionEn": "Pink snow pants covered in a playful “cat vs dog” print. A curved scimitar cut gives them a relaxed but stylish shape — made for snowboarding.\n\n## Fabric & Tech\n- Waterproof rating 20,000 mm\n- Breathability 20,000 g/m²/24h\n- Insulated for warmth\n\n## Design Details\n- All-over cat and dog print\n- Curved scimitar leg for a relaxed, stylish fit\n- 3D sealed pockets\n- 3-stage adjustable powder skirt and built-in belt\n- Leg gaiters to keep snow out\n- Hand wash only; no bleach, ironing or fabric softener; hang dry in the shade"
+  }
+]

@@ -4,11 +4,17 @@
     "brand": "ISEE MIGGA",
     "category": "suit",
     "name": "星空 3D 滑雪套装",
-    "dailyPrice": 30,
+    "nameEn": "Starry Sky 3D Ski Suit",
+    "dailyPrice": 49,
     "deposit": 200,
     "sortOrder": 10,
     "sourceUrl": "https://iseemigga.com/products/isee-migga-3d-naked-starry-sky-ski-suit",
-    "items": [{ "code": "SC001", "size": "M" }],
+    "items": [
+      {
+        "code": "SC001",
+        "size": "M"
+      }
+    ],
     "images": [
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_0b719e64-2b35-4eff-8f45-90b8936786cf.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_765d80d8-0602-4992-911f-7bde1033efb1.jpg",
@@ -17,18 +23,26 @@
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_ecee00eb-8d4c-4654-a9fc-2b07fa9e9809.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_63fc1c66-2f36-4ff5-ac7b-f571b032a4df.jpg"
     ],
-    "description": "官方款名：3D Naked Starry Sky Ski Suit\n蓝灰星空印花，满身细碎星点，上衣 + 背带雪裤一整套。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 背带可调节；裤脚带拉链，方便穿脱雪鞋"
+    "template": "isee-migga",
+    "description": "官方款名：3D Naked Starry Sky Ski Suit\n蓝灰星空印花，满身细碎星点，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: 3D Naked Starry Sky Ski Suit\nBlue-gray starry-sky print scattered with tiny stars. Jacket + bib pants set."
   },
   {
     "slug": "barbie-pink-diamond-ski-suit",
     "brand": "ISEE MIGGA",
     "category": "suit",
     "name": "芭比粉满钻滑雪套装",
-    "dailyPrice": 30,
+    "nameEn": "Barbie Pink Diamond Ski Suit",
+    "dailyPrice": 49,
     "deposit": 200,
     "sortOrder": 20,
     "sourceUrl": "https://iseemigga.com/products/barbie-pink-ski-suit-with-diamonds",
-    "items": [{ "code": "SC002", "size": "S" }],
+    "items": [
+      {
+        "code": "SC002",
+        "size": "S"
+      }
+    ],
     "images": [
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_37ab773c-7104-453a-ae38-a000e1cf73b9.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_6cc4fd1d-5ccb-41af-b5bd-cb47c47ef9e8.jpg",
@@ -39,18 +53,26 @@
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_03984ead-fff3-44d6-8903-6180d7d38b06.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_e51b8020-6f77-441c-a583-7d3aa78431a6.jpg"
     ],
-    "description": "官方款名：Barbie Pink Ski Suit with Diamonds（满钻系列）\n芭比粉面料满布亮钻，阳光下很闪，上衣 + 背带雪裤一整套。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 背带可调节；裤脚带拉链，方便穿脱雪鞋"
+    "template": "isee-migga",
+    "description": "官方款名：Barbie Pink Ski Suit with Diamonds（满钻系列）\n芭比粉面料满布亮钻，阳光下很闪，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Barbie Pink Ski Suit with Diamonds (Diamond series)\nBarbie-pink fabric covered in rhinestones that sparkle in the sun. Jacket + bib pants set."
   },
   {
     "slug": "dark-night-purple-cross-ski-suit",
     "brand": "ISEE MIGGA",
     "category": "suit",
     "name": "暗夜紫十字滑雪套装",
-    "dailyPrice": 30,
+    "nameEn": "Dark Night Purple Cross Ski Suit",
+    "dailyPrice": 49,
     "deposit": 200,
     "sortOrder": 30,
     "sourceUrl": "https://iseemigga.com/products/dark-night-purple-cross-ski-suit",
-    "items": [{ "code": "SC003", "size": "M" }],
+    "items": [
+      {
+        "code": "SC003",
+        "size": "M"
+      }
+    ],
     "images": [
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_8dbb4d36-c3f1-4970-8dca-2d6df6e41434.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_72288c43-948c-41d5-8b47-e1235ef681a0.jpg",
@@ -61,18 +83,26 @@
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_6db62b0a-73d7-4863-82f4-173737c8561a.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_75be1aad-4d4a-4769-94e0-31c847db8c85.jpg"
     ],
-    "description": "官方款名：Dark Night Purple Cross Ski Suit（十字系列）\n上衣浅紫渐变，雪裤是暗夜紫，全身点缀十字图案，上衣 + 背带雪裤一整套。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 背带可调节；裤脚带拉链，方便穿脱雪鞋"
+    "template": "isee-migga",
+    "description": "官方款名：Dark Night Purple Cross Ski Suit（十字系列）\n上衣浅紫渐变，雪裤是暗夜紫，全身点缀十字图案，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Dark Night Purple Cross Ski Suit (Cross series)\nLilac gradient jacket with deep-purple pants, dotted with cross motifs all over. Jacket + bib pants set."
   },
   {
     "slug": "mystery-of-the-rose-ski-suit",
     "brand": "ISEE MIGGA",
     "category": "suit",
     "name": "玫瑰之谜滑雪套装",
-    "dailyPrice": 30,
+    "nameEn": "Mystery of the Rose Ski Suit",
+    "dailyPrice": 49,
     "deposit": 200,
     "sortOrder": 40,
     "sourceUrl": "https://iseemigga.com/products/isee-migga-mystery-of-the-rose-ski-suit-%E5%87%8C",
-    "items": [{ "code": "SC004", "size": "M" }],
+    "items": [
+      {
+        "code": "SC004",
+        "size": "M"
+      }
+    ],
     "images": [
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_4b58dc80-0fba-4599-8821-971e647cc30b.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_f62bdec5-6a7d-411f-b49b-ea56246693c3.jpg",
@@ -82,6 +112,216 @@
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_5a12a608-5ba3-4284-b2f6-9446bf78605d.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/3b89eabfdc05878f6527ff865f294817.jpg"
     ],
-    "description": "官方款名：Mystery of the Rose Ski Suit（秘境系列）\n粉色到黑色的渐变配色，点缀亮钻，上衣 + 背带雪裤一整套。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 背带可调节；裤脚带拉链，方便穿脱雪鞋"
+    "template": "isee-migga",
+    "description": "官方款名：Mystery of the Rose Ski Suit（秘境系列）\n粉色到黑色的渐变配色，点缀亮钻，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Mystery of the Rose Ski Suit (Mystery series)\nPink-to-black gradient finished with rhinestones. Jacket + bib pants set."
+  },
+  {
+    "slug": "fire-cloud-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "火焰云朵滑雪套装",
+    "nameEn": "Fire Cloud Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 50,
+    "sourceUrl": "https://iseemigga.com/products/isee-migga-fire-cloud-ski-suit",
+    "items": [
+      {
+        "code": "SC005",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_553d5fb3-0baf-4a57-a496-2707a6e94581.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_227a6100-d37b-43ae-b49e-dff52a410dcb.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_454dcd76-bf17-44db-8941-587b97d9283c.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_b58fc911-3829-40ba-96cb-c834996bcd00.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_8bd926fb-1df2-4239-98fd-69fa81fbac99.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_3b18dae6-200b-4260-bbfc-dc630d553980.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/7d6daf52463fe40ecd88674b553e4ff1.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Fire Cloud Ski Suit\n粉色，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Fire Cloud Ski Suit\nPink. Jacket + bib pants set."
+  },
+  {
+    "slug": "snowy-powder-shadow-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "雪粉之影滑雪套装",
+    "nameEn": "Snowy Powder Shadow Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 60,
+    "sourceUrl": "https://iseemigga.com/products/isee-migga-snowy-powder-shadow-ski-suit-%E5%87%8C",
+    "items": [
+      {
+        "code": "SC006",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_e83d68d7-c9f5-47b8-81ab-05f2ea46db59.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_a5b1d9e0-e619-484c-b955-a2cac6f6059a.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_1062976a-4e97-4905-88e7-e38c02563985.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_0231bf3f-254e-42e6-8920-3c801992314c.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_445c6421-6ac6-4447-aaa1-7734f217eec8.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_1706bb47-1e4b-4c1c-9b9b-751acc815592.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_e85ab4ee-6e16-4fe9-b87f-5cdded8ef9ad.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-8_30349420-af53-4477-a7ac-dc252e69f432.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Snowy Powder Shadow Ski Suit\n粉色，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Snowy Powder Shadow Ski Suit\nPink. Jacket + bib pants set."
+  },
+  {
+    "slug": "rhinestone-flame-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "满钻火焰滑雪套装",
+    "nameEn": "Rhinestone Flame Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 70,
+    "sourceUrl": "https://iseemigga.com/products/isee-migga-rhinestone-flame-ski-suit-%E5%87%8C",
+    "items": [
+      {
+        "code": "SC007",
+        "size": "L"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_a4d15bf4-da05-462b-b013-fc8d7935d220.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_28ad6484-0d1a-4ead-ac50-ff87a1523b3a.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_4e47d0c4-16c7-47ed-99f5-6f99c37b2240.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_c42517a7-f4cb-43ee-824c-a845cb073ba9.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_08165895-7e1e-4bc8-8786-778b4f237a1f.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_3e88e68e-4679-404b-a7ff-52b8f6baa305.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_181a6ab8-9566-4f65-bef2-1ae56b0b1c80.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-8_24b6bf1f-ff69-4279-abb2-9551327763e5.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Rhinestone Flame Ski Suit\n黑色，缀有水钻火焰元素，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Rhinestone Flame Ski Suit\nBlack with rhinestone flame details. Jacket + bib pants set."
+  },
+  {
+    "slug": "pink-3d-bow-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "粉色 3D 蝴蝶结滑雪套装",
+    "nameEn": "Pink 3D Bow Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 80,
+    "sourceUrl": "https://iseemigga.com/products/isee-migga-pink-3d-bow-ski-suit",
+    "items": [
+      {
+        "code": "SC008",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_52f03349-5654-4353-b4e9-d36a6d429c8e.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_eb8654e7-e027-4798-ba5e-d70681aceb9b.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_f1a7af39-0081-452e-a808-24745d00742b.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_a8d1e493-e31d-46d8-9b11-d8edc441bf75.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_6af0b195-13ec-4435-bd13-cfb642d49988.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_cbf095ea-7e14-4d5a-8b49-a582a99caad6.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_39f93ac2-fdab-452a-a731-c7130194f2fb.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_db58c9ef-15cf-4e01-929c-9a237e56d0f4.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Pink 3D Bow Ski Suit\n粉色，3D 蝴蝶结设计，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Pink 3D Bow Ski Suit\nPink with 3D bow details. Jacket + bib pants set."
+  },
+  {
+    "slug": "diamond-denim-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "钻石牛仔滑雪套装",
+    "nameEn": "Diamond Denim Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 90,
+    "sourceUrl": "https://iseemigga.com/products/isee-migga-diamond-denim-ski-suit",
+    "items": [
+      {
+        "code": "SC009",
+        "size": "S"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_06ab5466-2167-4def-a906-aed6e1e459cc.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_0c4e9ce1-1994-41e4-989d-1389116d4b17.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_a48faafe-16cc-46cd-96a4-9cf8cb4939b8.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_dc1b79f1-3095-4c00-a5ac-504db891a5cc.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_258e71f8-6253-4b34-bbb9-c465d7234b14.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_58778692-bd88-45de-b609-a2b104f4a6ab.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Tile_5c236c95-493a-4385-aa1d-60bbead90282.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Diamond Denim Ski Suit\n蓝色牛仔风，缀有亮钻，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Diamond Denim Ski Suit\nBlue denim look finished with rhinestones. Jacket + bib pants set."
+  },
+  {
+    "slug": "velvet-quilted-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "丝绒绗缝滑雪套装",
+    "nameEn": "Velvet Quilted Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 100,
+    "sourceUrl": "https://iseemigga.com/products/velvet-quilted-ski-jacket",
+    "items": [
+      {
+        "code": "SC010",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_4b60c77b-2947-45df-aa19-4405638befb6.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_521f4d52-37b4-4877-8206-bdaf42922fd4.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_c5e95b42-cb6e-4675-b9cf-88d25a7b1b16.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_6ddc4e95-3ee5-417f-a468-0e44e926ae84.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_2116f9db-c75e-46ea-8e30-4b18b0d40141.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_9490523c-86c5-4e45-ad39-12d9529cf6ce.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_633f9013-1351-45a2-a494-83c29b9d5359.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_5981f7ed-079b-43be-99e9-5767cc887e83.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Velvet Quilted Ski Suit\n白色丝绒绗缝款（丝绒系列）。",
+    "descriptionEn": "Official name: Velvet Quilted Ski Suit\nWhite quilted velvet (Velvet series)."
+  },
+  {
+    "slug": "sweetheart-guava-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "甜心番石榴滑雪套装",
+    "nameEn": "Sweetheart Guava Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 110,
+    "sourceUrl": "https://iseemigga.com/products/sweetheart-guava-ski-suit",
+    "items": [
+      {
+        "code": "SC011",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_81e4d48a-cf88-424c-8f8f-1a8ca4264fbf.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_00eaf891-d44d-4b39-99d4-0d95125b0b13.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_ad8c7308-6f07-4fc8-ac9e-7c147ee266d4.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_386a30f4-90a3-4f76-aec4-306cebe7f322.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_ab14c614-eb69-4ed6-9079-9f1ac90263ac.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_2d1e8133-4328-4e4f-82ce-44d04144856d.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_7347227f-58e4-4994-9dd4-879afcf6347d.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_49b72742-eb54-4fe9-b3a8-49208824f6b9.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Sweetheart Guava Ski Suit\n粉色，上衣 + 背带雪裤一整套。",
+    "descriptionEn": "Official name: Sweetheart Guava Ski Suit\nPink. Jacket + bib pants set."
   }
 ]

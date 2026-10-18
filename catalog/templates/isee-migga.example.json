@@ -1,0 +1,21 @@
+[
+  {
+    "slug": "lavender-cloud-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "薰衣草云朵滑雪套装",
+    "nameEn": "Lavender Cloud Ski Suit",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 200,
+    "template": "isee-migga",
+    "description": "浅紫色底，满身白色云朵印花，上衣 + 背带雪裤一整套。\n颜色温柔，配白色雪镜、头盔很好看。",
+    "descriptionEn": "Soft lilac with white cloud prints all over. Jacket + bib pants set.\nA gentle color that looks great with white goggles and helmets.",
+    "items": [
+      {
+        "code": "SC101",
+        "size": "M"
+      }
+    ]
+  }
+]

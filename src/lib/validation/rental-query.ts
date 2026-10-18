@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { validateRentalRange, type RangeError } from "@/lib/booking/rules";
 import { isIsoDate, type IsoDate } from "@/lib/dates";
+import { getMessages } from "@/messages";
 
 const optionalText = z
   .union([z.string(), z.array(z.string())])
@@ -30,16 +31,12 @@ export function parseRentalSearch(
   return { kind: "valid", start: start as IsoDate, end: end as IsoDate, size };
 }
 
-/** /api/availability 的查询参数 */
+/** /api/availability 的查询参数。不传 styleId 时返回所有款式的可租件数 */
 export const availabilityQuerySchema = z.object({
-  styleId: z.uuid(),
+  styleId: z.uuid().optional(),
   start: z.string().refine(isIsoDate, "日期格式应为 YYYY-MM-DD"),
   end: z.string().refine(isIsoDate, "日期格式应为 YYYY-MM-DD"),
 });
 
-export const rangeErrorMessages: Record<RangeError, string> = {
-  invalid_date: "请选择取件日期和归还日期",
-  end_before_start: "归还日期不能早于取件日期",
-  start_in_past: "取件日期不能早于今天",
-  too_long: "租期超过了最长天数",
-};
+/** 中文提示（英文见 getMessages("en").rangeErrors） */
+export const rangeErrorMessages: Record<RangeError, string> = getMessages("zh").rangeErrors;

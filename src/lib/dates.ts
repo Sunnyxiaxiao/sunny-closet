@@ -64,3 +64,27 @@ export function formatShortDateZh(date: IsoDate): string {
   const d = new Date(toUtcMs(date));
   return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
 }
+
+const EN_SHORT = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const EN_LONG = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** 按语言格式化日期。中文："2026年1月10日（周六）"；英文："Sat, Jan 10, 2026" */
+export function formatDate(date: IsoDate, locale: "zh" | "en"): string {
+  return locale === "en" ? EN_LONG.format(new Date(toUtcMs(date))) : formatDateZh(date);
+}
+
+/** 按语言格式化短日期。中文："1月10日"；英文："Jan 10" */
+export function formatShortDate(date: IsoDate, locale: "zh" | "en"): string {
+  return locale === "en" ? EN_SHORT.format(new Date(toUtcMs(date))) : formatShortDateZh(date);
+}
+
+/** 日期范围，例："1月10日 – 1月12日" / "Jan 10 – Jan 12" */
+export function formatDateRange(start: IsoDate, end: IsoDate, locale: "zh" | "en"): string {
+  return `${formatShortDate(start, locale)} – ${formatShortDate(end, locale)}`;
+}
