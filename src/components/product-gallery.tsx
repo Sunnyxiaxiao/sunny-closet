@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { thumbUrl } from "@/lib/images";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/messages";
@@ -91,7 +92,7 @@ export function ProductGallery({
             className={`relative ${aspect === "helmet" ? "aspect-square" : "aspect-[3/5]"} overflow-hidden bg-neutral-100 ring-offset-2 ${i === index ? "ring-1 ring-neutral-900" : "opacity-70 hover:opacity-100"}`}
           >
             <Image
-              src={src}
+              src={thumbUrl(src)}
               alt=""
               fill
               sizes="10vw"

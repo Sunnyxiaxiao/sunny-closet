@@ -152,6 +152,7 @@ async function HomeCatalog({ locale }: { locale: Locale }) {
                     src={cover?.image_urls[0]}
                     alt={messages.categories[category]}
                     sizes="(min-width: 640px) 25vw, 42vw"
+                    thumb
                   />
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-3 pb-3 pt-10 text-base font-bold text-white">
                     {t.categoryLink(messages.categories[category])}

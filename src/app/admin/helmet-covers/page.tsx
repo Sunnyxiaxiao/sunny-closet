@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { thumbUrl } from "@/lib/images";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminNav } from "@/components/admin-nav";
@@ -80,7 +81,7 @@ async function HelmetCoverList() {
                 <Link href={`/admin/helmet-covers/${cover.id}`} className="flex gap-4 py-4 hover:bg-neutral-50">
                   <div className="relative aspect-square w-16 shrink-0 overflow-hidden bg-neutral-100">
                     {cover.image_urls[0] && (
-                      <Image src={cover.image_urls[0]} alt="" fill sizes="64px" unoptimized className="object-cover" />
+                      <Image src={thumbUrl(cover.image_urls[0])} alt="" fill sizes="64px" unoptimized className="object-cover" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1 space-y-1.5">

@@ -28,6 +28,7 @@
 // 多个颜色：items 里每件写 size（例如 "芭比玫红 · S"）和 image（images 里的第几张，从 1 数），
 //   顾客在详情页选这个颜色时会换到那张图。
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { extname, join } from "node:path";
@@ -37,6 +38,9 @@ import { z } from "zod";
 import { resolveDescription } from "./catalog-template.mjs";
 
 const BUCKET = "style-images";
+/** 与 src/lib/images.ts 一致：每张大图旁边存一张宽 ≤ 600px 的小图 xxx.sm.jpg，缓存一年 */
+const THUMB_WIDTH = 600;
+const CACHE_SECONDS = "31536000";
 const update = process.argv.includes("--update");
 const textOnly = process.argv.includes("--text");
 const onlyIndex = process.argv.indexOf("--only");
@@ -219,19 +223,55 @@ async function toJpeg(buffer, source) {
   }
 }
 
+function thumbJpeg(jpeg) {
+  return sharp(jpeg)
+    .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
+    .jpeg({ quality: 80, mozjpeg: true })
+    .toBuffer();
+}
+
+/** 导入脚本生成的文件名：序号-内容指纹.jpg / .sm.jpg（以前是 序号.jpg）。后台上传的图是随机 id，不会被清理 */
+const IMPORTED_NAME = /^\d+(-[0-9a-f]{10})?(\.sm)?\.jpg$/;
+
+/**
+ * 文件名带内容指纹：图片没变就是同一个地址（跳过上传），换了图就是新地址，
+ * 浏览器和 CDN 缓存一年也不会看到旧图。上传完删掉这个款式文件夹里不再用到的旧图。
+ */
 async function uploadImages(entry) {
+  const { data: existing, error: listError } = await supabase.storage.from(BUCKET).list(entry.slug, { limit: 1000 });
+  if (listError) throw new Error(`读取已有图片失败：${listError.message}`);
+  const existingNames = new Set(existing.map((o) => o.name));
+  const keep = new Set();
   const urls = [];
   for (const [index, source] of imageSources(entry).entries()) {
     const jpeg = await toJpeg(await readImage(source), source);
-    const path = `${entry.slug}/${index + 1}.jpg`;
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, jpeg, { contentType: "image/jpeg", upsert: true });
-    if (error) throw new Error(`上传图片失败：${error.message}`);
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    urls.push(`${data.publicUrl}?v=${Date.now()}`);
+    const name = `${index + 1}-${createHash("sha256").update(jpeg).digest("hex").slice(0, 10)}`;
+    const files = [
+      [`${name}.sm.jpg`, () => thumbJpeg(jpeg)],
+      [`${name}.jpg`, () => jpeg],
+    ];
+    for (const [file, body] of files) {
+      keep.add(file);
+      if (existingNames.has(file)) continue;
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(`${entry.slug}/${file}`, await body(), {
+          contentType: "image/jpeg",
+          cacheControl: CACHE_SECONDS,
+          upsert: true,
+        });
+      if (error) throw new Error(`上传图片失败：${error.message}`);
+    }
+    urls.push(supabase.storage.from(BUCKET).getPublicUrl(`${entry.slug}/${name}.jpg`).data.publicUrl);
   }
-  return urls;
+  return { urls, stale: existing.filter((o) => IMPORTED_NAME.test(o.name) && !keep.has(o.name)).map((o) => `${entry.slug}/${o.name}`) };
+}
+
+/** 数据库已经改用新图片地址后，再删掉旧图（先删的话网站会短暂显示不出图） */
+async function removeStaleImages(paths) {
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  if (error) console.log(`   ⚠️ 删除旧图片失败（不影响网站）：${error.message}`);
 }
 
 let created = 0;
@@ -265,7 +305,7 @@ for (const entry of entries) {
     console.log(`⏭️  已存在，跳过：${entry.name}（${entry.slug}）`);
   } else {
     process.stdout.write(`⬆️  ${entry.name}：上传 ${imageSources(entry).length} 张图片… `);
-    const imageUrls = await uploadImages(entry);
+    const { urls: imageUrls, stale } = await uploadImages(entry);
     const row = {
       slug: entry.slug,
       brand: entry.brand,
@@ -288,6 +328,7 @@ for (const entry of entries) {
     const { data, error } = await supabase.from("styles").upsert(row, { onConflict: "slug" }).select("id").single();
     if (error) throw new Error(`写入款式失败：${error.message}`);
     styleId = data.id;
+    await removeStaleImages(stale);
     if (existing) updated += 1;
     else created += 1;
     console.log("完成");

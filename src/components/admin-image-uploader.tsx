@@ -1,16 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import { IMAGE_BUCKET, IMAGE_CACHE_SECONDS, THUMB_WIDTH, thumbUrl } from "@/lib/images";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-const BUCKET = "style-images";
 const MAX_SIDE = 2000;
 
-/** 在浏览器里把照片转正、缩到长边 2000px 以内并转成 JPG（存储桶单张上限 5MB） */
-async function toJpeg(file: File): Promise<Blob> {
+/** 在浏览器里把照片转正、缩小并转成 JPG（存储桶单张上限 5MB）。maxWidth 只限制宽度，用来生成小图 */
+async function toJpeg(file: File, size: { maxSide: number } | { maxWidth: number }, quality: number): Promise<Blob> {
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(
+    1,
+    "maxSide" in size ? size.maxSide / Math.max(bitmap.width, bitmap.height) : size.maxWidth / bitmap.width,
+  );
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
@@ -21,7 +24,7 @@ async function toJpeg(file: File): Promise<Blob> {
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("图片转换失败"))), "image/jpeg", 0.85),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("图片转换失败"))), "image/jpeg", quality),
   );
 }
 
@@ -52,13 +55,18 @@ export function AdminImageUploader({
     onBusyChange?.(true);
     for (const file of Array.from(files)) {
       try {
-        const blob = await toJpeg(file);
-        const path = `${folder}/${crypto.randomUUID()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from(BUCKET)
-          .upload(path, blob, { contentType: "image/jpeg" });
-        if (uploadError) throw new Error(uploadError.message);
-        const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+        const [full, thumb] = await Promise.all([
+          toJpeg(file, { maxSide: MAX_SIDE }, 0.85),
+          toJpeg(file, { maxWidth: THUMB_WIDTH }, 0.8),
+        ]);
+        const id = crypto.randomUUID();
+        const options = { contentType: "image/jpeg", cacheControl: IMAGE_CACHE_SECONDS };
+        // 先传小图：列表页按 xxx.sm.jpg 找小图，大图地址加进表单时小图必须已经在了
+        for (const [path, blob] of [[`${folder}/${id}.sm.jpg`, thumb], [`${folder}/${id}.jpg`, full]] as const) {
+          const { error: uploadError } = await supabase.storage.from(IMAGE_BUCKET).upload(path, blob, options);
+          if (uploadError) throw new Error(uploadError.message);
+        }
+        const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(`${folder}/${id}.jpg`);
         setUrls((current) => [...current, data.publicUrl]);
       } catch (e) {
         setMessage(`「${file.name}」上传失败：${e instanceof Error ? e.message : "未知错误"}。HEIC 照片请在 Safari 里上传，或先存成 JPG。`);
@@ -87,7 +95,7 @@ export function AdminImageUploader({
         {urls.map((url, index) => (
           <li key={url} className="relative">
             <div className="relative aspect-square overflow-hidden bg-neutral-100">
-              <Image src={url} alt="" fill sizes="160px" unoptimized className="object-cover" />
+              <Image src={thumbUrl(url)} alt="" fill sizes="160px" unoptimized className="object-cover" />
               {index === 0 && (
                 <span className="absolute left-1 top-1 bg-neutral-900 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   封面

@@ -43,7 +43,7 @@ export function GlovesCard({
     <Link href={localePath(locale, `/gloves/${gloves.slug}${query}`)} className="group block">
       <div className="relative overflow-hidden">
         <div className={`transition duration-500 group-hover:scale-[1.03] ${unavailable ? "opacity-50" : ""}`}>
-          <StyleImage src={gloves.image_urls[0]} alt={gloves.name} sizes={sizes} />
+          <StyleImage src={gloves.image_urls[0]} alt={gloves.name} sizes={sizes} thumb />
         </div>
         {isCrystal(gloves) && <CrystalBadge className="absolute left-2 top-2" />}
         {unavailable && (

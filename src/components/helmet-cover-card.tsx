@@ -50,7 +50,7 @@ export function HelmetCoverCard({
     <Link href={localePath(locale, `/helmet-covers/${cover.slug}${query}`)} className="group block">
       <div className="relative overflow-hidden">
         <div className={`transition duration-500 group-hover:scale-[1.03] ${unavailable ? "opacity-50" : ""}`}>
-          <StyleImage src={cover.image_urls[0]} alt={cover.name} sizes={sizes} aspect="helmet" />
+          <StyleImage src={cover.image_urls[0]} alt={cover.name} sizes={sizes} aspect="helmet" thumb />
         </div>
         {cover.tier && <TierBadge tier={cover.tier} locale={locale} className="absolute left-2 top-2" />}
         {unavailable && (

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { thumbUrl } from "@/lib/images";
 import Link from "next/link";
 import { localePath, type Locale } from "@/i18n/config";
 import type { AddOnOption } from "@/lib/helmet-covers";
@@ -61,7 +62,7 @@ export function CompleteTheLook({
                   ].join(" ")}
                 >
                   {option.imageUrl ? (
-                    <Image src={option.imageUrl} alt="" fill sizes="160px" unoptimized className="object-cover" />
+                    <Image src={thumbUrl(option.imageUrl)} alt="" fill sizes="160px" unoptimized className="object-cover" />
                   ) : (
                     <span className="flex h-full items-center justify-center text-3xl">🐰</span>
                   )}

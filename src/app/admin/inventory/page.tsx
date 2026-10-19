@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { thumbUrl } from "@/lib/images";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminNav } from "@/components/admin-nav";
@@ -91,7 +92,7 @@ async function InventoryList() {
                     <Link href={href} className="flex gap-4 py-4 hover:bg-neutral-50">
                       <div className="relative aspect-[3/4] w-14 shrink-0 overflow-hidden bg-neutral-100">
                         {style.image_urls[0] && (
-                          <Image src={style.image_urls[0]} alt="" fill sizes="56px" unoptimized className="object-cover" />
+                          <Image src={thumbUrl(style.image_urls[0])} alt="" fill sizes="56px" unoptimized className="object-cover" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1 space-y-1">

@@ -29,6 +29,7 @@ export function ProductCard({
             src={style.image_urls[0]}
             alt={style.name}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            thumb
           />
         </div>
       </div>

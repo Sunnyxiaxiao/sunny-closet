@@ -13,6 +13,7 @@
     "check:supabase": "node --env-file=.env.local scripts/check-supabase.mjs",
     "db:setup": "node --env-file=.env.local scripts/db-setup.mjs",
     "import:catalog": "node --env-file=.env.local scripts/import-catalog.mjs",
+    "images:backfill": "node --env-file=.env.local scripts/backfill-thumbnails.mjs",
     "admin:add": "node --env-file=.env.local scripts/add-admin.mjs"
   },
   "engines": {
