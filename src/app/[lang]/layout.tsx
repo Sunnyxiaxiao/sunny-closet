@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -16,6 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const t = getMessages(locale).meta;
   return {
+    // 分享链接、网站地图里的完整网址用正式域名（环境变量 NEXT_PUBLIC_SITE_URL）
+    metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
     title: {
       default: `${shop.name} · ${t.siteTitle}`,
       template: `%s · ${shop.name}`,
@@ -42,6 +45,8 @@ export default async function SiteLayout({ children }: LayoutProps<"/[lang]">) {
         <SiteHeader locale={locale} />
         <main className="flex-1">{children}</main>
         <SiteFooter locale={locale} />
+        {/* Vercel 网站流量统计（不用 cookie）：部署到 Vercel 并在项目里打开 Analytics 后生效，本地开发不统计。后台页面不统计 */}
+        <Analytics />
       </body>
     </html>
   );

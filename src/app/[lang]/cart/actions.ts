@@ -2,6 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { DEFAULT_LOCALE, isLocale, localePath } from "@/i18n/config";
 import { hasAuthCookie } from "@/lib/account/customer";
 import { bookingErrorCode, mapBookingError } from "@/lib/booking/errors";
@@ -9,7 +10,9 @@ import type { BookingFormState, BookingFormValues } from "@/lib/booking/form-sta
 import { earliestShippingStart } from "@/lib/booking/rules";
 import { priceCart } from "@/lib/cart-quote";
 import { formatShortDate } from "@/lib/dates";
+import { notifyNewOrder } from "@/lib/email/order-notifications";
 import { formatShippingAddress } from "@/lib/shipping";
+import { publicOrigin } from "@/lib/site-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
@@ -191,6 +194,10 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
       .or(`booking_no.eq.${order.booking_no},booking_no.like.${order.booking_no}-%`);
     if (linkError) console.error("[submitOrder] 关联账号失败", linkError);
   }
+
+  // 发邮件通知店主有新订单（响应发出去之后再发，不让顾客等）
+  const origin = await publicOrigin();
+  after(() => notifyNewOrder(order.booking_id, origin));
 
   // 页面先清空购物车再跳转（直接 redirect 的话页面来不及清空）
   return { redirectTo: localePath(locale, `/booking/${order.booking_no}`) };

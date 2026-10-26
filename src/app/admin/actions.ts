@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import type { LoginState } from "@/lib/admin/login-state";
 import { canTransition, isBookingStatus } from "@/lib/booking/status";
+import { notifyOrderConfirmed } from "@/lib/email/order-notifications";
+import { publicOrigin } from "@/lib/site-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function signIn(_previous: LoginState, formData: FormData): Promise<LoginState> {
@@ -55,7 +58,7 @@ export async function updateBookingStatus(formData: FormData) {
 
   const { data: current, error: readError } = await supabase
     .from("bookings")
-    .select("status")
+    .select("status, parent_booking_id")
     .eq("id", bookingId)
     .maybeSingle();
   if (readError) throw new Error(`读取订单失败：${readError.message}`);
@@ -66,12 +69,20 @@ export async function updateBookingStatus(formData: FormData) {
     return;
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("bookings")
     .update({ status: nextStatus })
     .eq("id", bookingId)
-    .eq("status", current.status);
+    .eq("status", current.status)
+    .select("id");
   if (error) throw new Error(`更新订单状态失败：${error.message}`);
+
+  // 确认订单后给顾客发邮件（付款方式、订单链接）；子订单跟着主订单走，只在主订单确认时发。
+  // 同时有人改过状态（这次没更新到）就不发
+  if (nextStatus === "confirmed" && !current.parent_booking_id && updated.length > 0) {
+    const origin = await publicOrigin();
+    after(() => notifyOrderConfirmed(bookingId, origin));
+  }
 
   revalidatePath("/admin");
 }
