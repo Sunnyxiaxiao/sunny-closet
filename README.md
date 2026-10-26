@@ -1,294 +1,363 @@
-# Sunny Closet · 雪服租赁网站
+# Sunny Closet · Snowboard Apparel Rental
 
-> 本文档会随里程碑逐步完善。最终版（含部署到 Vercel）将在 M5 完成。
+A bilingual (English / Chinese) rental shop for snowboard outfits, gloves and helmet covers, built for a small real-world business in Ithaca, NY. Customers browse styles, check date-based availability, put several items in a cart and place one order; the owner confirms, ships or hands over, and tracks returns from an admin dashboard.
 
-## 技术栈
+**Highlights**
 
-- Next.js（App Router）+ TypeScript + Tailwind CSS
-- Supabase：Postgres 数据库、Auth（管理员登录）、Storage（商品图片）
-- zod 表单校验，Vitest 自动化测试
+- **Double-booking is impossible by construction** — a Postgres exclusion constraint on each inventory item's occupied date range (including shipping and cleaning buffer days), not application-level checks.
+- **Defense-in-depth data access** — default-deny grants, RLS on every table, column-level grants, and `security definer` functions for the few admin-only reads. See [Security model](#security-model).
+- **Database tests that run anywhere** — every migration runs in in-memory Postgres (PGlite), and tests assert what each role can and cannot do.
+- **Tiered, per-category pricing** with a cart that is re-priced and re-checked for availability on the server before an order is written.
+- Bilingual UI with locale-prefixed routes, customer accounts, order emails, reviews with moderation, sitemap / robots, and a catalog import pipeline that generates thumbnails and content-hashed image names.
 
-## 目录说明
+## Tech stack
 
-| 路径 | 作用 |
+- Next.js (App Router) + TypeScript + Tailwind CSS
+- Supabase: Postgres, Auth (customers and admin), Storage (product images)
+- zod for validation, Vitest for tests (PGlite for database tests)
+
+## Project layout
+
+| Path | Purpose |
 |---|---|
-| `src/app/[lang]/` | 网站页面（中文 `/styles`，英文 `/en/styles`，同一套页面） |
-| `src/components/` | 页面上复用的组件 |
-| `src/config/shop.ts` | 店名、货币、时区、联系方式 |
-| `src/messages/zh-CN.ts`、`en.ts` | 界面文字，中英文各一份，结构一样 |
-| `src/i18n/` | 语言设置（网址前缀、读取当前语言） |
-| `src/lib/supabase/` | 连接数据库的代码 |
-| `src/app/[lang]/booking/` | 顾客提交预订的服务端动作，以及预订详情页 `/booking/编号` |
-| `src/app/admin/` | 管理后台（登录、订单列表、确认/拒绝/取件/归还） |
-| `src/proxy.ts` | 把不带前缀的中文网址转到中文页面；访问 `/admin` 时续期管理员的登录状态 |
-| `supabase/migrations/` | 数据库建表文件（按文件名顺序执行） |
-| `catalog/` | 要导入的商品清单（`npm run import:catalog`） |
-| `tests/` | 自动化测试 |
+| `src/app/[lang]/` | Storefront pages (Chinese at `/styles`, English at `/en/styles`, same components) |
+| `src/components/` | Shared UI components |
+| `src/config/shop.ts` | Shop name, currency, time zone, contact info, payment handles |
+| `src/messages/zh-CN.ts`, `en.ts` | UI strings, one file per language with an identical shape (type-checked) |
+| `src/i18n/` | Locale config (URL prefixes, reading the current locale) |
+| `src/lib/supabase/` | Database clients and generated types |
+| `src/app/[lang]/booking/` | Order detail page `/booking/<order no.>` and its server actions |
+| `src/app/admin/` | Admin dashboard (login, orders, inventory, pricing, reviews) |
+| `src/proxy.ts` | Routes unprefixed URLs to the Chinese site; refreshes the admin session under `/admin` |
+| `supabase/migrations/` | Database migrations (applied in filename order) |
+| `catalog/` | Product catalog to import (`npm run import:catalog`) |
+| `tests/` | Automated tests |
 
-## 一、本地准备
+## Security model
 
-1. 安装 Node.js LTS（20.9 或更高）：https://nodejs.org
-2. 在 Cursor 里打开本项目，菜单 **Terminal → New Terminal** 打开终端，运行：
+Principle: **deny by default, grant only what is needed.** The migrations first revoke every default privilege from `anon` / `authenticated`, then grant access table by table and column by column. RLS is enabled on every table.
+
+### Three roles
+
+| Role | Who | How it connects |
+|---|---|---|
+| `anon` | Visitors who are not signed in | Publishable key (browser or server), subject to RLS |
+| `authenticated` | Signed-in customers and the admin | Session-bound client, subject to RLS. The admin uses this role too and is distinguished by `is_admin()` |
+| `service_role` | Server only | Secret key, bypasses RLS. Used only in `server-only` modules: placing orders, writing reviews, looking up an order by number, rate limiting |
+
+The admin dashboard never uses the secret key: every admin query goes through RLS, so even a bug in admin code cannot read more than an admin is allowed to.
+
+### Who can read and write each table
+
+| Table | Read | Write | Why |
+|---|---|---|---|
+| `styles` | Everyone: active styles; admin: all | Admin (insert, update; no delete — styles are deactivated instead) | The catalog is public; unreleased styles stay hidden |
+| `settings` | **Everyone** (`using (true)`) | Admin (specific columns only) | The storefront needs price tiers and buffer days. **This table holds only public configuration**; anything internal goes in a separate table |
+| `inventory_items` | Admin only | Admin only | Contains purchase cost. Visitors only get counts through `get_availability()` |
+| `inventory_blocks` | Admin only | Admin only | Internal scheduling (photo shoots, repairs, cleaning) |
+| `bookings` | Admin only | Admin can change status / notes only; **nobody can insert or delete directly** | Holds customer names, phone numbers and addresses. Orders go through the server-side `create_order()`, which writes the whole cart in one transaction; an exclusion constraint (`exclude using gist`) guarantees at the database level that an item's occupied dates never overlap |
+| `reviews` | Visitors and signed-in users: published reviews, **display columns only** (no `booking_id` or `status`); admin: everything via `admin_list_reviews()` | Admin (`status`, `published_at` only); customers submit through the server | The server verifies the order number and that the order was returned before writing; one review per order |
+| `profiles` | Owner | Owner | `user_id = auth.uid()` |
+| `admin_users` | Own row only | Nobody through the site (added with `npm run admin:add`) | Only answers "am I an admin?"; other admins are not visible |
+| `rate_limits` | Nobody | Nobody | RLS on with no policies — only `service_role` can use it |
+| Storage `style-images` | Everyone (public bucket) | Admin only (upload / replace / delete) | Product images must be publicly accessible |
+
+### Other design decisions
+
+- **Row and column privileges together.** RLS controls which rows; sensitive columns are additionally restricted with column-level `grant` (e.g. `reviews` and `settings` only allow updating specific columns).
+- **Column grants are per role**, so the admin cannot be given extra columns on its own. Admin-only full reads go through `security definer` functions that check `is_admin()` first and pin `search_path = ''` to prevent object-shadowing attacks.
+- **Order numbers are access tokens.** `/booking/SC-XXXXXXXX` opens without signing in, so the number is 8 characters from a 32-symbol alphabet (~40 random bits from `gen_random_uuid()`) and cannot be enumerated. The page selects display fields only — never phone, email or address.
+- **Prices are recomputed on the server.** Prices sent by the browser are not trusted; the cart is re-priced from the database when the order is placed, and the database re-validates prices and minimum rental days.
+- **Abuse protection.** Rate limits per IP and per email, plus a honeypot field (see [Abuse protection](#abuse-protection)).
+- **Tests back every rule.** `tests/db/` runs all migrations in in-memory Postgres (PGlite) and checks, as `anon` / `authenticated` / `service_role`, that allowed actions succeed and everything else is rejected — e.g. visitors cannot read `booking_id`, and regular customers cannot call `admin_list_reviews()`.
+- **No secrets in the repo.** `.env*` is git-ignored (only an empty `.env.example` is committed), and the full commit history has been scanned with gitleaks.
+
+## 1. Local setup
+
+1. Install Node.js LTS (20.9 or later): https://nodejs.org
+2. Open the project in your editor, open a terminal and run:
 
    ```bash
    npm install
    ```
 
-3. 运行测试，确认环境正常：
+3. Run the tests to confirm the environment works:
 
    ```bash
    npm test
    ```
 
-## 二、配置 Supabase
+## 2. Configure Supabase
 
-### 1. 创建项目
+### 1. Create a project
 
-1. 打开 https://supabase.com ，点右上角 **Start your project**，用 GitHub 或邮箱注册并登录。
-2. 点 **New project**：
-   - **Name**：`sunny-closet`
-   - **Database Password**：点 **Generate a password**，然后把密码保存到你自己的密码管理器（本项目日常用不到它，但请妥善保管，不要发给任何人）。
-   - **Region**：选离你的顾客最近的，例如 **East US (North Virginia)**。
-3. 点 **Create new project**，等待 1–2 分钟直到项目准备好。
+1. Go to https://supabase.com, click **Start your project**, and sign up with GitHub or email.
+2. Click **New project**:
+   - **Name**: `sunny-closet`
+   - **Database Password**: click **Generate a password** and save it in your password manager (the app doesn't use it day to day, but keep it safe and never share it).
+   - **Region**: the one closest to your customers, e.g. **East US (North Virginia)**.
+3. Click **Create new project** and wait 1–2 minutes until it is ready.
 
-### 2. 填写密钥
+### 2. Fill in the keys
 
-1. 在 Cursor 左侧文件列表中打开项目根目录的 `.env.local`（如果没有，就把 `.env.example` 复制一份并改名为 `.env.local`）。
-2. 回到 Supabase，点顶部绿色的 **Connect** 按钮，在 **Framework** 选项卡里能看到现成的 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 两行，复制到 `.env.local` 中对应位置。
-3. 打开 **Project Settings → API Keys**，在 **Secret keys** 区域点眼睛图标显示并复制（以 `sb_secret_` 开头）→ 粘贴到 `SUPABASE_SECRET_KEY=` 后面。
-4. 点 **Connect → Direct（Connection string）**，复制以 `postgresql://` 开头的地址 → 粘贴到 `SUPABASE_DB_URL=` 后面，并把 `[YOUR-PASSWORD]`（连同方括号）换成你的数据库密码。
-   - 忘记密码：**Project Settings → Database → Reset database password**，建议只用字母和数字。
-   - 如果后面建表时报网络/地址错误，改用同一页面中 **Session pooler** 的地址。
-5. 保存文件。等号前后不要加空格，也不要加引号。
+1. Open `.env.local` in the project root (if it doesn't exist, copy `.env.example` and rename it to `.env.local`).
+2. In Supabase, click the green **Connect** button. The **Framework** tab shows `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; copy them into `.env.local`.
+3. Open **Project Settings → API Keys**, reveal and copy the key under **Secret keys** (starts with `sb_secret_`), and paste it after `SUPABASE_SECRET_KEY=`.
+4. Click **Connect → Direct (Connection string)**, copy the address starting with `postgresql://`, paste it after `SUPABASE_DB_URL=`, and replace `[YOUR-PASSWORD]` (including the brackets) with your database password.
+   - Forgot the password: **Project Settings → Database → Reset database password**. Letters and digits only is easiest.
+   - If migrations later fail with a network / host error, use the **Session pooler** address from the same page instead.
+5. Save the file. No spaces around `=` and no quotes.
 
-> ⚠️ `.env.local` 已被 `.gitignore` 排除，不会被提交到 git。请不要把里面的内容发到聊天、截图或任何公开的地方。
+> ⚠️ `.env.local` is excluded by `.gitignore` and never committed. Don't paste its contents into chats, screenshots or anywhere public.
 
-### 3. 建表并导入商品
-
-在终端运行：
+### 3. Create tables and import products
 
 ```bash
 npm run db:setup
 ```
 
-它会按顺序执行 `supabase/migrations/` 下的建表文件。已执行过的文件会自动跳过，重复运行是安全的。
+This applies the files in `supabase/migrations/` in order. Already-applied migrations are skipped, so it is safe to run again.
 
-然后导入商品（图片会自动上传到 Supabase Storage）：
+Then import the products (images are uploaded to Supabase Storage automatically):
 
 ```bash
 npm run import:catalog
 ```
 
-> 备选方式：也可以在 Supabase 左侧 **SQL Editor** 中新建查询（注意不要选到 Logs），按文件名顺序粘贴并运行上述文件。
+> Alternative: in Supabase's **SQL Editor**, create a new query and paste and run the migration files in filename order.
 
-### 4. 检查配置
-
-在终端运行：
+### 4. Verify the configuration
 
 ```bash
 npm run check:supabase
 ```
 
-全部显示 ✅ 即表示数据库与密钥都配置正确。
+All ✅ means the database and keys are configured correctly.
 
-## 三、本地运行
+## 3. Run locally
 
 ```bash
 npm run dev
 ```
 
-浏览器打开 http://localhost:3000 。按 `Ctrl + C` 停止。
+Open http://localhost:3000. Press `Ctrl + C` to stop.
 
-## 四、预订流程与管理后台
+## 4. Ordering flow and admin dashboard
 
-### 顾客怎么订
+### How customers order
 
-1. 在雪服 / 手套 / 头盔套的详情页选好尺码和日期，确认有货后点“加入购物车”。可以加好几件（最多 10 件），右上角的购物车图标显示件数。
-   购物车存在顾客自己的浏览器里（`src/lib/cart.ts`），不登录也能用。
-2. 在购物车页（`/cart`）看每件的租金、押金和整单金额，填写姓名、手机号、邮箱（微信号选填）、取件方式（邮寄要填地址），提交。**此时不付款**。
-   打开购物车时会重新查价格和库存（`/api/cart`）；有一件没货、不能邮寄等，标红提示，处理好才能提交。
-3. 整个购物车成为一笔订单、一个预订编号，进入“待确认”，并立刻占住这几件库存（防超订由数据库保证，任何一件没货整单不成立）。
-   第 1 件是主订单，其余每件是子订单（`SC-XXXXXXXX-1`……，`cart_item = true`），后台在同一张订单卡片里显示，状态跟着主订单走。
-   顾客会跳转到 `/booking/SC-XXXXXXXX` 页面查看进度，这个页面不显示手机号、邮箱和地址。
-4. 你在后台点“确认预订”后，顾客刷新这个页面就会看到付款方式（Zelle / Venmo）和应付金额。
+1. On an outfit / gloves / helmet cover page, pick a size and dates, and click "Add to cart" once it shows as available. Up to 10 items; the cart icon shows the count.
+   The cart lives in the customer's browser (`src/lib/cart.ts`), so no account is required.
+2. The cart page (`/cart`) shows each item's rental fee, deposit and the order total. The customer enters name, phone, email (WeChat optional) and pickup or shipping (with an address), then submits. **No payment at this point.**
+   Opening the cart re-checks prices and availability (`/api/cart`); unavailable items or items that can't ship are flagged and must be resolved before submitting.
+3. The whole cart becomes one order with one order number, in "pending" status, and the items are reserved immediately (the database prevents overbooking; if any item is unavailable, the whole order fails).
+   The first item is the main order and every other item is a child order (`SC-XXXXXXXX-1`, …, `cart_item = true`). The admin sees them on one order card and their status follows the main order.
+   The customer is redirected to `/booking/SC-XXXXXXXX` to track progress; that page never shows phone, email or address.
+4. After the admin clicks "Confirm" (确认预订), the customer's order page shows the payment methods (Zelle / Venmo) and the amount due.
 
-### 改成你自己的付款信息
+### Set your own payment details
 
-打开 `src/config/shop.ts`，把 `payment` 里的 `zelle`、`venmo` 换成你自己的账号。顾客只有在订单被你“确认”之后才能看到。
+In `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your own handles. Customers only see them after you confirm the order.
 
-> 收到 Zelle / Venmo 款项后，请先在自己的银行或 Venmo App 里确认到账，再放货。Zelle 转账发出后无法撤销，也没有购买保护。
+> After receiving a Zelle / Venmo payment, confirm it in your bank or Venmo app before releasing the items. Zelle transfers can't be reversed and have no purchase protection.
 
-### 创建管理员账号（只需做一次）
+### Create the admin account (one time)
 
-1. 打开 Supabase 后台 **Authentication → Users → Add user → Create new user**，填你的邮箱和一个强密码，勾选 **Auto Confirm User**。
-2. 在终端运行（把邮箱换成你自己的）：
+1. In Supabase, go to **Authentication → Users → Add user → Create new user**, enter your email and a strong password, and check **Auto Confirm User**.
+2. Run (with your own email):
 
    ```bash
-   npm run admin:add -- 你的邮箱
+   npm run admin:add -- you@example.com
    ```
 
-3. 浏览器打开 http://localhost:3000/admin/login 登录。
+3. Sign in at http://localhost:3000/admin/login.
 
-### 后台能做什么
+### What the admin dashboard does
 
-- 订单按 待确认 / 已确认 / 已取件 / 已归还 / 已关闭 分类，并显示数量。
-- 状态只能按顺序流转：待确认 → 已确认 → 已取件 → 已归还；待确认可以拒绝，待确认和已确认可以取消。拒绝和取消会立刻释放库存。
-- 每笔订单都有“内部备注”，只有你自己能看到。
-- 订单列表目前显示最近 500 笔。
-- **库存**（`/admin/inventory`）：所有款式一览（雪服 / 头盔套 / 手套），每件库存现在的状态和下一笔预订。点进一款可以改中英文名称、押金、单独定价、排序、上下架；加一件库存；把某件标记不可租；手动锁定日期（拍照、维修、送洗）。
-- **价格**（`/admin/pricing`）：改全店的三张价目表（完整套装 / 只租外套 / 只租雪裤）和邮寄最短天数，保存后立即生效，已下的订单不变。
-- **头盔套**：新增头盔套、改档位和加购价。
-- 只有 `admin_users` 名单里的账号能进后台；顾客账号登录后台会被拒绝。
+- Orders are grouped as pending / confirmed / picked up / returned / closed, with counts.
+- Status moves forward only: pending → confirmed → picked up → returned. Pending orders can be rejected; pending and confirmed orders can be cancelled. Rejecting or cancelling frees the inventory immediately.
+- Every order has private internal notes.
+- The order list shows the latest 500 orders.
+- **Inventory** (`/admin/inventory`): every style (outfits / helmet covers / gloves) with each item's current status and next booking. Edit a style's Chinese and English names, deposit, custom pricing, sort order and visibility; add an item; mark an item unavailable; block dates manually (photo shoots, repairs, cleaning).
+- **Pricing** (`/admin/pricing`): edit the three shop-wide price tables (full set / jacket only / pants only) and the minimum shipping days. Changes apply immediately; existing orders keep their prices.
+- **Helmet covers**: add helmet covers and edit their tier and add-on price.
+- Only accounts in `admin_users` can enter the dashboard; customer accounts are rejected.
+- The dashboard UI is Chinese only.
 
-### 顾客账号
+### Customer accounts
 
-- 顾客可以注册（`/signup`）、登录（`/login`）、忘记密码（`/forgot-password`），右上角的人像图标进“我的账号”（`/account`）。
-- “我的账号”里可以保存姓名、手机号、微信号（下单时自动填好），看到自己的预订（登录后下的单，以及用同一个已确认邮箱下的单）。
-- **上线前一定要在 Supabase 里设置发信**：注册确认、忘记密码都要发邮件，而 Supabase 自带的发信只能发给项目成员（真实顾客收不到）。
-  免费的做法是用店铺的 Gmail 发：
-  1. 登录店铺 Gmail → Google 账号 → 安全性 → 打开**两步验证**；再搜索 **App passwords（应用专用密码）**，新建一个（名字写 Supabase），记下 16 位密码。
-  2. Supabase → **Authentication → Emails → SMTP Settings** → 打开 Enable custom SMTP：
-     Sender email 填店铺 Gmail，Sender name 填 `Sunny Closet`，Host `smtp.gmail.com`，Port `465`，
-     Username 填店铺 Gmail，Password 填第 1 步的 16 位应用专用密码。
-  3. 同一页的 **Templates**：把 `supabase/email-templates/confirm-signup.html` 和 `reset-password.html` 的内容分别贴到
-     “Confirm signup”和“Reset Password”（文件开头注释里有建议的邮件主题）。邮件是英文的，链接换手机打开也能用。
-  4. **Authentication → URL Configuration**：Site URL 填网站地址（本地是 `http://localhost:3000`，上线后改成正式网址），
-     Redirect URLs 加上 `http://localhost:3000/**` 和 `https://你的网址/**`。
-  Gmail 免费，每天大约能发 500 封，小店够用。以后量大了可以换 Resend 等发信服务（需要自己的域名）。
+- Customers can sign up (`/signup`), sign in (`/login`) and reset their password (`/forgot-password`). The person icon in the header opens "My account" (`/account`).
+- "My account" stores name, phone and WeChat (prefilled at checkout) and lists the customer's orders (orders placed while signed in, plus orders placed with the same confirmed email).
+- **Set up email sending in Supabase before launch.** Sign-up confirmation and password reset need email, and Supabase's built-in sender only delivers to project members.
+  The free option is the shop's Gmail:
+  1. In the shop's Google account → Security, turn on **2-Step Verification**, then search for **App passwords**, create one named Supabase, and note the 16-character password.
+  2. Supabase → **Authentication → Emails → SMTP Settings** → enable custom SMTP:
+     Sender email = shop Gmail, Sender name = `Sunny Closet`, Host `smtp.gmail.com`, Port `465`,
+     Username = shop Gmail, Password = the 16-character app password.
+  3. On the same page under **Templates**, paste `supabase/email-templates/confirm-signup.html` and `reset-password.html` into
+     "Confirm signup" and "Reset Password" (suggested subjects are in the comment at the top of each file). The emails are in English and their links work when opened on another device.
+  4. **Authentication → URL Configuration**: set Site URL to the site address (`http://localhost:3000` locally, the production URL after launch),
+     and add `http://localhost:3000/**` and `https://your-domain/**` to Redirect URLs.
+  Gmail is free and sends roughly 500 emails a day, which is plenty for a small shop. At higher volume, switch to a service like Resend (requires your own domain).
 
-### 防刷
+### Order emails
 
-同一网络 10 分钟最多提交 6 次，同一邮箱 1 小时最多 3 次；表单里还有一个真人看不到的隐藏输入框，机器人填了就会被拒绝。
+- **New order** → email to the owner with every item, dates, pickup / shipping address, customer contact info and a dashboard link; replying goes straight to the customer.
+- **Admin clicks "Confirm"** → email to the customer with the amount due, payment methods (Zelle / Venmo from `src/config/shop.ts`) and the order link.
+- Emails are in English and sent from the shop Gmail (same account and app password as above). Set these in `.env.local` (and in Vercel environment variables in production):
+  `SMTP_USER` (shop Gmail), `SMTP_PASS` (16-character app password); set `ADMIN_NOTIFY_EMAIL` to send new-order alerts somewhere else.
+- If they're not set, ordering and status changes work as usual and no email is sent (the server log says the send was skipped). A failed send never affects the order.
+- Email content is in `src/lib/email/templates.ts`; sending is in `src/lib/email/send.ts`.
 
-## 常用命令
+### Launch: deployment, domain, analytics
 
-| 命令 | 作用 |
+1. **Deploy to Vercel**: sign in to [vercel.com](https://vercel.com) with GitHub → Add New Project → pick the `sunny-closet` repo → Deploy.
+   Every push to `main` redeploys automatically.
+2. **Environment variables** (Vercel project → Settings → Environment Variables): add
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SMTP_USER` and `SMTP_PASS` from `.env.local`
+   (`SUPABASE_DB_URL` is only for running migrations locally), plus `NEXT_PUBLIC_SITE_URL` = your production URL. Redeploy once for the changes to take effect.
+3. **Domain**: buy a domain (Namecheap, GoDaddy, Squarespace, …) → Vercel project → Settings → Domains → add it,
+   then add the DNS records it asks for at your registrar. It takes minutes to hours; Vercel sets up HTTPS automatically.
+4. **Supabase**: under Authentication → URL Configuration, change Site URL to the production URL and add `https://your-domain/**` to Redirect URLs.
+5. **Analytics**: Vercel project → Analytics → Enable, to see daily visitors, top pages and referrers.
+   No cookies and no consent banner; admin pages and local development are not tracked.
+6. **Search engines**: the site serves `/sitemap.xml` (all sections and active products, both languages) and `/robots.txt` (admin, cart, orders and account are excluded).
+   To get indexed faster, add the site in [Google Search Console](https://search.google.com/search-console) and submit `https://your-domain/sitemap.xml`.
+
+### Abuse protection
+
+At most 6 submissions per network per 10 minutes and 3 per email per hour. The form also has a hidden field that humans never see; bots that fill it in are rejected.
+
+## Commands
+
+| Command | Purpose |
 |---|---|
-| `npm run dev` | 本地开发预览 |
-| `npm run build` | 生产构建（部署前检查） |
-| `npm test` | 运行全部自动化测试 |
-| `npm run db:setup` | 把建表文件写入 Supabase |
-| `npm run import:catalog` | 导入 `catalog/` 里的商品（已存在的跳过；加 `-- --update` 覆盖更新） |
-| `npm run check:supabase` | 检查 Supabase 配置 |
-| `npm run admin:add -- 邮箱` | 把已创建的 Supabase 用户设为管理员 |
+| `npm run dev` | Local development server |
+| `npm run build` | Production build (check before deploying) |
+| `npm test` | Run all automated tests |
+| `npm run db:setup` | Apply migrations to Supabase |
+| `npm run import:catalog` | Import products from `catalog/` (existing ones are skipped; add `-- --update` to overwrite) |
+| `npm run check:supabase` | Verify the Supabase configuration |
+| `npm run admin:add -- <email>` | Make an existing Supabase user an admin |
 
-## 商品怎么组织
+## How products are organized
 
-- **每套雪服 = 一个“款式” = 一个展示页**。你的每套雪服都不一样，所以每套单独建一个款式，下面挂 1 件库存（填尺码和编号）。只有一个尺码时，详情页直接显示“尺码 M”，不用顾客选。
-- 每个款式有 **品牌**（可留空，例如 ISEE MIGGA）和 **品类**：成套 / 连体服 / 上衣 / 裤子。列表页可以按品类筛选。
-- 商品清单放在 `catalog/*.json`（目前是 `catalog/iseemigga.json`），运行 `npm run import:catalog` 会读取图片、压缩后上传到 Supabase Storage，并写入款式和库存。
-- 每个款式可以填 `brand`（品牌），列表页会自动出现对应的品牌筛选。
-- 填了 `sourceUrl` 的款式，详情页底部会注明“图片与参数来源：品牌 官网”并链接到原商品页；不填就不显示。
+- **One outfit = one "style" = one product page.** Every outfit is unique, so each gets its own style with one inventory item (size and code). When there is only one size, the page simply shows "Size M" with nothing to choose.
+- Each style has a **brand** (optional, e.g. ISEE MIGGA) and a **category**: set / one-piece / jacket / pants. Listing pages can filter by category, and a brand filter appears automatically for brands in use.
+- The catalog lives in `catalog/*.json`. `npm run import:catalog` reads the images, compresses them, uploads them to Supabase Storage, and writes the styles and inventory.
+- Styles with a `sourceUrl` show "Images and specs: <brand> official site" at the bottom of the page, linking to the original product; without it nothing is shown.
 
-### 上架新款（用自己下载或截图的图片）
+### Adding a new style (with your own photos or screenshots)
 
-1. 新建文件夹 `catalog/images/<slug>/`（slug 用小写英文和连字符，例如 `pink-bow-ski-suit`），把图片放进去。
-   图片按文件名排序，**第一张是封面**，建议命名为 `1.jpg`、`2.jpg`……（`10` 会排在 `9` 后面）。
-   JPG / PNG / WebP / HEIC（iPhone 照片）都可以，脚本会自动转正、压缩成长边 2000px 以内的 JPG，不用自己处理大小。
-   截图请先裁掉手机状态栏和淘宝的按钮，只留衣服。
-2. 在 `catalog/` 下的任意 `.json` 文件里加一条（可以新建一个文件，例如 `catalog/other.json`，内容是 `[ … ]` 数组）：
+1. Create `catalog/images/<slug>/` (lowercase letters and hyphens, e.g. `pink-bow-ski-suit`) and put the images in it.
+   Images are sorted by filename and **the first one is the cover**; name them `1.jpg`, `2.jpg`, … (`10` sorts after `9`).
+   JPG / PNG / WebP / HEIC (iPhone photos) all work. The script auto-rotates and compresses them to JPGs with a long edge of at most 2000px.
+   Crop phone status bars and shopping-app buttons out of screenshots first.
+2. Add an entry to any `.json` file in `catalog/` (or create a new one such as `catalog/other.json` containing a `[ … ]` array):
 
    ```json
    {
      "slug": "pink-bow-ski-suit",
-     "brand": "品牌名",
+     "brand": "Brand name",
      "category": "suit",
      "name": "粉色蝴蝶结滑雪套装",
+     "nameEn": "Pink Bow Ski Suit",
      "dailyPrice": 49,
      "deposit": 200,
      "sortOrder": 200,
      "items": [{ "code": "SC020", "size": "M" }],
-     "description": "一句话介绍颜色和款式。\n\n## 设计细节\n- ……"
+     "description": "一句话介绍颜色和款式。\n\n## 设计细节\n- ……",
+     "descriptionEn": "One sentence about the color and style.\n\n## Design details\n- …"
    }
    ```
 
-   不写 `images` 就会自动用 `catalog/images/<slug>/` 里的图；也可以写 `"images": ["images/pink-bow-ski-suit/封面.jpg", "https://…"]` 手动指定顺序，本地路径和网址可以混用。
-   `category` 可选 `suit`（成套）、`one_piece`（连体服）、`jacket`（上衣）、`pants`（裤子）；库存编号 `code` 不能和已有的重复。
-3. 运行 `npm run import:catalog`。之后换了图片或改了文字，运行 `npm run import:catalog -- --update`。
+   Without `images`, the files in `catalog/images/<slug>/` are used; you can also set `"images": ["images/pink-bow-ski-suit/cover.jpg", "https://…"]` to control the order, mixing local paths and URLs.
+   `category` is one of `suit`, `one_piece`, `jacket`, `pants`; inventory `code`s must be unique.
+3. Run `npm run import:catalog`. After changing images or text later, run `npm run import:catalog -- --update`.
 
-### 商品介绍怎么写
+### Writing product descriptions
 
-`description` 里用两条简单规则排版，详情页会自动变成可展开的段落：
+`description` uses two simple rules, and the product page turns them into collapsible sections:
 
 ```text
-官方款名：……            ← 第一个标题之前的内容显示为“商品介绍”
-一句话介绍颜色和款式。
+Official name: …            ← text before the first heading is shown as the product description
+One sentence about the color and style.
 
-## 面料与科技             ← “## ”开头：新的一段，标题是“面料与科技”
-- 防水指数 ＞20000mmH₂O   ← “- ”开头：一条列表项
+## Fabric & technology       ← a line starting with "## " starts a new section with that title
+- Waterproof rating >20,000 mm H₂O   ← a line starting with "- " is a list item
 ```
 
-#### ISEE 雪服模板（没有官网链接时）
+#### ISEE outfit template (when there is no official product page)
 
-ISEE MIGGA 的雪服面料和细节基本一样，统一放在 `catalog/templates/isee-migga.md`。新款只要：
+ISEE MIGGA outfits share almost the same fabric and details, kept in `catalog/templates/isee-migga.md`. For a new outfit:
 
-1. 照片放进 `catalog/images/<slug>/`（按文件名排序，第一张是封面）；
-2. 在商品清单里加一条，写 `"template": "isee-migga"`，`description` / `descriptionEn` 只写这一套的外观（中英文各一两句）；不写 `sourceUrl`；
-3. 运行 `npm run import:catalog`。
+1. Put the photos in `catalog/images/<slug>/` (sorted by filename, first is the cover);
+2. Add an entry with `"template": "isee-migga"`, and write only this outfit's look in `description` / `descriptionEn` (a sentence or two in each language); leave out `sourceUrl`;
+3. Run `npm run import:catalog`.
 
-导入时会把模板里的「面料与科技」「设计细节」接在后面（英文用 `isee-migga.en.md`）。示例见 `catalog/templates/isee-migga.example.json`。某一套参数不一样时，不写 `template`，直接在 `description` 里写完整介绍即可。
+The import appends the template's "Fabric & technology" and "Design details" sections (English uses `isee-migga.en.md`). See `catalog/templates/isee-migga.example.json`. When an outfit's specs differ, skip `template` and write the full description instead.
 
-### 中英文
+### Chinese and English
 
-网站有中文（`/styles`）和英文（`/en/styles`）两版，右上角「EN / 中文」切换。加内容时两种语言都要加：
+The site has a Chinese version (`/styles`) and an English version (`/en/styles`), switched with "EN / 中文" in the header. Add content in both languages:
 
-- **商品**：清单里 `name` / `description` 是中文，`nameEn` / `descriptionEn` 是英文，都要填（测试会检查漏填和英文里混进中文）。只改了文字时运行 `npm run import:catalog -- --text`，不会重新上传图片。
-- **后台新增头盔套**：表单里有「英文名称」「英文介绍」。
-- **界面文字**：`src/messages/zh-CN.ts` 加一句，`src/messages/en.ts` 同一个位置加英文（漏了类型检查会报错）。
-- **新的颜色名**（库存尺码里写的中文颜色，例如「芭比玫红 · S」）：在 `en.ts` 的 `sizeNames` 加上英文。
-- **后台**只有中文。
+- **Products**: `name` / `description` are Chinese and `nameEn` / `descriptionEn` are English; both are required (tests catch missing English and Chinese text leaking into English). For text-only changes run `npm run import:catalog -- --text`, which skips re-uploading images.
+- **Helmet covers added in the dashboard**: the form has English name and description fields.
+- **UI strings**: add to `src/messages/zh-CN.ts` and the same place in `src/messages/en.ts` (the type checker flags anything missing).
+- **New color names** (Chinese color names in inventory sizes, e.g. 「芭比玫红 · S」): add the English name to `sizeNames` in `en.ts`.
+- The **admin dashboard** is Chinese only.
 
-### 换图片
+### Replacing images
 
-- **商品图**：竖版 3:5（例如 930×1550 或 1200×2000），第一张作为封面。
-- **首页大图**：现在是 `public/hero.jpg`（滑雪板图案，3200×667）。按原比例完整显示：电脑上铺满宽度，手机上左右滑动看全图。换图时把新图放进 `public`，再改 `src/config/shop.ts` 里 `heroImage` 的文件名和宽高。
+- **Product images**: portrait 3:5 (e.g. 930×1550 or 1200×2000); the first image is the cover.
+- **Home page hero**: currently `public/hero.jpg` (snowboard graphic, 3200×667), shown at its full aspect ratio — full width on desktop, horizontally scrollable on phones. To replace it, put the new image in `public` and update `heroImage` (filename, width, height) in `src/config/shop.ts`.
 
-## 头盔套
+## Helmet covers
 
-- 头盔套也是“款式”（`styles.category = 'helmet_cover'`），库存、排期、防超订和雪服共用同一套表和数据库约束。
-- **后台管理**：登录 `/admin` → 顶部切到“头盔套”，可以新增 / 编辑、上传图片、设置经典款 / 精选款、价格、重置价值、
-  标签，标记某件可租 / 不可租，查看即将到来的预订，手动锁定日期。
-- **单租**：默认 1 天 $15、2–3 天 $20、4–7 天 $25（整个租期的总价，不按天相乘），存在 `styles.rental_prices_cents`。
-- **搭配雪服加购**：经典款 +$8、精选款 +$12，整个租期一口价。雪服页的“Complete the Look ✨”里选择；
-  加购的头盔套是一笔子订单（`bookings.parent_booking_id`），日期和雪服相同，雪服订单改状态时自动跟着改。
-  目前每套雪服最多加购 1 件（`MAX_ADD_ONS_PER_OUTFIT`）。
-- **库存状态**（可租 / 已预订 / 已出租 / 已归还 / 清洁中 / 不可租）由订单和锁定日期自动推算，见 `src/lib/inventory/status.ts`。
-- 也可以用 `catalog/*.json` 批量导入：`category` 写 `"helmet_cover"`，填 `tier`（`regular` / `premium`）和 `tags`，价格不填用默认值。
+- Helmet covers are styles too (`styles.category = 'helmet_cover'`) and share the same inventory, scheduling and overbooking constraints as outfits.
+- **Admin**: sign in at `/admin` → "Helmet covers" (头盔套) to add / edit, upload images, set classic / premium tier, prices, replacement value and
+  tags, mark items available / unavailable, see upcoming bookings and block dates.
+- **Standalone rental**: by default $15 for 1 day, $20 for 2–3 days, $25 for 4–7 days (a flat price for the whole rental, not per day), stored in `styles.rental_prices_cents`.
+- **Add-on to an outfit**: classic +$8, premium +$12, flat for the whole rental, chosen under "Complete the Look ✨" on outfit pages.
+  The add-on is a child order (`bookings.parent_booking_id`) with the same dates as the outfit, and follows the outfit order's status automatically.
+  Currently at most one add-on per outfit (`MAX_ADD_ONS_PER_OUTFIT`).
+- **Inventory status** (available / booked / rented out / returned / cleaning / unavailable) is derived from orders and blocked dates; see `src/lib/inventory/status.ts`.
+- Bulk import via `catalog/*.json` also works: set `category` to `"helmet_cover"`, add `tier` (`regular` / `premium`) and `tags`; prices default if omitted.
 
-## 业务规则速查
+## Business rules at a glance
 
-- **阶梯定价**（按品类，另加押金）：
+- **Tiered pricing** by category, plus a deposit:
 
-  | 租期 | 只租外套 | 只租雪裤 | 完整套装（成套 / 连体服） |
+  | Days | Jacket only | Pants only | Full set (set / one-piece) |
   |---|---|---|---|
-  | 1 天 | $35 | $25 | $49 |
-  | 2 天 | $50 | $35 | $79 |
-  | 3 天 | $60 | $45 | $94 |
-  | 4 天 | $70 | $55 | $109 |
-  | 5 天 | $80 | $65 | $119 |
-  | 6 天 | $85 | $70 | $129 |
-  | 7 天 | $90 | $75 | $139 |
+  | 1 | $35 | $25 | $49 |
+  | 2 | $50 | $35 | $79 |
+  | 3 | $60 | $45 | $94 |
+  | 4 | $70 | $55 | $109 |
+  | 5 | $80 | $65 | $119 |
+  | 6 | $85 | $70 | $129 |
+  | 7 | $90 | $75 | $139 |
 
-  价目表存在数据库 `settings` 里（单位：美分，第 n 项 = 租 n 天，超出的天数用最后一档）：
-  完整套装 `rental_prices_cents`、外套 `jacket_prices_cents`、雪裤 `pants_prices_cents`。
-  要改价格在 Supabase 的 SQL Editor 里执行，例如
-  `update public.settings set pants_prices_cents = array[2500,3500,4500,5500,6500,7000,7500] where id;`。
-  外套、雪裤会出现在 **Mix & Match** 页（`/mix-and-match`）。头盔套、手套用自己的价目表。
-- **押金**：完整套装 $200，单租外套 $150、雪裤 $100（商品清单里 `deposit` 不填时按这个默认值）。
-- **最长租期** 7 天（`settings.max_rental_days`）。**最短租期**：到店自取 1 天，邮寄 2 天（`settings.shipping_min_days`）。
-  下单时数据库会再校验一遍价格和最短租期。
-- **邮寄与运费**：
-  - 只寄美国本土 48 州 + 华盛顿特区（不含阿拉斯加、夏威夷和海外地区），**全美包邮，不收运费**；订单合计 = 租金 + 押金。
-  - 邮寄每件最短 2 天（后台“价格”里改）；Ithaca 本地自取 1 天起。邮寄需提前约 7 天下单（`src/config/shop.ts` 的 `shop.shipping.orderAheadDays`）。
-  - 邮寄的订单一起寄出，所以购物车里每件的滑雪日必须相同（到店自取可以不同）。
-  - 邮寄地址分成街道、城市、州（下拉，只能选本土 48 州 + DC）、邮编四个字段，州和邮编会校验格式；提交时拼成一行存进订单的 `shipping_address`。
-  - 文案（款式页、结算表单、租赁须知页）里的天数从设置和配置读取，改了自动同步。
-- **只按滑雪日计费**：顾客选第一个和最后一个滑雪日，租期天数 = 最后一天 − 第一天 + 1。
-- **取件 / 归还 / 运输不收费，但占用库存**（前置 / 后置天数，存在 `settings`，可以按实际物流修改）：
-  - 到店自取：前一晚起可取件，最后一个滑雪日的次日中午前归还 → 前 1 天、后 1 天（`pickup_lead_days` / `pickup_tail_days`）
-  - 邮寄：提前 3 天寄出；顾客次日前寄回，回程按 3 天算 → 前 3 天、后 4 天（`shipping_lead_days` / `shipping_tail_days`）
-  - 之后再加清洁缓冲天数（`buffer_days`，默认 1 天）。每笔订单下单时记下当时的天数，以后改设置不影响已有订单。
-  - 例：周六、周日滑雪，到店自取 → 周五晚取、周一中午前还、周二清洁，按 2 天计费；下一位最早周四滑雪（周三晚取件）。
-  - 修改示例：`update public.settings set shipping_tail_days = 5 where id;`
-- “待确认 / 已确认 / 已取件 / 已归还” 的订单占用库存；“已拒绝 / 已取消” 释放库存。
-- 防超订由数据库的排他约束（`bookings_no_overlap`）保证，并发提交也不会重复分配同一件。
+  The price tables live in `settings` (in cents; item n = n days, longer rentals use the last tier):
+  full set `rental_prices_cents`, jacket `jacket_prices_cents`, pants `pants_prices_cents`.
+  They can be edited in the dashboard or with SQL, e.g.
+  `update public.settings set pants_prices_cents = array[2500,3500,4500,5500,6500,7000,7500] where id;`.
+  Jackets and pants also appear on the **Mix & Match** page (`/mix-and-match`). Helmet covers and gloves have their own price tables.
+- **Deposit**: $200 for a full set, $150 for a jacket, $100 for pants (defaults when `deposit` is omitted in the catalog).
+- **Maximum rental** 7 days (`settings.max_rental_days`). **Minimum rental**: 1 day for local pickup, 2 days for shipping (`settings.shipping_min_days`).
+  The database re-validates prices and minimum days when the order is placed.
+- **Shipping**:
+  - Contiguous 48 states + Washington, DC only (no Alaska, Hawaii or territories), **free shipping nationwide**; order total = rental + deposit.
+  - Shipped items have a 2-day minimum (editable under Pricing); local pickup in Ithaca starts at 1 day. Shipped orders need about 7 days' notice (`shop.shipping.orderAheadDays` in `src/config/shop.ts`).
+  - Shipped items go out together, so every item in the cart must have the same ski dates (pickup orders can differ).
+  - The shipping address is split into street, city, state (dropdown, 48 states + DC only) and ZIP, with state and ZIP validated; it is stored as one line in the order's `shipping_address`.
+  - Day counts in copy (style pages, checkout, rental info page) are read from settings and config, so they stay in sync.
+- **Only ski days are billed**: customers pick their first and last ski day; rental days = last − first + 1.
+- **Pickup / return / transit days are free but occupy inventory** (lead / tail days in `settings`, adjustable to match real logistics):
+  - Local pickup: pick up the evening before, return by noon the day after the last ski day → 1 day before, 1 day after (`pickup_lead_days` / `pickup_tail_days`).
+  - Shipping: ships 3 days ahead; the customer ships it back the next day and return transit counts as 3 days → 3 days before, 4 days after (`shipping_lead_days` / `shipping_tail_days`).
+  - A cleaning buffer follows (`buffer_days`, default 1). Each order records the values in effect when it was placed, so changing settings never affects existing orders.
+  - Example: skiing Saturday and Sunday with local pickup → pick up Friday evening, return by Monday noon, clean Tuesday, billed as 2 days; the next customer can ski as early as Thursday (picking up Wednesday evening).
+  - To change: `update public.settings set shipping_tail_days = 5 where id;`
+- Pending / confirmed / picked-up / returned orders occupy inventory; rejected / cancelled orders release it.
+- Overbooking is prevented by the exclusion constraint `bookings_no_overlap`, so even concurrent submissions can never be assigned the same item.
