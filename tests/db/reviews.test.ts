@@ -66,8 +66,9 @@ describe("顾客评价", () => {
       customer,
     );
     expect(visible).toHaveLength(1);
+    const pendingId = (await db.query<{ id: string }>("select id from public.reviews where status = 'pending'")).rows[0].id;
     const touched = await withRole(db, "authenticated", async () =>
-      (await db.query("update public.reviews set status = 'published' where status = 'pending' returning id")).rows,
+      (await db.query("update public.reviews set status = 'published' where id = $1 returning id", [pendingId])).rows,
       customer,
     );
     expect(touched).toHaveLength(0);
@@ -79,10 +80,32 @@ describe("顾客评价", () => {
     );
     expect(all).toHaveLength(2);
     const published = await withRole(db, "authenticated", async () =>
-      (await db.query("update public.reviews set status = 'published', published_at = now() where status = 'pending' returning id")).rows,
+      (await db.query("update public.reviews set status = 'published', published_at = now() where id = $1 returning id", [pendingId])).rows,
       admin,
     );
     expect(published).toHaveLength(1);
+  });
+
+  it("登录用户和访客一样只能读展示用的列，管理员通过 admin_list_reviews 读全部", async () => {
+    const customer = await makeUser("customer3@example.com", false);
+    const admin = await makeUser("owner2@example.com", true);
+    for (const user of [customer, admin]) {
+      await expect(
+        withRole(db, "authenticated", () => db.query("select booking_id from public.reviews"), user),
+      ).rejects.toThrow();
+      await expect(
+        withRole(db, "authenticated", () => db.query("select status from public.reviews"), user),
+      ).rejects.toThrow();
+    }
+    await expect(
+      withRole(db, "authenticated", () => db.query("select * from public.admin_list_reviews()"), customer),
+    ).rejects.toThrow();
+    await expect(withRole(db, "anon", () => db.query("select * from public.admin_list_reviews()"))).rejects.toThrow();
+    const rows = await withRole(db, "authenticated", async () =>
+      (await db.query<{ booking_id: string }>("select booking_id from public.admin_list_reviews()")).rows,
+      admin,
+    );
+    expect(rows).toHaveLength(2);
   });
 
   it("评分只能是 1–5 星", async () => {

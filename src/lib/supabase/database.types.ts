@@ -407,6 +407,11 @@ export type Database = {
         };
         Returns: { booking_id: string; booking_no: string }[];
       };
+      /** 管理员后台读评价全部字段（登录用户直接查表只能读展示用的列） */
+      admin_list_reviews: {
+        Args: Record<string, never>;
+        Returns: Database["public"]["Tables"]["reviews"]["Row"][];
+      };
       rental_price_cents: {
         Args: { p_days: number };
         Returns: number;

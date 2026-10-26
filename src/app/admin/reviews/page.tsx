@@ -25,7 +25,7 @@ export default function AdminReviewsPage() {
 async function ReviewList() {
   const { supabase } = await requireAdmin();
   const { data: reviews, error } = await supabase
-    .from("reviews")
+    .rpc("admin_list_reviews")
     .select("id, booking_id, style_id, rating, body, display_name, locale, status, created_at")
     .order("created_at", { ascending: false });
   if (error) throw new Error(`读取评价失败：${error.message}`);

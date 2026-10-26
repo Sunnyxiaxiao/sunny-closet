@@ -39,7 +39,7 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
   const [styles, items, pendingReviews] = await Promise.all([
     supabase.from("styles").select("id, name, brand").in("id", styleIds),
     supabase.from("inventory_items").select("id, code").in("id", itemIds),
-    supabase.from("reviews").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.rpc("admin_list_reviews", undefined, { count: "exact", head: true }).eq("status", "pending"),
   ]);
   if (styles.error) throw new Error(`读取款式失败：${styles.error.message}`);
   if (items.error) throw new Error(`读取库存失败：${items.error.message}`);
