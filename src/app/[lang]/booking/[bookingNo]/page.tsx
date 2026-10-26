@@ -61,7 +61,7 @@ async function BookingDetail({
 
   const { data: children, error: childError } = await service
     .from("bookings")
-    .select("style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, total_cents, lead_days, tail_days, cart_item")
+    .select("id, booking_no, style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, total_cents, lead_days, tail_days, cart_item")
     .eq("parent_booking_id", booking.id)
     // 组合套装里的其他单品是 0 元子订单，顾客只看到整套
     .eq("bundle_part", false)
@@ -94,17 +94,16 @@ async function BookingDetail({
     );
 
   const status = booking.status;
-  // 已归还的订单可以写评价；写过了就显示自己写的那条
-  const review =
+  // 已归还的订单可以写评价，买了几件就可以写几条；写过的显示自己写的那条
+  const reviews =
     status === "returned"
-      ? (
+      ? ((
           await service
             .from("reviews")
-            .select("rating, body, display_name")
-            .eq("booking_id", booking.id)
-            .maybeSingle()
-        ).data
-      : null;
+            .select("booking_id, rating, body, display_name")
+            .in("booking_id", lines.map((l) => l.id))
+        ).data ?? [])
+      : [];
   const tr = messages.review;
 
   return (
@@ -171,24 +170,30 @@ async function BookingDetail({
 
       {status === "returned" && (
         <section id="review" className="mt-10 scroll-mt-24 border-t border-neutral-200 pt-8">
-          {review ? (
-            <>
-              <h2 className="text-base font-bold">{tr.yourReview}</h2>
-              <p className="mt-2 text-lg tracking-widest" aria-label={tr.stars(review.rating)}>
-                {"★".repeat(review.rating)}
-                <span className="text-neutral-300">{"★".repeat(5 - review.rating)}</span>
-              </p>
-              <p className="mt-2 whitespace-pre-line text-sm text-neutral-700">{review.body}</p>
-              <p className="mt-1 text-sm text-neutral-500">— {review.display_name}</p>
-              <p className="mt-3 text-sm text-neutral-500">{tr.thanksTitle}</p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-base font-bold">{tr.formTitle}</h2>
-              <p className="mt-1 mb-5 text-sm text-neutral-600">{tr.formIntro}</p>
-              <ReviewForm bookingNo={booking.booking_no} locale={locale} />
-            </>
-          )}
+          <h2 className="text-base font-bold">{tr.formTitle}</h2>
+          <p className="mt-1 text-sm text-neutral-600">{multi ? tr.formIntroMulti : tr.formIntro}</p>
+          {lines.map((line) => {
+            const review = reviews.find((rv) => rv.booking_id === line.id);
+            return (
+              <div key={line.id} className={multi ? "mt-8 border-t border-neutral-200 pt-6 first-of-type:border-0" : "mt-5"}>
+                {multi && <h3 className="mb-4 text-sm font-semibold">{styleName(line.style_id)}</h3>}
+                {review ? (
+                  <>
+                    <p className="text-sm font-semibold">{tr.yourReview}</p>
+                    <p className="mt-2 text-lg tracking-widest" aria-label={tr.stars(review.rating)}>
+                      {"★".repeat(review.rating)}
+                      <span className="text-neutral-300">{"★".repeat(5 - review.rating)}</span>
+                    </p>
+                    <p className="mt-2 whitespace-pre-line text-sm text-neutral-700">{review.body}</p>
+                    <p className="mt-1 text-sm text-neutral-500">— {review.display_name}</p>
+                    <p className="mt-3 text-sm text-neutral-500">{tr.thanksTitle}</p>
+                  </>
+                ) : (
+                  <ReviewForm lineNo={line.booking_no} locale={locale} />
+                )}
+              </div>
+            );
+          })}
         </section>
       )}
 

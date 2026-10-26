@@ -9,7 +9,7 @@ const inputClass =
   "mt-1.5 w-full border border-neutral-300 bg-white px-3 text-base focus:border-neutral-900 focus:outline-none";
 
 /** 订单归还后，顾客在订单页写评价：星级、称呼、内容 */
-export function ReviewForm({ bookingNo, locale }: { bookingNo: string; locale: Locale }) {
+export function ReviewForm({ lineNo, locale }: { lineNo: string; locale: Locale }) {
   const t = getMessages(locale).review;
   const [state, action, pending] = useActionState<ReviewFormState, FormData>(submitReview, {});
   const [rating, setRating] = useState(Number(state.values?.rating) || 0);
@@ -27,7 +27,7 @@ export function ReviewForm({ bookingNo, locale }: { bookingNo: string; locale: L
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
-      <input type="hidden" name="bookingNo" value={bookingNo} />
+      <input type="hidden" name="lineNo" value={lineNo} />
       <input type="hidden" name="rating" value={rating || ""} />
       <fieldset>
         <legend className="text-sm text-neutral-600">{t.rating}</legend>

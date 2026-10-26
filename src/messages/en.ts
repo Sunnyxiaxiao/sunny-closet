@@ -421,6 +421,8 @@ export const messages: Messages = {
   review: {
     formTitle: "Leave a review",
     formIntro: "How did it go? We'd love to hear about it. Reviews go to Sunny first, and some may be featured on the site.",
+    formIntroMulti:
+      "How did it go? You can review each item separately. Reviews go to Sunny first, and some may be featured on that item's page.",
     rating: "Rating",
     stars: (n: number) => `${n} star${n === 1 ? "" : "s"}`,
     name: "Name (shown on the site)",

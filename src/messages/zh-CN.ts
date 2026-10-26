@@ -407,6 +407,7 @@ export const messages = {
   review: {
     formTitle: "写一条评价",
     formIntro: "这次穿得开心吗？说说你的感受吧。评价会先发给 Sunny 看，可能会挑一些放到网站上。",
+    formIntroMulti: "这次穿得开心吗？每件都可以单独写一条。评价会先发给 Sunny 看，可能会挑一些放到对应商品的页面上。",
     rating: "评分",
     stars: (n: number) => `${n} 星`,
     name: "称呼（会显示在网站上）",

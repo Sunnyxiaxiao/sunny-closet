@@ -15,7 +15,8 @@ export interface ReviewFormState {
 
 const schema = z.object({
   locale: z.enum(["zh", "en"]),
-  bookingNo: z.string().regex(/^SC-[A-HJ-NP-Z2-9]{8}$/),
+  /** 评价哪一件：主订单编号（第 1 件），或购物车里其他件的编号（SC-XXXXXXXX-1 这种） */
+  lineNo: z.string().regex(/^SC-[A-HJ-NP-Z2-9]{8}(-\d{1,3})?$/),
   rating: z.coerce.number().int().min(1).max(5),
   name: z.string().trim().min(1).max(40),
   body: z.string().trim().min(1).max(2000),
@@ -23,7 +24,8 @@ const schema = z.object({
 
 /**
  * 顾客在订单页写评价。订单编号就是凭证（详情页也是靠编号打开的）。
- * 只接受已归还（returned）的主订单，每笔一条；写入后是待审核状态，管理员发布后才出现在网站上。
+ * 只接受已归还（returned）的订单；一笔订单里买了几件，每件可以各写一条（加购的头盔套不单独评价）。
+ * 写入后是待审核状态，管理员发布后才出现在那件商品的页面上。
  */
 export async function submitReview(_previous: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
   const raw = Object.fromEntries(formData) as Record<string, string>;
@@ -46,14 +48,16 @@ export async function submitReview(_previous: ReviewFormState, formData: FormDat
   const service = createSupabaseServiceClient();
   const { data: booking, error } = await service
     .from("bookings")
-    .select("id, style_id, status, parent_booking_id")
-    .eq("booking_no", input.bookingNo)
+    .select("id, style_id, status, parent_booking_id, cart_item")
+    .eq("booking_no", input.lineNo)
     .maybeSingle();
   if (error) {
     console.error("[submitReview] 读取订单失败", error);
     return { message: t.errorGeneric, values };
   }
-  if (!booking || booking.parent_booking_id || booking.status !== "returned") {
+  // 主订单（第 1 件）或购物车里的其他件；加购的头盔套、套装里的单品不能单独评价
+  const isLine = booking && (!booking.parent_booking_id || booking.cart_item);
+  if (!booking || !isLine || booking.status !== "returned") {
     return { message: t.errorNotReturned, values };
   }
 
@@ -71,7 +75,8 @@ export async function submitReview(_previous: ReviewFormState, formData: FormDat
     return { message: t.errorGeneric, values };
   }
 
-  revalidatePath(localePath(input.locale, `/booking/${input.bookingNo}`));
+  const orderNo = input.lineNo.split("-").slice(0, 2).join("-");
+  revalidatePath(localePath(input.locale, `/booking/${orderNo}`));
   revalidatePath("/admin/reviews");
   return { done: true };
 }
