@@ -10,6 +10,7 @@ import { getLocale } from "@/i18n/server";
 import { getCustomer, type Customer } from "@/lib/account/customer";
 import { formatDateRange, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getMessages } from "@/messages";
 
@@ -35,7 +36,7 @@ async function AccountBody({
   const t = getMessages(locale).account;
   const customer = await getCustomer();
   if (!customer) redirect(`${localePath(locale, "/login")}?next=${encodeURIComponent(localePath(locale, "/account"))}`);
-  const { password } = await searchParams;
+  const [{ password }, isAdmin] = await Promise.all([searchParams, checkIsAdmin()]);
 
   return (
     <>
@@ -46,12 +47,23 @@ async function AccountBody({
             {t.hello(customer.profile.full_name)} · {customer.user.email}
           </p>
         </div>
-        <form action={signOutCustomer}>
-          <input type="hidden" name="locale" value={locale} />
-          <button type="submit" className="text-sm underline underline-offset-4 hover:text-neutral-600">
-            {t.signOut}
-          </button>
-        </form>
+        <div className="flex items-center gap-5">
+          {/* 只有管理员账号看得到；后台页面自己也会再检查一次 */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="inline-flex h-9 items-center rounded-full bg-neutral-900 px-4 text-xs font-bold tracking-wider text-white hover:bg-neutral-700"
+            >
+              {t.adminLink} →
+            </Link>
+          )}
+          <form action={signOutCustomer}>
+            <input type="hidden" name="locale" value={locale} />
+            <button type="submit" className="text-sm underline underline-offset-4 hover:text-neutral-600">
+              {t.signOut}
+            </button>
+          </form>
+        </div>
       </div>
       {password === "updated" && (
         <p role="status" className="mt-4 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
@@ -82,6 +94,13 @@ async function AccountBody({
       </section>
     </>
   );
+}
+
+/** 当前登录的账号是不是管理员（和后台用的是同一个检查） */
+async function checkIsAdmin() {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.rpc("is_admin");
+  return data === true;
 }
 
 /**
@@ -116,13 +135,14 @@ async function MyBookings({ customer, locale }: { customer: Customer; locale: Lo
     );
   }
 
-  // 加购的头盔套是子订单，合计金额要加上
+  // 购物车里的其他件、加购的头盔套是子订单，合计金额要加上
   const { data: addOns } = await service
     .from("bookings")
-    .select("parent_booking_id, total_cents")
+    .select("parent_booking_id, total_cents, cart_item")
     .in("parent_booking_id", bookings.map((b) => b.id));
   const totalOf = (id: string, own: number) =>
     own + (addOns ?? []).filter((a) => a.parent_booking_id === id).reduce((sum, a) => sum + a.total_cents, 0);
+  const moreItems = (id: string) => (addOns ?? []).filter((a) => a.parent_booking_id === id && a.cart_item).length;
 
   const { data: styles } = await service
     .from("styles")
@@ -142,7 +162,12 @@ async function MyBookings({ customer, locale }: { customer: Customer; locale: Lo
             className="flex items-center justify-between gap-4 py-4 hover:bg-neutral-50"
           >
             <div className="min-w-0">
-              <p className="truncate font-semibold">{nameOf(b.style_id)}</p>
+              <p className="truncate font-semibold">
+                {nameOf(b.style_id)}
+                {moreItems(b.id) > 0 && (
+                  <span className="font-normal text-neutral-500"> {t.moreItems(moreItems(b.id))}</span>
+                )}
+              </p>
               <p className="mt-0.5 text-sm text-neutral-600">
                 {formatDateRange(b.start_date as IsoDate, b.end_date as IsoDate, locale)} ·{" "}
                 {messages.bookingStatus[b.status]}

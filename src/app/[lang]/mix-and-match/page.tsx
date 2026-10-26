@@ -7,6 +7,7 @@ import {
   getAvailability,
   getSettings,
   listStyles,
+  crystalRegularTable,
   stylePriceTable,
   type PublicStyle,
   type ShopSettings,
@@ -80,6 +81,7 @@ function PriceTable({ settings, locale }: { settings: ShopSettings; locale: Loca
         </tbody>
       </table>
       <p className="mt-2 text-xs text-neutral-500">{t.tableNote}</p>
+      <p className="mt-1 text-xs text-neutral-500">{t.specialNote}</p>
       <p className="mt-1 text-xs text-neutral-500">{t.depositNote}</p>
     </section>
   );
@@ -115,6 +117,7 @@ function Section({
                 style={style}
                 sizes={(availability.get(style.id) ?? []).map((s) => s.size)}
                 fromCents={stylePriceTable(style, settings)[0]}
+                wasCents={crystalRegularTable(style, settings)?.[0]}
                 locale={locale}
               />
             </li>

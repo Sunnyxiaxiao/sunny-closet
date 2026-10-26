@@ -1,0 +1,78 @@
+[
+  {
+    "slug": "chop-chop-cherry-kitty-hoodie",
+    "brand": "Chop Chop",
+    "category": "jacket",
+    "name": "樱桃猫猫毛绒连帽上衣",
+    "nameEn": "Cherry Kitty Plush Hoodie",
+    "sortOrder": 360,
+    "items": [
+      {
+        "code": "SC025",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "images/chop-chop-cherry-kitty-hoodie/1.jpg",
+      "images/chop-chop-cherry-kitty-hoodie/2.jpg",
+      "images/chop-chop-cherry-kitty-hoodie/3.jpg",
+      "images/chop-chop-cherry-kitty-hoodie/4.jpg"
+    ],
+    "description": "白色连帽上衣：毛绒猫耳帽配红色蝴蝶结，胸前一对大樱桃刺绣和两颗毛绒球，袖子上红色 Chop Chop 字样。宽松版型，可爱又显小。可以单租，也可以和樱桃背带雪裤整套租。尺码 M。",
+    "descriptionEn": "A white hooded top with a plush kitty-ear hood and red bow, big embroidered cherries on the chest, two fluffy pom-poms and red Chop Chop lettering down the sleeve. Relaxed and cute. Rent it on its own or as a full set with the matching cherry bib pants. Size M.",
+    "tags": [
+      "hoodie"
+    ]
+  },
+  {
+    "slug": "chop-chop-cherry-kitty-snow-pants",
+    "brand": "ISEE MIGGA",
+    "category": "pants",
+    "name": "樱桃蝴蝶结背带雪裤",
+    "nameEn": "Cherry Bow Bib Snow Pants",
+    "sortOrder": 370,
+    "items": [
+      {
+        "code": "SC026",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "images/chop-chop-cherry-kitty-snow-pants/1.jpg",
+      "images/chop-chop-cherry-kitty-snow-pants/2.jpg",
+      "images/chop-chop-cherry-kitty-snow-pants/3.jpg",
+      "images/isee-size-chart/1.jpg",
+      "images/isee-size-chart/2.jpg"
+    ],
+    "description": "白色背带雪裤：红色侧边条纹，腿上樱桃蝴蝶结刺绣，配红色毛绒腰带和蝴蝶结挂饰。可以单租，也可以和樱桃猫猫上衣整套租。尺码 M。",
+    "descriptionEn": "White bib snow pants with red side stripes, embroidered cherry bows on the legs, a red plush belt and a bow charm. Rent them on their own or as a full set with the matching cherry kitty hoodie. Size M.",
+    "tags": [
+      "bib"
+    ]
+  },
+  {
+    "slug": "chop-chop-cherry-kitty-snow-set",
+    "brand": "Chop Chop",
+    "category": "suit",
+    "name": "樱桃猫猫雪服（店主搭配）",
+    "nameEn": "Cherry Kitty Snow Set (Styled by Sunny)",
+    "dailyPrice": 49,
+    "deposit": 200,
+    "sortOrder": 355,
+    "bundle": [
+      "chop-chop-cherry-kitty-hoodie",
+      "chop-chop-cherry-kitty-snow-pants"
+    ],
+    "items": [],
+    "images": [
+      "images/chop-chop-cherry-kitty-snow-set/1.jpg",
+      "images/chop-chop-cherry-kitty-snow-set/6.jpg",
+      "images/chop-chop-cherry-kitty-snow-set/2.jpg",
+      "images/chop-chop-cherry-kitty-snow-set/3.jpg",
+      "images/chop-chop-cherry-kitty-snow-set/4.jpg",
+      "images/chop-chop-cherry-kitty-snow-set/5.jpg"
+    ],
+    "description": "樱桃猫猫毛绒连帽上衣（Chop Chop）+ 樱桃蝴蝶结背带雪裤（ISEE MIGGA）。这两件来自不同品牌，不是官方套装，但红白配色和樱桃元素完全一致，穿在一起就是一整套，比分开租更划算。尺码 M。\n\n## 设计细节\n- 毛绒猫耳帽 + 红色蝴蝶结，胸前大樱桃刺绣和毛绒球\n- 背带雪裤红色侧边条纹，腿上樱桃蝴蝶结刺绣\n- 红色毛绒腰带和蝴蝶结挂饰",
+    "descriptionEn": "The Cherry Kitty Plush Hoodie (Chop Chop) + the Cherry Bow Bib Snow Pants (ISEE MIGGA). They come from two different brands and aren't sold as a set, but the red-and-white colors and cherry details match perfectly — together they look like one outfit, and the set costs less than renting them separately. Size M.\n\n## Design Details\n- Plush kitty-ear hood with a red bow; big embroidered cherries and pom-poms on the chest\n- Bib pants with red side stripes and embroidered cherry bows on the legs\n- Red plush belt and bow charm"
+  }
+]

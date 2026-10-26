@@ -7,7 +7,8 @@ import { StyleImage } from "@/components/style-image";
 import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
-import { getAvailability, getSettings, listStyles, stylePriceTable } from "@/lib/catalog";
+import { getAvailability, getSettings, listStyles, crystalRegularTable,
+  stylePriceTable } from "@/lib/catalog";
 import { STYLE_CATEGORIES } from "@/lib/categories";
 import { getMessages } from "@/messages";
 
@@ -177,6 +178,7 @@ async function HomeCatalog({ locale }: { locale: Locale }) {
               <ProductCard
                 style={style}
                 fromCents={stylePriceTable(style, settings)[0]}
+                wasCents={crystalRegularTable(style, settings)?.[0]}
                 sizes={(availability.get(style.id) ?? []).map((s) => s.size)}
                 locale={locale}
               />

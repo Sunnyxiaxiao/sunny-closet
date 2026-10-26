@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
+import { COST_ERROR, parseCost } from "@/lib/admin/price-form";
 import type { HelmetCoverFormState } from "@/lib/admin/helmet-cover-state";
 import { HELMET_COVER_CATEGORY, HELMET_COVER_SIZE, standalonePriceTable } from "@/lib/helmet-covers";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
@@ -90,6 +91,7 @@ export async function saveHelmetCover(
         style_id: id,
         size: HELMET_COVER_SIZE,
         code: itemCode(input.slug, i + 1),
+        purchase_cents: input.cost,
       })),
     );
     if (error) {
@@ -104,11 +106,15 @@ export async function saveHelmetCover(
 
 const styleIdSchema = z.object({ styleId: z.uuid() });
 
-/** 再加一件同款库存 */
+/** 再加一件同款库存（采购价选填） */
 export async function addHelmetCoverItem(formData: FormData) {
   const { supabase } = await requireAdmin();
   const parsed = styleIdSchema.safeParse({ styleId: formData.get("styleId") });
   if (!parsed.success) return;
+  const purchaseCents = parseCost(String(formData.get("cost") ?? ""));
+  if (purchaseCents === undefined) {
+    redirect(`/admin/helmet-covers/${parsed.data.styleId}?costError=${encodeURIComponent(COST_ERROR)}#items`);
+  }
 
   const [style, items] = await Promise.all([
     supabase.from("styles").select("slug").eq("id", parsed.data.styleId).single(),
@@ -125,7 +131,9 @@ export async function addHelmetCoverItem(formData: FormData) {
     style_id: parsed.data.styleId,
     size: HELMET_COVER_SIZE,
     code: itemCode(style.data.slug, n),
+    purchase_cents: purchaseCents,
   });
   if (error) throw new Error(`添加库存失败：${error.message}`);
   refresh(parsed.data.styleId);
+  redirect(`/admin/helmet-covers/${parsed.data.styleId}#items`);
 }

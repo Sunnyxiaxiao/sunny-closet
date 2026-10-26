@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { loadInventory } from "@/lib/admin/inventory";
 import { todayIn } from "@/lib/dates";
 import { HELMET_COVER_CATEGORY, standalonePricesFrom } from "@/lib/helmet-covers";
+import { formatMoney } from "@/lib/money";
 
 export default function EditHelmetCoverPage({ params, searchParams }: PageProps<"/admin/helmet-covers/[id]">) {
   return (
@@ -62,7 +63,13 @@ async function EditHelmetCover({ params, searchParams }: PageProps<"/admin/helme
     imageUrls: cover.image_urls,
   };
 
+  const cost = {
+    cents: items.reduce((sum, i) => sum + (i.item.purchase_cents ?? 0), 0),
+    missing: items.filter((i) => i.item.purchase_cents === null).length,
+  };
+
   const blockError = typeof query.blockError === "string" ? query.blockError : null;
+  const costError = typeof query.costError === "string" ? query.costError : null;
 
   return (
     <>
@@ -77,16 +84,27 @@ async function EditHelmetCover({ params, searchParams }: PageProps<"/admin/helme
       {query.saved && <p className="mt-3 bg-emerald-50 px-4 py-2 text-sm text-emerald-900">已保存。</p>}
 
       <section id="items" className="mt-8 scroll-mt-24">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold">库存与排期</h2>
-          <form action={addHelmetCoverItem}>
-            <input type="hidden" name="styleId" value={cover.id} />
-            <button type="submit" className="text-sm underline underline-offset-4">
-              + 再加一件
-            </button>
-          </form>
-        </div>
+        <h2 className="text-lg font-bold">库存与排期</h2>
+        <p className="mt-1 text-sm text-neutral-600">
+          共 {items.length} 件 · 成本 {formatMoney(cost.cents)}
+          {cost.missing > 0 && <span className="text-amber-700">（{cost.missing} 件没填采购价）</span>}
+        </p>
+        <form action={addHelmetCoverItem} className="mt-3 flex flex-wrap items-end gap-2">
+          <input type="hidden" name="styleId" value={cover.id} />
+          <label className="flex flex-col text-xs text-neutral-500">
+            采购价（美元，选填）
+            <input
+              name="cost"
+              inputMode="decimal"
+              className="h-10 w-28 border border-neutral-300 bg-white px-2 text-sm focus:border-neutral-900 focus:outline-none"
+            />
+          </label>
+          <button type="submit" className="h-10 rounded-full bg-neutral-900 px-4 text-xs font-bold text-white hover:bg-neutral-700">
+            + 再加一件
+          </button>
+        </form>
         {blockError && <p className="mt-3 bg-red-50 px-4 py-2 text-sm text-red-800">{blockError}</p>}
+        {costError && <p className="mt-3 bg-red-50 px-4 py-2 text-sm text-red-800">{costError}</p>}
         <ul className="mt-3 space-y-4">
           {items.map((overview) => (
             <AdminItemCard

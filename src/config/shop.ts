@@ -9,6 +9,14 @@ export const shop = {
   timeZone: "America/New_York",
   fulfillmentMethods: ["pickup", "shipping"] as const,
   /**
+   * 邮寄：只寄美国本土 48 州 + DC，全美包邮，不收运费。
+   * 邮寄最短租期在后台“价格”里改（settings.shipping_min_days）；到店自取 1 天起。
+   */
+  shipping: {
+    /** 文案里写的“邮寄需提前约几天下单” */
+    orderAheadDays: 7,
+  },
+  /**
    * 首页大图：按图片原本的比例完整显示（电脑上铺满宽度，手机上左右滑动看全图）。
    * 换图：把图片放到 public 文件夹，再改这里的文件名和宽高（像素）。
    */

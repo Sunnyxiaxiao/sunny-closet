@@ -80,13 +80,15 @@ describe("catalog/ 商品清单", () => {
     for (const e of entries) expect(`${e.name}${e.description}`, e.slug).not.toMatch(/儿童|children|kids/i);
   });
 
-  it("雪服介绍能拆出 商品介绍 / 面料与科技 / 设计细节", () => {
+  // 没有面料数据的款式不写“面料与科技”（不编造参数），有的话按这个顺序
+  it("雪服介绍能拆出 商品介绍 / 面料与科技 / 设计细节 / 尺码", () => {
+    const order = ["面料与科技", "设计细节", "尺码"];
     for (const e of entries.filter((entry) => isStyleCategory(entry.category))) {
-      expect(parseDescription(resolveDescription(e, dir)).map((s) => s.title), e.slug).toEqual([
-        null,
-        "面料与科技",
-        "设计细节",
-      ]);
+      const titles = parseDescription(resolveDescription(e, dir)).map((s) => s.title);
+      expect(titles[0], e.slug).toBeNull();
+      const ranks = titles.slice(1).map((t) => order.findIndex((o) => t?.startsWith(o)));
+      expect(ranks.every((r) => r >= 0), `${e.slug}: ${titles.join(" / ")}`).toBe(true);
+      expect(ranks, e.slug).toEqual([...ranks].sort());
     }
   });
 });

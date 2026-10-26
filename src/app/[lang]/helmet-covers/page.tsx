@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { FilterChips } from "@/components/filter-chips";
+import { FilterChips, FilterSection } from "@/components/filter-chips";
+import { FilterPanel, ShopColumns } from "@/components/filter-panel";
 import { HelmetCoverCard, HelmetGridSkeleton } from "@/components/helmet-cover-card";
 import { RentalFilterForm } from "@/components/rental-filter-form";
 import { localePath, type Locale } from "@/i18n/config";
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HelmetCoversPage({ searchParams }: PageProps<"/[lang]/helmet-covers">) {
   const locale = await getLocale();
   return (
-    <div className="mx-auto max-w-7xl px-2 py-8 sm:px-4 sm:py-12">
+    <div className="mx-auto max-w-[88rem] px-2 py-8 sm:px-4 sm:py-12 lg:px-6">
       <Suspense fallback={<HelmetGridSkeleton />}>
         <HelmetCovers searchParams={searchParams} locale={locale} />
       </Suspense>
@@ -96,74 +97,82 @@ async function HelmetCovers({
           <span aria-hidden="true">→</span>
         </Link>
 
-        <FilterChips
-          label={t.filters.tier}
-          allLabel={t.filters.all}
-          options={HELMET_COVER_TIERS.map((value) => ({ value, label: t.tiers[value] }))}
-          active={tier}
-          href={(value) => href("tier", value)}
-        />
-        {colors.length > 0 && (
-          <FilterChips
-            label={t.filters.color}
-            allLabel={t.filters.all}
-            options={colors.map((value) => ({ value, label: tagLabel(value) }))}
-            active={color}
-            href={(value) => href("color", value)}
-          />
-        )}
-        {styleTags.length > 0 && (
-          <FilterChips
-            label={t.filters.style}
-            allLabel={t.filters.all}
-            options={styleTags.map((value) => ({ value, label: tagLabel(value) }))}
-            active={style}
-            href={(value) => href("style", value)}
-          />
-        )}
+      </div>
 
-        <details className="group mt-4 border-y border-neutral-200" open={search.kind !== "none"}>
-          <summary className="flex cursor-pointer list-none items-center justify-between py-3 text-sm font-medium">
-            {search.kind === "valid"
-              ? t.availableCount(formatDateRange(search.start, search.end, locale), visible.length)
-              : t.dateFilter}
-            <span className="text-lg leading-none transition group-open:rotate-45">+</span>
-          </summary>
-          <div className="pb-4">
-            <RentalFilterForm
-              action="/helmet-covers"
-              today={today}
-              sizes={[]}
-              keepParams={current}
-              start={search.kind !== "none" ? search.start : undefined}
-              end={search.kind !== "none" ? search.end : undefined}
-              locale={locale}
-            />
+      <ShopColumns
+        filters={
+          <div className="px-2 sm:px-0">
+            <FilterPanel
+              title={messages.filterForm.title}
+              activeCount={[tier, color, style, search.kind === "valid" ? "dates" : undefined].filter(Boolean).length}
+              closeLabel={messages.filterForm.close}
+            >
+              <FilterChips
+                label={t.filters.tier}
+                allLabel={t.filters.all}
+                options={HELMET_COVER_TIERS.map((value) => ({ value, label: t.tiers[value] }))}
+                active={tier}
+                href={(value) => href("tier", value)}
+              />
+              {colors.length > 0 && (
+                <FilterChips
+                  label={t.filters.color}
+                  allLabel={t.filters.all}
+                  options={colors.map((value) => ({ value, label: tagLabel(value) }))}
+                  active={color}
+                  href={(value) => href("color", value)}
+                />
+              )}
+              {styleTags.length > 0 && (
+                <FilterChips
+                  label={t.filters.style}
+                  allLabel={t.filters.all}
+                  options={styleTags.map((value) => ({ value, label: tagLabel(value) }))}
+                  active={style}
+                  href={(value) => href("style", value)}
+                />
+              )}
+              <FilterSection title={messages.filterForm.dates}>
+                <RentalFilterForm
+                  action="/helmet-covers"
+                  today={today}
+                  sizes={[]}
+                  keepParams={current}
+                  start={search.kind !== "none" ? search.start : undefined}
+                  end={search.kind !== "none" ? search.end : undefined}
+                  locale={locale}
+                />
+              </FilterSection>
+            </FilterPanel>
           </div>
-        </details>
-
+        }
+      >
+        {search.kind === "valid" && (
+          <p className="mx-2 mt-4 text-sm text-neutral-500 sm:mx-0 lg:mt-0 lg:mb-4">
+            {t.availableCount(formatDateRange(search.start, search.end, locale), visible.length)}
+          </p>
+        )}
         {search.kind === "invalid" && (
-          <p className="mt-4 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="mx-2 mt-4 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:mx-0 lg:mt-0 lg:mb-4">
             {search.error === "too_long"
               ? messages.filterForm.tooLong(settings.maxRentalDays)
               : messages.rangeErrors[search.error]}
           </p>
         )}
-      </div>
-
-      {visible.length === 0 ? (
-        <p className="mx-2 mt-8 border border-dashed border-neutral-300 px-4 py-14 text-center text-sm text-neutral-500 sm:mx-0">
-          {t.empty}
-        </p>
-      ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-x-2 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
-          {visible.map((cover) => (
-            <li key={cover.id}>
-              <HelmetCoverCard cover={cover} query={detailSuffix} locale={locale} />
-            </li>
-          ))}
-        </ul>
-      )}
+        {visible.length === 0 ? (
+          <p className="mx-2 mt-5 border border-dashed border-neutral-300 lg:mt-0 px-4 py-14 text-center text-sm text-neutral-500 sm:mx-0">
+            {t.empty}
+          </p>
+        ) : (
+          <ul className="mt-5 grid grid-cols-2 gap-x-2 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:mt-0 xl:grid-cols-4">
+            {visible.map((cover) => (
+              <li key={cover.id}>
+                <HelmetCoverCard cover={cover} query={detailSuffix} locale={locale} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </ShopColumns>
     </>
   );
 }

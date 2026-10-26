@@ -15,7 +15,6 @@ import {
   listStyles,
   stylePriceTable,
 } from "@/lib/catalog";
-import { checkoutDefaults, getCustomer } from "@/lib/account/customer";
 import { parseDescription } from "@/lib/description";
 import { capFromDays, isCrystal, variantImageIndex } from "@/lib/gloves";
 import { CrystalBadge } from "@/components/gloves-card";
@@ -24,6 +23,7 @@ import { compareSizes } from "@/lib/sizes";
 import { priceTiers } from "@/lib/pricing";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
 import { getMessages } from "@/messages";
+import { StyleReviews } from "@/components/style-reviews";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/gloves/[slug]">): Promise<Metadata> {
   const locale = await getLocale();
@@ -54,12 +54,11 @@ async function GlovesDetail({
   const gloves = await getStyleBySlug(slug, { kind: "gloves", locale });
   if (!gloves) notFound();
 
-  const [settings, today, availability, all, customer] = await Promise.all([
+  const [settings, today, availability, all] = await Promise.all([
     getSettings(),
     getToday(),
     getAvailability({ styleId: gloves.id }),
     listStyles({ kind: "gloves", locale }),
-    getCustomer(),
   ]);
   // 颜色按图片顺序排，没有对应图片的排在最后
   const imageOf = (size: string) => gloves.variant_images[size] ?? Number.MAX_SAFE_INTEGER;
@@ -178,11 +177,12 @@ async function GlovesDetail({
             maxRentalDays: settings.glovesMaxRentalDays,
             paddings: settings.paddings,
             initial,
-            customer: checkoutDefaults(customer),
             locale,
           }}
         />
       )}
+
+      <StyleReviews styleId={gloves.id} locale={locale} />
 
       {related.length > 0 && (
         <section className="px-2 pt-14 md:px-0">

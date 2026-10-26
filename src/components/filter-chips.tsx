@@ -1,6 +1,10 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-/** 一行可横向滑动的筛选标签（品类、品牌、颜色……） */
+/**
+ * 筛选栏里的一组选项（品类、品牌、颜色……）：纯文字竖排，选中的变黑并在前面加一道短线。
+ * 不用胶囊按钮，和杂志式的商品图更搭。
+ */
 export function FilterChips({
   label,
   allLabel,
@@ -15,28 +19,42 @@ export function FilterChips({
   href: (value?: string) => string;
 }) {
   return (
-    <nav
-      aria-label={label}
-      className="no-scrollbar -mx-2 mt-3 flex gap-2 overflow-x-auto px-2 first-of-type:mt-5 sm:mx-0 sm:px-0"
-    >
-      {[{ value: undefined, label: allLabel }, ...options].map((option) => {
-        const selected = option.value === active;
-        return (
-          <Link
-            key={option.value ?? "all"}
-            href={href(option.value)}
-            aria-current={selected ? "page" : undefined}
-            className={[
-              "shrink-0 rounded-full border px-4 py-1.5 text-sm transition",
-              selected
-                ? "border-neutral-900 bg-neutral-900 text-white"
-                : "border-neutral-300 hover:border-neutral-900",
-            ].join(" ")}
-          >
-            {option.label}
-          </Link>
-        );
-      })}
-    </nav>
+    <FilterSection title={label}>
+      <nav aria-label={label}>
+        <ul className="space-y-1.5">
+          {[{ value: undefined, label: allLabel }, ...options].map((option) => {
+            const selected = option.value === active;
+            return (
+              <li key={option.value ?? "all"}>
+                <Link
+                  href={href(option.value)}
+                  aria-current={selected ? "page" : undefined}
+                  className={[
+                    "group/opt flex items-center text-sm transition",
+                    selected ? "font-semibold text-neutral-900" : "text-neutral-500 hover:text-neutral-900",
+                  ].join(" ")}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`h-px bg-neutral-900 transition-all ${selected ? "mr-2 w-3" : "w-0 group-hover/opt:mr-1.5 group-hover/opt:w-1.5"}`}
+                  />
+                  {option.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </FilterSection>
+  );
+}
+
+/** 筛选栏里的一个分区：小标题 + 内容 */
+export function FilterSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="py-5 first:pt-0 lg:first:pt-1">
+      <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-900">{title}</h2>
+      {children}
+    </section>
   );
 }

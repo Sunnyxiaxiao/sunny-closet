@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
+import { ReviewForm } from "@/components/review-form";
 import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
@@ -58,25 +59,53 @@ async function BookingDetail({
   // 加购子订单没有单独的详情页，顾客只用主订单编号
   if (!booking || booking.parent_booking_id) notFound();
 
-  const { data: addOns, error: addOnError } = await service
+  const { data: children, error: childError } = await service
     .from("bookings")
-    .select("style_id, rental_cents, total_cents")
+    .select("style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, total_cents, lead_days, tail_days, cart_item")
     .eq("parent_booking_id", booking.id)
+    // 组合套装里的其他单品是 0 元子订单，顾客只看到整套
+    .eq("bundle_part", false)
     .order("booking_no");
-  if (addOnError) throw new Error(`读取加购失败：${addOnError.message}`);
+  if (childError) throw new Error(`读取订单明细失败：${childError.message}`);
+  // 购物车订单：第 1 件是主订单，其余每件是 cart_item 子订单；其他子订单是加购的头盔套
+  const lines = [booking, ...children.filter((c) => c.cart_item)];
+  const addOns = children.filter((c) => !c.cart_item);
 
   const { data: styles } = await createSupabasePublicClient()
     .from("styles")
     .select("id, name, name_en, brand")
-    .in("id", [booking.style_id, ...addOns.map((a) => a.style_id)]);
+    .in("id", [booking.style_id, ...children.map((a) => a.style_id)]);
   const styleName = (id: string) => {
     const s = styles?.find((x) => x.id === id);
     const name = locale === "en" && s?.name_en ? s.name_en : s?.name;
     return [s?.brand, name].filter(Boolean).join(" ") || "—";
   };
-  const totalCents = booking.total_cents + addOns.reduce((sum, a) => sum + a.total_cents, 0);
+  const totalCents = booking.total_cents + children.reduce((sum, a) => sum + a.total_cents, 0);
+  const depositCents = lines.reduce((sum, l) => sum + l.deposit_cents, 0);
+  const multi = lines.length > 1;
+  // 每件日期一样时取件 / 归还只写一次
+  const sameDates = lines.every((l) => l.start_date === booking.start_date && l.end_date === booking.end_date);
+  const handover = (l: (typeof lines)[number]) =>
+    handoverText(
+      { start: l.start_date as IsoDate, end: l.end_date as IsoDate },
+      booking.fulfillment_method,
+      { leadDays: l.lead_days, tailDays: l.tail_days },
+      locale,
+    );
 
   const status = booking.status;
+  // 已归还的订单可以写评价；写过了就显示自己写的那条
+  const review =
+    status === "returned"
+      ? (
+          await service
+            .from("reviews")
+            .select("rating, body, display_name")
+            .eq("booking_id", booking.id)
+            .maybeSingle()
+        ).data
+      : null;
+  const tr = messages.review;
 
   return (
     <article>
@@ -114,23 +143,18 @@ async function BookingDetail({
       <section className="mt-8">
         <h2 className="text-base font-bold">{t.summary}</h2>
         <dl className="mt-3 divide-y divide-neutral-200 border-y border-neutral-200 text-sm">
-          <Row label={t.item} value={styleName(booking.style_id)} />
-          <Row label={t.size} value={sizeLabel(booking.size, locale)} />
-          <Row
-            label={t.dates}
-            value={`${formatDate(booking.start_date, locale)} – ${formatDate(booking.end_date, locale)}${t.days(booking.rental_days)}`}
-          />
-          <Row label={t.fulfillment} value={messages.fulfillment[booking.fulfillment_method]} />
-          <Row
-            label={t.handover}
-            value={handoverText(
-              { start: booking.start_date as IsoDate, end: booking.end_date as IsoDate },
-              booking.fulfillment_method,
-              { leadDays: booking.lead_days, tailDays: booking.tail_days },
-              locale,
-            )}
-          />
-          <Row label={t.rental} value={formatMoney(booking.rental_cents)} />
+          {lines.map((line, index) => (
+            <Fragment key={index}>
+              <Row label={multi ? t.itemN(index + 1) : t.item} value={styleName(line.style_id)} strong={multi} />
+              <Row label={t.size} value={sizeLabel(line.size, locale)} />
+              <Row
+                label={t.dates}
+                value={`${formatDate(line.start_date, locale)} – ${formatDate(line.end_date, locale)}${t.days(line.rental_days)}`}
+              />
+              {!sameDates && <Row label={t.handover} value={handover(line)} />}
+              <Row label={t.rental} value={formatMoney(line.rental_cents)} />
+            </Fragment>
+          ))}
           {addOns.map((addOn, index) => (
             <Row
               key={index}
@@ -138,10 +162,35 @@ async function BookingDetail({
               value={formatMoney(addOn.rental_cents)}
             />
           ))}
-          {booking.deposit_cents > 0 && <Row label={t.deposit} value={formatMoney(booking.deposit_cents)} />}
+          <Row label={t.fulfillment} value={messages.fulfillment[booking.fulfillment_method]} />
+          {sameDates && <Row label={t.handover} value={handover(booking)} />}
+          {depositCents > 0 && <Row label={t.deposit} value={formatMoney(depositCents)} />}
           <Row label={t.total} value={formatMoney(totalCents)} strong />
         </dl>
       </section>
+
+      {status === "returned" && (
+        <section id="review" className="mt-10 scroll-mt-24 border-t border-neutral-200 pt-8">
+          {review ? (
+            <>
+              <h2 className="text-base font-bold">{tr.yourReview}</h2>
+              <p className="mt-2 text-lg tracking-widest" aria-label={tr.stars(review.rating)}>
+                {"★".repeat(review.rating)}
+                <span className="text-neutral-300">{"★".repeat(5 - review.rating)}</span>
+              </p>
+              <p className="mt-2 whitespace-pre-line text-sm text-neutral-700">{review.body}</p>
+              <p className="mt-1 text-sm text-neutral-500">— {review.display_name}</p>
+              <p className="mt-3 text-sm text-neutral-500">{tr.thanksTitle}</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-base font-bold">{tr.formTitle}</h2>
+              <p className="mt-1 mb-5 text-sm text-neutral-600">{tr.formIntro}</p>
+              <ReviewForm bookingNo={booking.booking_no} locale={locale} />
+            </>
+          )}
+        </section>
+      )}
 
       <p className="mt-8 text-sm text-neutral-600">
         {t.questions}

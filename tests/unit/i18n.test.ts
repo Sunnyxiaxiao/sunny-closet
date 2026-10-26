@@ -4,7 +4,7 @@ import { handoverText } from "@/lib/booking/schedule";
 import { formatDate, formatShortDate } from "@/lib/dates";
 import { mapBookingError } from "@/lib/booking/errors";
 import { priceTiers } from "@/lib/pricing";
-import { createBookingRequestSchema, firstFieldErrors } from "@/lib/validation/booking-request";
+import { createCheckoutSchema, firstFieldErrors } from "@/lib/validation/booking-request";
 import { getMessages, sizeLabel } from "@/messages";
 
 const CJK = /[㐀-鿿]/;
@@ -100,7 +100,7 @@ describe("按语言格式化", () => {
 
   it("预订错误和表单校验", () => {
     expect(mapBookingError("ERROR: no_availability", "en")).toMatch(/just booked/);
-    const result = createBookingRequestSchema(getMessages("en").validation).safeParse({ name: "  ", email: "x" });
+    const result = createCheckoutSchema(getMessages("en").validation).safeParse({ name: "  ", email: "x" });
     expect(result.success).toBe(false);
     if (!result.success) expect(firstFieldErrors(result.error).name).toBe("Please enter your name");
   });

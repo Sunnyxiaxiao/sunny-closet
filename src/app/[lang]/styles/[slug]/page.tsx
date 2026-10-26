@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { BookingPanel } from "@/components/booking-panel";
 import { ProductCard } from "@/components/product-card";
 import { PriceTierStrip } from "@/components/price-tier-strip";
 import { ProductGallery } from "@/components/product-gallery";
 import { RentFrom } from "@/components/rent-from";
+import { StyleImage } from "@/components/style-image";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import {
@@ -17,15 +18,20 @@ import {
   getToday,
   isSeparate,
   listStyles,
+  sameSeries,
+  crystalRegularTable,
   stylePriceTable,
+  WITH_PANTS_TAG,
 } from "@/lib/catalog";
-import { checkoutDefaults, getCustomer } from "@/lib/account/customer";
 import { parseDescription, type DescriptionBlock } from "@/lib/description";
 import type { AddOnOption } from "@/lib/helmet-covers";
+import { formatDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { priceTiers } from "@/lib/pricing";
+import { shippingPolicyArgs } from "@/lib/shipping";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
-import { getMessages } from "@/messages";
+import { getMessages, sizeLabel } from "@/messages";
+import { StyleReviews } from "@/components/style-reviews";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/styles/[slug]">): Promise<Metadata> {
   const locale = await getLocale();
@@ -55,14 +61,19 @@ async function StyleDetail({
   const [{ slug }, raw] = await Promise.all([params, searchParams]);
   const style = await getStyleBySlug(slug, { locale });
   if (!style) notFound();
+  // “上衣 + 黑色雪裤”是上衣页面里的选项，没有自己的页面
+  if (style.tags.includes(WITH_PANTS_TAG) && style.bundle_style_ids) {
+    const jacket = (await listStyles({ locale })).find((s) => s.id === style.bundle_style_ids?.[0]);
+    if (jacket) permanentRedirect(href(`/styles/${jacket.slug}`));
+    notFound();
+  }
 
-  const [settings, today, availability, allStyles, helmetCovers, customer] = await Promise.all([
+  const [settings, today, availability, allStyles, helmetCovers] = await Promise.all([
     getSettings(),
     getToday(),
     getAvailability(),
-    listStyles({ locale }),
+    listStyles({ locale, withPantsOptions: true }),
     listStyles({ kind: "helmet_cover", locale }),
-    getCustomer(),
   ]);
   const sizes = availability.get(style.id) ?? [];
   const initial = rentalSearchParamsSchema.parse(raw);
@@ -77,7 +88,19 @@ async function StyleDetail({
     )
     .sort((a, b) => Number(b.slug === addonSlug) - Number(a.slug === addonSlug));
   const prices = stylePriceTable(style, settings);
+  const regularPrices = crystalRegularTable(style, settings);
   const tiers = priceTiers(prices, settings.maxRentalDays, locale);
+  // 组合套装：由哪几件单品组成；单品：属于哪几个组合套装
+  const parts = (style.bundle_style_ids ?? []).flatMap((id) => allStyles.find((s) => s.id === id) ?? []);
+  const containing = allStyles.filter((s) => s.bundle_style_ids?.includes(style.id));
+  const sets = containing.filter((s) => !s.tags.includes(WITH_PANTS_TAG));
+  const pantsSet = containing.find((s) => s.tags.includes(WITH_PANTS_TAG));
+  const pantsOption = pantsSet && {
+    styleId: pantsSet.id,
+    rentalPricesCents: stylePriceTable(pantsSet, settings),
+    depositCents: pantsSet.deposit_cents,
+  };
+  const variants = sameSeries(style, allStyles);
   const related = allStyles
     .filter((s) => s.id !== style.id)
     .sort((a, b) => Number(b.category === style.category) - Number(a.category === style.category))
@@ -110,13 +133,69 @@ async function StyleDetail({
           <p className="mt-3 text-xl">
             <RentFrom
               cents={prices[0]}
+              wasCents={regularPrices?.[0]}
               locale={locale}
               priceClassName="font-bold"
             />
           </p>
           <div className="mt-4">
-            <PriceTierStrip tiers={tiers} showPerDay locale={locale} />
+            <PriceTierStrip tiers={tiers} showPerDay regularPrices={regularPrices} locale={locale} />
           </div>
+          {regularPrices && settings.crystalPromoEndsOn && (
+            <p className="mt-2 text-xs font-semibold text-rose-600">
+              {t.promoNote(formatDate(settings.crystalPromoEndsOn, locale))}
+            </p>
+          )}
+          {variants.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">{t.otherColors}</p>
+              <ul className="mt-2 flex flex-wrap gap-3">
+                {variants.map((v) => (
+                  <li key={v.id}>
+                    <Link href={href(`/styles/${v.slug}`)} className="group flex w-56 items-center gap-3 border border-neutral-200 p-2 hover:border-neutral-900">
+                      <div className="w-12 shrink-0">
+                        <StyleImage src={v.image_urls[0]} alt="" sizes="48px" thumb />
+                      </div>
+                      <div className="min-w-0 text-xs">
+                        <p className="font-semibold leading-snug">{v.name}</p>
+                        <p className="mt-0.5 text-neutral-500">
+                          {t.variantNote(
+                            messages.categories[v.category],
+                            (availability.get(v.id) ?? []).map((x) => sizeLabel(x.size, locale)).join(" / "),
+                          )}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {parts.length > 0 && (
+            <div className="mt-3 bg-neutral-100 px-4 py-3 text-sm">
+              <p className="font-semibold">{t.styledTitle}</p>
+              <p className="mt-1 text-neutral-600">{t.styledBody}</p>
+              <ul className="mt-2 space-y-1">
+                {parts.map((part) => (
+                  <li key={part.id}>
+                    <Link href={href(`/styles/${part.slug}`)} className="font-semibold underline underline-offset-4">
+                      {part.name} →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {sets.map((set) => (
+            <Link
+              key={set.id}
+              href={href(`/styles/${set.slug}`)}
+              className="mt-3 flex items-center justify-between gap-3 bg-neutral-100 px-4 py-3 text-sm hover:bg-neutral-200"
+            >
+              <span>{t.inSet(set.name)}</span>
+              <span className="shrink-0 font-semibold">{t.inSetCta}</span>
+            </Link>
+          ))}
           {isSeparate(style) && (
             <Link
               href={href("/mix-and-match")}
@@ -128,6 +207,9 @@ async function StyleDetail({
           )}
           <p className="mt-2 text-sm text-neutral-500">
             {t.pickupMin} 1 {t.minDaysUnit} · {t.shippingMin} {settings.shippingMinDays} {t.minDaysUnit}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+            {t.shippingPolicy(...shippingPolicyArgs(settings.shippingMinDays))}
           </p>
           <p className="mt-1 text-sm text-neutral-500">
             {t.deposit} {formatMoney(style.deposit_cents, { whole: true })}
@@ -143,6 +225,7 @@ async function StyleDetail({
                 rentalPricesCents={prices}
                 shippingMinDays={settings.shippingMinDays}
                 depositCents={style.deposit_cents}
+                pantsOption={pantsOption}
                 sizes={sizes}
                 today={today}
                 maxRentalDays={settings.maxRentalDays}
@@ -150,7 +233,6 @@ async function StyleDetail({
                 initial={initial}
                 addOnOptions={addOnOptions}
                 initialAddOnSlug={addonSlug}
-                customer={checkoutDefaults(customer)}
                 locale={locale}
               />
             )}
@@ -196,6 +278,8 @@ async function StyleDetail({
         </div>
       </div>
 
+      <StyleReviews styleId={style.id} locale={locale} />
+
       {related.length > 0 && (
         <section className="px-2 pt-14 md:px-0">
           <h2 className="px-2 text-xl font-black md:px-0">{t.related}</h2>
@@ -206,6 +290,7 @@ async function StyleDetail({
                   style={s}
                   sizes={(availability.get(s.id) ?? []).map((x) => x.size)}
                   fromCents={stylePriceTable(s, settings)[0]}
+                  wasCents={crystalRegularTable(s, settings)?.[0]}
                   locale={locale}
                 />
               </li>

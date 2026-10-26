@@ -16,6 +16,15 @@ export function dollarsToCents(raw: string): number | null {
   return cents <= 500_000 ? cents : null;
 }
 
+/** 采购价输入框（美元，可以带 $）：空 = 还没录入（null），填得不对 = undefined */
+export function parseCost(raw: string): number | null | undefined {
+  const value = raw.trim().replace(/^\$/, "");
+  if (value === "") return null;
+  return dollarsToCents(value) ?? undefined;
+}
+
+export const COST_ERROR = "采购价请填 0–5000 之间的数字，例如 129 或 89.99";
+
 /** 一行价目表：第 n 格 = 租 n 天的总价。有一格不对就返回出错的天数 */
 export function parsePriceRow(
   values: string[],

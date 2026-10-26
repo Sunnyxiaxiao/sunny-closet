@@ -32,7 +32,7 @@ export function GlovesCard({
   unavailable?: boolean;
   query?: string;
   sizes?: string;
-  /** 放在深色背景（Crystal Collection）上 */
+  /** Crystal Collection：黑色卡片 */
   dark?: boolean;
   locale: Locale;
 }) {
@@ -40,7 +40,10 @@ export function GlovesCard({
   const prices = gloves.rental_prices_cents ?? [gloves.daily_price_cents];
   const colorCount = Object.keys(gloves.variant_images).length;
   return (
-    <Link href={localePath(locale, `/gloves/${gloves.slug}${query}`)} className="group block">
+    <Link
+      href={localePath(locale, `/gloves/${gloves.slug}${query}`)}
+      className={`group block h-full ${dark ? "bg-neutral-950 pb-3 text-white" : ""}`}
+    >
       <div className="relative overflow-hidden">
         <div className={`transition duration-500 group-hover:scale-[1.03] ${unavailable ? "opacity-50" : ""}`}>
           <StyleImage src={gloves.image_urls[0]} alt={gloves.name} sizes={sizes} thumb />
@@ -52,7 +55,7 @@ export function GlovesCard({
           </span>
         )}
       </div>
-      <div className={`mt-2.5 space-y-0.5 px-0.5 ${dark ? "[&_.text-neutral-500]:text-neutral-400" : ""}`}>
+      <div className={`mt-2.5 space-y-0.5 ${dark ? "px-2.5 [&_.text-neutral-500]:text-neutral-400" : "px-0.5"}`}>
         {gloves.brand && <p className="text-[11px] uppercase tracking-widest text-neutral-500">{gloves.brand}</p>}
         <p className="text-sm leading-snug">{gloves.name}</p>
         <p className="text-sm">

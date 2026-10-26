@@ -12,15 +12,19 @@ const ids: Record<string, string> = {};
 
 beforeAll(async () => {
   db = await createTestDb();
-  for (const [slug, category] of [
-    ["suit", "suit"],
-    ["one-piece", "one_piece"],
-    ["jacket", "jacket"],
-    ["pants", "pants"],
-  ]) {
+  for (const [slug, category, tags] of [
+    ["suit", "suit", []],
+    ["one-piece", "one_piece", []],
+    ["jacket", "jacket", []],
+    ["pants", "pants", []],
+    ["bib-pants", "pants", ["bib"]],
+    ["hoodie", "jacket", ["hoodie"]],
+    ["crystal-suit", "suit", ["crystal"]],
+    ["crystal-jacket", "jacket", ["crystal"]],
+  ] as const) {
     const res = await db.query<{ id: string }>(
-      "insert into public.styles (slug, name, category, daily_price_cents, deposit_cents) values ($1, $1, $2, 4900, 20000) returning id",
-      [slug, category],
+      "insert into public.styles (slug, name, category, daily_price_cents, deposit_cents, tags) values ($1, $1, $2, 4900, 20000, $3) returning id",
+      [slug, category, tags],
     );
     ids[slug] = res.rows[0].id;
     await db.query("insert into public.inventory_items (style_id, size, code) values ($1, 'M', $2)", [
@@ -51,6 +55,25 @@ describe("Mix & Match 按品类计价", () => {
   it("只租外套、只租雪裤各用自己的价目表", async () => {
     expect(await table("jacket")).toEqual(JACKET);
     expect(await table("pants")).toEqual(PANTS);
+  });
+
+  it("Crystal 款：特惠期内按普通价，过了截止日（或没有特惠）按正价", async () => {
+    await db.query("update public.settings set crystal_promo_ends_on = current_date + 30 where id");
+    expect(await table("crystal-suit")).toEqual(SUIT);
+    expect(await table("crystal-jacket")).toEqual(JACKET);
+
+    await db.query("update public.settings set crystal_promo_ends_on = current_date - 30 where id");
+    expect(await table("crystal-suit")).toEqual([5900, 9500, 11300, 13100, 14300, 15500, 16700]);
+    expect(await table("crystal-jacket")).toEqual([4200, 6000, 7200, 8400, 9600, 10200, 10800]);
+
+    await db.query("update public.settings set crystal_promo_ends_on = null where id");
+    expect(await table("crystal-suit")).toEqual([5900, 9500, 11300, 13100, 14300, 15500, 16700]);
+    expect(await table("suit")).toEqual(SUIT);
+  });
+
+  it("背带雪裤按外套价，卫衣按雪裤价", async () => {
+    expect(await table("bib-pants")).toEqual(JACKET);
+    expect(await table("hoodie")).toEqual(PANTS);
   });
 
   it("下单时按品类校验：雪裤 3 天收 $45，按套装价 $94 提交会被拒绝", async () => {

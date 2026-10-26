@@ -49,7 +49,7 @@ export function standalonePricesFrom(table: readonly number[]): StandalonePrices
 /** 筛选用的标签分组。标签存英文小写，界面显示中文（见 messages.helmet.tags），不在列表里的标签原样显示 */
 export const HELMET_TAG_GROUPS = {
   color: ["pink", "white", "black", "blue", "purple", "red", "yellow", "green", "brown", "colorful"],
-  style: ["bunny", "bear", "cat", "dog", "devil", "fluffy", "cute", "funny", "statement"],
+  style: ["bunny", "bear", "cat", "dog", "sheep", "devil", "fluffy", "cute", "funny", "statement"],
 } as const;
 
 export type HelmetTagGroup = keyof typeof HELMET_TAG_GROUPS;

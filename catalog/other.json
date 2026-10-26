@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "brown-camo-cargo-snow-pants",
+    "brand": "",
+    "category": "pants",
+    "name": "咖色迷彩工装雪裤",
+    "nameEn": "Brown Camo Cargo Snow Pants",
+    "sortOrder": 395,
+    "items": [
+      {
+        "code": "SC047",
+        "size": "S"
+      }
+    ],
+    "images": [
+      "images/brown-camo-cargo-snow-pants/1.jpg",
+      "images/brown-camo-cargo-snow-pants/2.jpg"
+    ],
+    "description": "咖啡色系迷彩阔腿雪裤：松紧腰配抽绳，前后和两侧都是带金属按扣的工装大口袋，裤脚可以抽绳收紧。很好搭，配纯色上衣就很酷。尺码 S。",
+    "descriptionEn": "Wide-leg snow pants in a brown camo print, with an elastic drawstring waist, snap-button cargo pockets front, back and on the sides, and drawcord cuffs. Easy to style — pair them with a solid top for an effortlessly cool look. Size S."
+  }
+]

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { IMAGE_BUCKET, IMAGE_CACHE_SECONDS, THUMB_WIDTH, thumbUrl } from "@/lib/images";
-import { useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const MAX_SIDE = 2000;
@@ -28,7 +28,10 @@ async function toJpeg(file: File, size: { maxSide: number } | { maxWidth: number
   );
 }
 
-/** 后台上传商品图：可多选，第一张是封面，可以调整顺序和删除。图片地址通过隐藏输入框随表单提交 */
+/**
+ * 后台上传商品图：可多选，第一张是封面。可以拖动排序（电脑直接拖图片，手机按住右上角的 ⠿ 拖）、
+ * 用 ← → 一格一格挪，或删除。图片地址通过隐藏输入框随表单提交
+ */
 export function AdminImageUploader({
   name,
   initial,
@@ -77,6 +80,35 @@ export function AdminImageUploader({
     onBusyChange?.(false);
   }
 
+  // 拖动排序：按下后跟着指针走，经过哪张图就把拖的那张挪到它的位置
+  const [dragging, setDragging] = useState<string | null>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  function startDrag(event: PointerEvent<HTMLElement>, url: string) {
+    if (event.button !== 0) return;
+    // 鼠标在整张图上都能拖；手指只能按住拖动手柄，免得挡住页面滚动
+    if (event.pointerType !== "mouse" && !(event.target as HTMLElement).closest("[data-drag-handle]")) return;
+    if ((event.target as HTMLElement).closest("button:not([data-drag-handle])")) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragging(url);
+  }
+
+  function dragMove(event: PointerEvent<HTMLElement>) {
+    if (!dragging) return;
+    const over = document
+      .elementsFromPoint(event.clientX, event.clientY)
+      .map((el) => (el as HTMLElement).closest<HTMLElement>("[data-image-url]"))
+      .find((el) => el && listRef.current?.contains(el) && el.dataset.imageUrl !== dragging);
+    const target = over?.dataset.imageUrl;
+    if (!target) return;
+    setUrls((current) => {
+      const next = current.filter((u) => u !== dragging);
+      next.splice(current.indexOf(target), 0, dragging);
+      return next;
+    });
+  }
+
   function move(index: number, delta: number) {
     setUrls((current) => {
       const next = [...current];
@@ -91,16 +123,32 @@ export function AdminImageUploader({
       {urls.map((url) => (
         <input key={url} type="hidden" name={name} value={url} />
       ))}
-      <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+      <ul ref={listRef} className="grid grid-cols-3 gap-2 sm:grid-cols-5">
         {urls.map((url, index) => (
-          <li key={url} className="relative">
+          <li
+            key={url}
+            data-image-url={url}
+            onPointerDown={(e) => startDrag(e, url)}
+            onPointerMove={dragMove}
+            onPointerUp={() => setDragging(null)}
+            onPointerCancel={() => setDragging(null)}
+            className={`relative select-none ${dragging === url ? "opacity-40" : ""} ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+          >
             <div className="relative aspect-square overflow-hidden bg-neutral-100">
-              <Image src={thumbUrl(url)} alt="" fill sizes="160px" unoptimized className="object-cover" />
+              <Image src={thumbUrl(url)} alt="" fill sizes="160px" unoptimized draggable={false} className="pointer-events-none object-cover" />
               {index === 0 && (
                 <span className="absolute left-1 top-1 bg-neutral-900 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   封面
                 </span>
               )}
+              <button
+                type="button"
+                data-drag-handle
+                aria-label="按住拖动排序"
+                className="absolute right-1 top-1 touch-none bg-white/90 px-1.5 py-0.5 text-sm leading-none"
+              >
+                ⠿
+              </button>
             </div>
             <div className="mt-1 flex justify-between text-xs">
               <button type="button" disabled={index === 0} onClick={() => move(index, -1)} className="px-1.5 disabled:opacity-30" aria-label="往前移">

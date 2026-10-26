@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 用户发来的原图（带水印 / 手机原图），处理好的图在 catalog/images 各款文件夹里
+/catalog/images/_sources/

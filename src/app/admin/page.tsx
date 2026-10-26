@@ -36,9 +36,10 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
 
   const styleIds = [...new Set(bookings.map((b) => b.style_id))];
   const itemIds = [...new Set(bookings.map((b) => b.inventory_item_id))];
-  const [styles, items] = await Promise.all([
+  const [styles, items, pendingReviews] = await Promise.all([
     supabase.from("styles").select("id, name, brand").in("id", styleIds),
     supabase.from("inventory_items").select("id, code").in("id", itemIds),
+    supabase.from("reviews").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
   if (styles.error) throw new Error(`读取款式失败：${styles.error.message}`);
   if (items.error) throw new Error(`读取库存失败：${items.error.message}`);
@@ -48,7 +49,7 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
   );
   const itemCodes = new Map(items.data.map((i) => [i.id, i.code]));
 
-  // 加购的头盔套是子订单，显示在所属雪服订单的卡片里，状态跟着主订单走
+  // 购物车里的其他件、加购的头盔套、组合套装里的其他单品是子订单，显示在主订单的卡片里，状态跟着主订单走
   const addOnsByParent = new Map<string, typeof bookings>();
   for (const b of bookings) {
     if (!b.parent_booking_id) continue;
@@ -64,6 +65,15 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
   return (
     <>
       <AdminNav current="orders" />
+      {(pendingReviews.count ?? 0) > 0 && (
+        <Link
+          href="/admin/reviews"
+          className="mt-4 flex items-center justify-between bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100"
+        >
+          <span>有 {pendingReviews.count} 条新评价等你审核</span>
+          <span className="font-semibold">去看看 →</span>
+        </Link>
+      )}
 
       <nav className="no-scrollbar mt-6 flex gap-2 overflow-x-auto" aria-label={t.ordersTitle}>
         {ADMIN_FILTERS.map((f) => {
@@ -101,6 +111,8 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
                 name: styleNames.get(a.style_id) ?? "—",
                 itemCode: itemCodes.get(a.inventory_item_id) ?? "—",
                 cents: a.total_cents,
+                bundlePart: a.bundle_part,
+                cartItem: a.cart_item ? a : undefined,
               }))}
             />
           ))}

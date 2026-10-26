@@ -10,7 +10,7 @@ export const GLOVES_CATEGORY = "gloves" as const satisfies StyleCategory;
 /** 普通手套的默认价目表（美分）：1 天 $10、2 天 $18、3 天及以上 $25 封顶 */
 export const GLOVES_DEFAULT_PRICES = [1000, 1800, 2500];
 
-/** 带这个标签的手套属于 Crystal Collection（限量水钻款），单独成区展示，价目表各自填写 */
+/** 带这个标签的手套、雪服属于 Crystal Collection（水钻款）：黑色卡片、排在列表最前面。手套各自填价目表，雪服价格不变 */
 export const CRYSTAL_TAG = "crystal";
 
 export function isCrystal(style: { tags: readonly string[] }) {

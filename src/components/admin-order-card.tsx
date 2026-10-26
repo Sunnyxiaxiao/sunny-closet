@@ -41,11 +41,19 @@ export function AdminOrderCard({
   booking: BookingRow;
   styleName: string;
   itemCode: string;
-  /** 加购的头盔套（子订单），状态跟着这单走 */
-  addOns?: { name: string; itemCode: string; cents: number }[];
+  /**
+   * 子订单，状态跟着这单走：购物车里的其他件（cartItem，有自己的尺码、日期、租金、押金）、
+   * 加购的头盔套、组合套装里的其他单品（bundlePart，0 元）
+   */
+  addOns?: { name: string; itemCode: string; cents: number; bundlePart?: boolean; cartItem?: BookingRow }[];
 }) {
   const actions = nextStatuses(booking.status);
   const orderTotal = booking.total_cents + addOns.reduce((sum, a) => sum + a.cents, 0);
+  const cartItems = addOns.filter((a) => a.cartItem);
+  const rentalTotal = booking.rental_cents + addOns.reduce((sum, a) => sum + (a.cartItem?.rental_cents ?? (a.bundlePart ? 0 : a.cents)), 0);
+  const depositTotal = booking.deposit_cents + cartItems.reduce((sum, a) => sum + a.cartItem!.deposit_cents, 0);
+  const dates = (b: BookingRow) =>
+    `${formatDateZh(b.start_date)} – ${formatDateZh(b.end_date)}（${b.rental_days} 天）`;
 
   return (
     <li className="border border-neutral-200 p-4 sm:p-5">
@@ -65,18 +73,35 @@ export function AdminOrderCard({
 
       <div className="mt-4 grid gap-5 text-sm sm:grid-cols-2">
         <dl className="space-y-1.5">
-          <Line label={messages.bookingPage.item} value={`${styleName} · ${booking.size}`} />
+          <Line
+            label={cartItems.length > 0 ? "第 1 件" : messages.bookingPage.item}
+            value={`${styleName} · ${booking.size}${cartItems.length > 0 ? ` · ${formatMoney(booking.rental_cents)}` : ""}`}
+          />
           <Line label={t.inventoryCode} value={itemCode} mono />
-          {addOns.map((addOn, index) => (
-            <Line
-              key={index}
-              label={messages.helmet.addOnLine}
-              value={`${addOn.name} · ${addOn.itemCode} · ${formatMoney(addOn.cents)}`}
-            />
-          ))}
+          {addOns.map((addOn, index) =>
+            addOn.cartItem ? (
+              <Line
+                key={index}
+                label={`第 ${cartItems.indexOf(addOn) + 2} 件`}
+                value={`${addOn.name} · ${addOn.cartItem.size} · ${formatMoney(addOn.cartItem.rental_cents)}\n${addOn.itemCode}${
+                  addOn.cartItem.start_date !== booking.start_date || addOn.cartItem.end_date !== booking.end_date
+                    ? ` · ${dates(addOn.cartItem)}`
+                    : ""
+                }`}
+              />
+            ) : addOn.bundlePart ? (
+              <Line key={index} label={t.bundlePart} value={`${addOn.name} · ${addOn.itemCode}`} />
+            ) : (
+              <Line
+                key={index}
+                label={messages.helmet.addOnLine}
+                value={`${addOn.name} · ${addOn.itemCode} · ${formatMoney(addOn.cents)}`}
+              />
+            ),
+          )}
           <Line
             label={messages.bookingPage.dates}
-            value={`${formatDateZh(booking.start_date)} – ${formatDateZh(booking.end_date)}（${booking.rental_days} 天）`}
+            value={dates(booking)}
           />
           <Line label={messages.bookingPage.fulfillment} value={messages.fulfillment[booking.fulfillment_method]} />
           <Line
@@ -89,7 +114,7 @@ export function AdminOrderCard({
           />
           <Line
             label={`${t.rental} / ${t.deposit} / ${t.total}`}
-            value={`${formatMoney(booking.rental_cents)} / ${formatMoney(booking.deposit_cents)} / ${formatMoney(orderTotal)}`}
+            value={`${formatMoney(rentalTotal)} / ${formatMoney(depositTotal)} / ${formatMoney(orderTotal)}`}
           />
         </dl>
 

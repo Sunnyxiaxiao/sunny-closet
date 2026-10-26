@@ -1,12 +1,13 @@
-import { addInventoryBlock, deleteInventoryBlock, setItemStatus } from "@/app/admin/inventory/actions";
+import { addInventoryBlock, deleteInventoryBlock, setItemCost, setItemStatus } from "@/app/admin/inventory/actions";
 import { ItemStateBadge } from "@/components/admin-item-state";
 import type { ItemOverview } from "@/lib/admin/inventory";
+import { centsToDollars } from "@/lib/admin/price-form";
 import { formatShortDateZh, type IsoDate } from "@/lib/dates";
 import { messages } from "@/messages/zh-CN";
 
 const dateInputClass = "h-10 border border-neutral-300 bg-white px-2 text-sm focus:border-neutral-900 focus:outline-none";
 
-/** 后台一件库存：现在的状态、可租 / 不可租、即将到来的预订、手动锁定日期 */
+/** 后台一件库存：现在的状态、可租 / 不可租、采购价、即将到来的预订、手动锁定日期 */
 export function AdminItemCard({
   overview,
   today,
@@ -43,6 +44,25 @@ export function AdminItemCard({
         </form>
       </div>
 
+      <form action={setItemCost} className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <input type="hidden" name="itemId" value={item.id} />
+        <label className="flex items-center gap-2 text-neutral-600">
+          采购价 $
+          <input
+            name="cost"
+            inputMode="decimal"
+            defaultValue={item.purchase_cents === null ? "" : centsToDollars(item.purchase_cents)}
+            placeholder="未填"
+            className="h-9 w-24 border border-neutral-300 bg-white px-2 text-sm tabular-nums focus:border-neutral-900 focus:outline-none"
+          />
+        </label>
+        <button type="submit" className="h-9 rounded-full border border-neutral-900 px-3 text-xs font-bold hover:bg-neutral-100">
+          保存
+        </button>
+        <span className="text-xs text-neutral-400">只有你能看到</span>
+      </form>
+
       <h3 className="mt-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">即将到来的预订</h3>
       {upcoming.length === 0 ? (
         <p className="mt-1 text-sm text-neutral-500">暂无</p>
@@ -56,7 +76,7 @@ export function AdminItemCard({
               <span>{messages.bookingStatus[b.status]}</span>
               <span className="text-neutral-500">
                 {b.customer_name} · <span className="font-mono">{b.booking_no}</span>
-                {b.parent_booking_id ? "（搭配雪服加购）" : ""}
+                {b.viaSet ? "（整套租）" : b.parent_booking_id ? "（搭配雪服加购）" : ""}
               </span>
             </li>
           ))}

@@ -17,6 +17,8 @@ export type StyleCategory = "suit" | "one_piece" | "jacket" | "pants" | "helmet_
 
 export type HelmetCoverTier = "regular" | "premium";
 
+export type ReviewStatus = "pending" | "published" | "hidden";
+
 export type Database = {
   public: {
     Tables: {
@@ -29,6 +31,11 @@ export type Database = {
           rental_prices_cents: number[];
           jacket_prices_cents: number[];
           pants_prices_cents: number[];
+          /** Crystal 雪服正价表；特惠期内（今天 ≤ crystal_promo_ends_on）按普通价 */
+          crystal_prices_cents: number[];
+          crystal_jacket_prices_cents: number[];
+          crystal_pants_prices_cents: number[];
+          crystal_promo_ends_on: string | null;
           shipping_min_days: number;
           /** 滑雪日前后额外占用库存的天数（不收费）：到店自取前一晚取、次日还；邮寄提前寄出、用完寄回 */
           pickup_lead_days: number;
@@ -45,6 +52,10 @@ export type Database = {
           rental_prices_cents?: number[];
           jacket_prices_cents?: number[];
           pants_prices_cents?: number[];
+          crystal_prices_cents?: number[];
+          crystal_jacket_prices_cents?: number[];
+          crystal_pants_prices_cents?: number[];
+          crystal_promo_ends_on?: string | null;
           shipping_min_days?: number;
           updated_at?: string;
         };
@@ -55,6 +66,10 @@ export type Database = {
           rental_prices_cents?: number[];
           jacket_prices_cents?: number[];
           pants_prices_cents?: number[];
+          crystal_prices_cents?: number[];
+          crystal_jacket_prices_cents?: number[];
+          crystal_pants_prices_cents?: number[];
+          crystal_promo_ends_on?: string | null;
           shipping_min_days?: number;
         };
         Relationships: [];
@@ -80,6 +95,8 @@ export type Database = {
           /** 不为空时按款式自己的价目表计价，否则用 settings 的全店价目表 */
           rental_prices_cents: number[] | null;
           variant_images: Record<string, number>;
+          /** 组合套装由哪几件单品（款式 id）组成；普通款式为 null */
+          bundle_style_ids: string[] | null;
           name_en: string;
           description_en: string;
           created_at: string;
@@ -104,6 +121,7 @@ export type Database = {
           replacement_value_cents?: number | null;
           rental_prices_cents?: number[] | null;
           variant_images?: Record<string, number>;
+          bundle_style_ids?: string[] | null;
           name_en?: string;
           description_en?: string;
         };
@@ -125,6 +143,7 @@ export type Database = {
           replacement_value_cents?: number | null;
           rental_prices_cents?: number[] | null;
           variant_images?: Record<string, number>;
+          bundle_style_ids?: string[] | null;
           name_en?: string;
           description_en?: string;
         };
@@ -138,6 +157,8 @@ export type Database = {
           code: string;
           status: InventoryStatus;
           notes: string;
+          /** 采购价（美分），没录入时为 null */
+          purchase_cents: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -148,12 +169,14 @@ export type Database = {
           code: string;
           status?: InventoryStatus;
           notes?: string;
+          purchase_cents?: number | null;
         };
         Update: {
           size?: string;
           code?: string;
           status?: InventoryStatus;
           notes?: string;
+          purchase_cents?: number | null;
         };
         Relationships: [
           {
@@ -194,6 +217,10 @@ export type Database = {
           admin_note: string;
           /** 加购子订单指向它所属的雪服订单；普通订单为 null */
           parent_booking_id: string | null;
+          /** 组合套装里的其他单品（0 元子订单），区别于头盔套加购 */
+          bundle_part: boolean;
+          /** 购物车订单里的第 2 件起（有自己的租金和押金，挂在第 1 件的主订单下面） */
+          cart_item: boolean;
           /** 登录状态下提交的订单记在这个账号名下 */
           user_id: string | null;
           created_at: string;
@@ -222,6 +249,37 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      reviews: {
+        Row: {
+          id: string;
+          booking_id: string;
+          style_id: string;
+          rating: number;
+          body: string;
+          display_name: string;
+          locale: "zh" | "en";
+          status: ReviewStatus;
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          style_id: string;
+          rating: number;
+          body: string;
+          display_name: string;
+          locale?: "zh" | "en";
+          status?: ReviewStatus;
+          published_at?: string | null;
+        };
+        Update: {
+          status?: ReviewStatus;
+          published_at?: string | null;
+        };
+        Relationships: [];
       };
       inventory_blocks: {
         Row: {
@@ -326,6 +384,29 @@ export type Database = {
           inventory_item_id: string;
         }[];
       };
+      create_order: {
+        Args: {
+          /** 购物车每一件：款式、尺码、滑雪日、服务端算好的价格、加购的头盔套 */
+          p_lines: {
+            style_id: string;
+            size: string;
+            start: string;
+            end: string;
+            daily_price_cents: number;
+            rental_cents: number;
+            deposit_cents: number;
+            addon_style_ids: string[];
+            addon_cents: number[];
+          }[];
+          p_customer_name: string;
+          p_customer_email: string;
+          p_customer_phone: string;
+          p_fulfillment_method: "pickup" | "shipping";
+          p_shipping_address: string | null;
+          p_customer_note: string;
+        };
+        Returns: { booking_id: string; booking_no: string }[];
+      };
       rental_price_cents: {
         Args: { p_days: number };
         Returns: number;
@@ -359,3 +440,4 @@ export type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 export type InventoryBlockRow = Database["public"]["Tables"]["inventory_blocks"]["Row"];
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type SettingsRow = Database["public"]["Tables"]["settings"]["Row"];
+export type ReviewRow = Database["public"]["Tables"]["reviews"]["Row"];

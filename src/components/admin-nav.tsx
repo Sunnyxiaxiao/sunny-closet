@@ -6,12 +6,15 @@ const t = messages.admin;
 
 const LINKS = [
   { key: "orders", href: "/admin", label: t.ordersTitle },
-  { key: "inventory", href: "/admin/inventory", label: "库存" },
-  { key: "pricing", href: "/admin/pricing", label: "价格" },
+  { key: "outfits", href: "/admin/outfits", label: "雪服" },
+  { key: "gloves", href: "/admin/gloves", label: "手套" },
   { key: "helmet-covers", href: "/admin/helmet-covers", label: t.helmetCoversTitle },
+  { key: "inventory", href: "/admin/inventory", label: "库存总览" },
+  { key: "pricing", href: "/admin/pricing", label: "价格" },
+  { key: "reviews", href: "/admin/reviews", label: "评价" },
 ] as const;
 
-/** 后台顶部：订单 / 库存 / 价格 / 头盔套 切换 + 退出登录 */
+/** 后台顶部：订单 / 雪服 / 手套 / 头盔套 / 库存总览 / 价格 / 评价 切换 + 退出登录 */
 export function AdminNav({ current }: { current: (typeof LINKS)[number]["key"] }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">

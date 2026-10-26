@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { PublicStyle } from "@/lib/catalog";
 import { localePath, type Locale } from "@/i18n/config";
+import { isCrystal } from "@/lib/gloves";
 import { getMessages, sizeLabel } from "@/messages";
+import { CrystalBadge } from "./gloves-card";
 import { RentFrom } from "./rent-from";
 import { StyleImage } from "./style-image";
 
@@ -10,6 +12,7 @@ export function ProductCard({
   sizes,
   query = "",
   fromCents,
+  wasCents,
   locale,
 }: {
   style: PublicStyle;
@@ -18,12 +21,19 @@ export function ProductCard({
   query?: string;
   /** 起租价：价目表第 1 档（成套、外套、雪裤各不相同，见 stylePriceTable） */
   fromCents: number;
+  /** 特惠期内的正价（划掉显示），见 crystalRegularTable */
+  wasCents?: number;
   locale: Locale;
 }) {
   const messages = getMessages(locale);
+  // Crystal Collection（水钻款）：黑色卡片 + 标记，价格和普通雪服一样
+  const crystal = isCrystal(style);
   return (
-    <Link href={localePath(locale, `/styles/${style.slug}${query}`)} className="group block">
-      <div className="overflow-hidden">
+    <Link
+      href={localePath(locale, `/styles/${style.slug}${query}`)}
+      className={`group block h-full ${crystal ? "bg-neutral-950 pb-3 text-white" : ""}`}
+    >
+      <div className="relative overflow-hidden">
         <div className="transition duration-500 group-hover:scale-[1.03]">
           <StyleImage
             src={style.image_urls[0]}
@@ -32,15 +42,28 @@ export function ProductCard({
             thumb
           />
         </div>
+        {crystal && <CrystalBadge className="absolute left-2 top-2" />}
+        {style.bundle_style_ids && (
+          <span className="absolute left-2 top-2 bg-white/90 px-2 py-0.5 text-[11px] font-semibold tracking-wide">
+            {messages.product.styledBadge}
+          </span>
+        )}
       </div>
-      <div className="mt-2.5 space-y-0.5 px-0.5">
+      <div
+        className={`mt-2.5 space-y-0.5 ${crystal ? "px-2.5 [&_.text-neutral-500]:text-neutral-400" : "px-0.5"}`}
+      >
         {style.brand && (
           <p className="text-[11px] uppercase tracking-widest text-neutral-500">{style.brand}</p>
         )}
         <p className="text-sm leading-snug">{style.name}</p>
         <p className="text-sm">
-          <RentFrom cents={fromCents} locale={locale} />
+          <RentFrom cents={fromCents} wasCents={wasCents} locale={locale} />
         </p>
+        {wasCents !== undefined && (
+          <p className={`text-[11px] font-semibold ${crystal ? "text-rose-300" : "text-rose-600"}`}>
+            {messages.product.promoBadge}
+          </p>
+        )}
         {sizes.length > 0 && (
           <p className="text-xs text-neutral-500">
             {messages.product.size} {sizes.map((s) => sizeLabel(s, locale)).join(" / ")}

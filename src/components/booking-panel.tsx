@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CheckoutForm } from "@/components/checkout-form";
 import { CompleteTheLook } from "@/components/complete-the-look";
 import { earliestShippingStart, validateRentalRange, type FulfillmentPaddings } from "@/lib/booking/rules";
-import type { Locale } from "@/i18n/config";
+import { localePath, type Locale } from "@/i18n/config";
+import { addToCart, MAX_CART_LINES } from "@/lib/cart";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDateRange, formatShortDate, type IsoDate } from "@/lib/dates";
 import type { AddOnOption } from "@/lib/helmet-covers";
@@ -31,10 +32,11 @@ type AvailabilityState =
 type AddOnCounts = { pickup: Record<string, number>; shipping: Record<string, number> } | null;
 
 export function BookingPanel({
-  styleId,
-  rentalPricesCents,
+  styleId: jacketStyleId,
+  rentalPricesCents: jacketPricesCents,
   shippingMinDays,
-  depositCents,
+  depositCents: jacketDepositCents,
+  pantsOption,
   sizes,
   today,
   maxRentalDays,
@@ -45,13 +47,17 @@ export function BookingPanel({
   onSizeChange,
   addOnOptions = [],
   initialAddOnSlug,
-  customer,
   locale,
 }: {
   styleId: string;
   rentalPricesCents: number[];
   shippingMinDays: number;
   depositCents: number;
+  /**
+   * 只有上衣的款式：可以选“加一条黑色滑雪裤”，按这个套装的价格和押金下单（套装占用的就是这件上衣）。
+   * 默认只租上衣
+   */
+  pantsOption?: { styleId: string; rentalPricesCents: number[]; depositCents: number };
   sizes: SizeAvailability[];
   today: IsoDate;
   maxRentalDays: number;
@@ -68,14 +74,17 @@ export function BookingPanel({
   addOnOptions?: AddOnOption[];
   /** 从头盔套页点“搭配雪服一起租”过来时预先选中的头盔套 */
   initialAddOnSlug?: string;
-  /** 登录的顾客：下单表单预先填好的联系方式 */
-  customer?: { name: string; email: string; phone: string; wechat: string };
   locale: Locale;
 }) {
   const messages = getMessages(locale);
   const t = messages.bookingPanel;
   const label = choiceLabel ?? messages.product.size;
   const singleSize = sizes.length === 1 ? sizes[0].size : null;
+  const [withPants, setWithPants] = useState(false);
+  const chosen = withPants && pantsOption ? pantsOption : null;
+  const styleId = chosen?.styleId ?? jacketStyleId;
+  const rentalPricesCents = chosen?.rentalPricesCents ?? jacketPricesCents;
+  const depositCents = chosen?.depositCents ?? jacketDepositCents;
   const [start, setStart] = useState(initial.start ?? "");
   const [end, setEnd] = useState(initial.end ?? "");
   const [size, setSize] = useState(
@@ -86,6 +95,9 @@ export function BookingPanel({
     addOnOptions.find((o) => o.slug === initialAddOnSlug)?.id ?? null,
   );
   const [addOnResult, setAddOnResult] = useState<{ query: string; counts: AddOnCounts } | null>(null);
+  // 刚加入购物车的是哪一个选择（款式、尺码、日期、加购都没变时显示“已加入”）
+  const [addedKey, setAddedKey] = useState<string | null>(null);
+  const [cartFull, setCartFull] = useState(false);
 
   const rangeError = validateRentalRange({ start, end }, { today, maxRentalDays });
   const rangeValid = rangeError === null;
@@ -108,6 +120,8 @@ export function BookingPanel({
   const selectedAddOnUnavailable =
     selectedAddOn !== undefined && addOnCounts !== null && (addOnCounts.pickup[selectedAddOn.id] ?? 0) === 0;
   const addOns = selectedAddOn && !selectedAddOnUnavailable ? [selectedAddOn] : [];
+
+  const selectionKey = JSON.stringify([styleId, size, start, end, addOns.map((a) => a.id)]);
 
   const quote = rangeValid
     ? calculateQuote({
@@ -194,8 +208,40 @@ export function BookingPanel({
   const dateInputClass =
     "h-12 w-full border border-neutral-300 bg-white px-3 text-base focus:border-neutral-900 focus:outline-none";
 
+  const choiceClass = (selected: boolean) =>
+    [
+      "flex-1 border px-4 py-2.5 text-left text-sm transition",
+      selected ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 bg-white hover:border-neutral-900",
+    ].join(" ");
+
   return (
     <div className="space-y-6">
+      {pantsOption && (
+        <fieldset>
+          <legend className="text-sm text-neutral-500">{t.pantsLabel}</legend>
+          <div className="mt-2 flex gap-2">
+            {[
+              { value: false, label: t.jacketOnly, cents: jacketPricesCents[0] },
+              { value: true, label: t.withPants, cents: pantsOption.rentalPricesCents[0] },
+            ].map((option) => (
+              <button
+                key={String(option.value)}
+                type="button"
+                onClick={() => setWithPants(option.value)}
+                aria-pressed={withPants === option.value}
+                className={choiceClass(withPants === option.value)}
+              >
+                <span className="block font-semibold">{option.label}</span>
+                <span className={withPants === option.value ? "text-neutral-300" : "text-neutral-500"}>
+                  {messages.product.rentFrom.prefix} {formatMoney(option.cents, { whole: true })}
+                  {messages.product.rentFrom.suffix && ` ${messages.product.rentFrom.suffix}`}
+                </span>
+              </button>
+            ))}
+          </div>
+          {withPants && <p className="mt-2 text-xs text-neutral-500">{t.withPantsNote}</p>}
+        </fieldset>
+      )}
       {hideSize ? null : singleSize ? (
         <p className="text-sm">
           <span className="text-neutral-500">{label}</span>
@@ -352,25 +398,51 @@ export function BookingPanel({
       </div>
 
       {quote && size && selectedAvailable !== null && selectedAvailable > 0 ? (
-        <CheckoutForm
-          styleId={styleId}
-          selection={{ start, end, size, quote }}
-          shippingMinDays={shippingMinDays}
-          addOnIds={addOns.map((a) => a.id)}
-          addOnPending={addOnLoading && addOnId !== null}
-          shippingBlocked={
-            shippingTooSoon
-              ? t.shippingTooSoon(
-                  paddings.shipping.leadDays,
-                  formatShortDate(earliestShippingStart(today, paddings), locale),
-                )
-              : !shippingSizeFree || !shippingAddOnsFree
-                ? t.shippingTaken(paddings.shipping.leadDays)
-                : null
-          }
-          defaults={customer}
-          locale={locale}
-        />
+        <div className="space-y-3">
+          {addedKey === selectionKey ? (
+            <div className="space-y-3 border border-neutral-900 p-4" role="status">
+              <p className="text-sm font-semibold">✓ {t.added}</p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href={localePath(locale, "/cart")}
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold tracking-wider text-white hover:bg-neutral-700"
+                >
+                  {t.viewCart}
+                </Link>
+                <Link
+                  href={localePath(locale, "/styles")}
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-neutral-900 text-sm font-bold tracking-wider hover:bg-neutral-100"
+                >
+                  {t.keepShopping}
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={addOnLoading && addOnId !== null}
+              onClick={() => {
+                const ok = addToCart({ styleId, size, start, end, addOnIds: addOns.map((a) => a.id) });
+                setCartFull(!ok);
+                if (ok) setAddedKey(selectionKey);
+              }}
+              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-neutral-900 text-sm font-bold tracking-wider text-white hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t.addToCart}
+            </button>
+          )}
+          {cartFull && <p className="text-sm font-semibold text-amber-700">{t.cartFull(MAX_CART_LINES)}</p>}
+          {/* 取件方式在结算时选；这里先提醒这次能不能邮寄 */}
+          {quote.rentalDays < shippingMinDays ? (
+            <p className="text-xs text-neutral-500">{messages.checkout.shippingTooShort(shippingMinDays)}</p>
+          ) : shippingTooSoon ? (
+            <p className="text-xs text-neutral-500">
+              {t.shippingTooSoon(paddings.shipping.leadDays, formatShortDate(earliestShippingStart(today, paddings), locale))}
+            </p>
+          ) : !shippingSizeFree || !shippingAddOnsFree ? (
+            <p className="text-xs text-neutral-500">{t.shippingTaken(paddings.shipping.leadDays)}</p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

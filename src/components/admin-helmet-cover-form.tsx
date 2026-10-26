@@ -238,12 +238,15 @@ export function AdminHelmetCoverForm({ initial }: { initial: HelmetCoverFormValu
       </Field>
 
       <section className="grid grid-cols-2 gap-4">
-        {isNew ? (
+        {isNew && (
           <Field label="数量（件）" hint="同款有几件就填几" error={errors.quantity}>
             <input name="quantity" type="number" min={1} max={20} defaultValue={state.values?.quantity ?? 1} className={inputClass} />
           </Field>
-        ) : (
-          <div />
+        )}
+        {isNew && (
+          <Field label="采购价（美元 / 件，选填）" hint="每件都按这个价；之后也能在库存里单独改" error={errors.cost}>
+            <input name="cost" inputMode="decimal" defaultValue={state.values?.cost} className={inputClass} />
+          </Field>
         )}
         <Field label="排序" hint="数字小的排前面" error={errors.sortOrder}>
           <input name="sortOrder" type="number" defaultValue={v("sortOrder")} className={inputClass} />

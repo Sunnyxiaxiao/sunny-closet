@@ -7,7 +7,10 @@ import type { BookingRow, InventoryBlockRow, InventoryItemRow } from "@/lib/supa
 type AdminClient = Awaited<ReturnType<typeof requireAdmin>>["supabase"];
 
 export type ItemReservation = ItemBooking &
-  Pick<BookingRow, "id" | "booking_no" | "customer_name" | "parent_booking_id">;
+  Pick<BookingRow, "id" | "booking_no" | "customer_name" | "parent_booking_id"> & {
+    /** 是整套租的一部分（组合套装），不是单租这一件 */
+    viaSet: boolean;
+  };
 
 export interface ItemOverview {
   item: InventoryItemRow;
@@ -37,7 +40,7 @@ export async function loadInventory(
     supabase
       .from("bookings")
       .select(
-        "id, booking_no, inventory_item_id, start_date, end_date, buffer_days, lead_days, tail_days, status, customer_name, parent_booking_id",
+        "id, booking_no, inventory_item_id, start_date, end_date, buffer_days, lead_days, tail_days, status, customer_name, parent_booking_id, style_id, bundle_part",
       )
       .in("inventory_item_id", itemIds.length ? itemIds : ["00000000-0000-0000-0000-000000000000"])
       .in("status", ["pending", "confirmed", "picked_up", "returned"])
@@ -61,6 +64,7 @@ export async function loadInventory(
         booking_no: b.booking_no,
         customer_name: b.customer_name,
         parent_booking_id: b.parent_booking_id,
+        viaSet: b.bundle_part || b.style_id !== item.style_id,
         start: b.start_date as IsoDate,
         end: b.end_date as IsoDate,
         bufferDays: b.buffer_days,

@@ -16,6 +16,8 @@ const BOOKING_ERROR_CODES = [
   "addon_unavailable",
   "addon_not_found",
   "invalid_addons",
+  "shipping_dates_differ",
+  "invalid_cart",
 ] as const;
 
 export type BookingErrorCode = (typeof BOOKING_ERROR_CODES)[number];

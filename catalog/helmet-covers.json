@@ -145,5 +145,189 @@
         "size": "均码"
       }
     ]
+  },
+  {
+    "slug": "black-pink-bunny",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "黑粉兔耳头盔套",
+    "nameEn": "Black & Pink Bunny Helmet Cover",
+    "tags": [
+      "black",
+      "pink",
+      "bunny",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 60,
+    "description": "黑色卷卷毛绒头盔套，一对玫红色内里的兔耳朵，头顶一颗玫红小毛球，又酷又可爱。",
+    "descriptionEn": "Curly black plush helmet cover with hot-pink-lined bunny ears and a hot-pink pom-pom on top — cool and cute at the same time.",
+    "images": [
+      "images/black-pink-bunny/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC009",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "white-lop-bunny",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "白色垂耳兔头盔套",
+    "nameEn": "White Lop Bunny Helmet Cover",
+    "tags": [
+      "white",
+      "pink",
+      "bunny",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 70,
+    "description": "白色卷卷毛绒头盔套，两只粉色内里的长垂耳，头顶粉色蝴蝶结，粉色刺绣眼睛。",
+    "descriptionEn": "Curly white plush helmet cover with long pink-lined floppy ears, pink bows on top and pink embroidered eyes.",
+    "images": [
+      "images/white-lop-bunny/1.jpg",
+      "images/white-lop-bunny/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC010",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "white-little-sheep",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "白色小羊头盔套",
+    "nameEn": "White Little Sheep Helmet Cover",
+    "tags": [
+      "white",
+      "blue",
+      "sheep",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 80,
+    "description": "白色卷卷毛绒头盔套，头顶一对浅蓝色小羊角，粉色内耳，侧边一颗黄色小星星，粉蓝刺绣眼睛。",
+    "descriptionEn": "Curly white plush helmet cover with two little light-blue sheep horns, pink inner ears, a yellow star on the side and pink-and-blue embroidered eyes.",
+    "images": [
+      "images/white-little-sheep/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC011",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "calico-cat",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "三花猫头盔套",
+    "nameEn": "Calico Cat Helmet Cover",
+    "tags": [
+      "white",
+      "yellow",
+      "cat",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 90,
+    "description": "白色卷卷毛绒头盔套，奶黄色和棕色的三花斑块，粉色内耳，耳边一朵小雏菊，一蓝一黄的鸳鸯眼。",
+    "descriptionEn": "Curly white plush helmet cover with cream and brown calico patches, pink inner ears, a little daisy by the ear and odd eyes — one blue, one yellow.",
+    "images": [
+      "images/calico-cat/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC012",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "cream-little-sheep",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "奶黄小羊头盔套",
+    "nameEn": "Cream Little Sheep Helmet Cover",
+    "tags": [
+      "yellow",
+      "sheep",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 100,
+    "description": "奶黄色卷卷毛绒头盔套，头顶两只黄色小羊角，粉色内耳和腮红，两侧垂着小毛球。",
+    "descriptionEn": "Curly cream-yellow plush helmet cover with two little yellow sheep horns, pink inner ears and cheeks, and pom-poms hanging at the sides.",
+    "images": [
+      "images/cream-little-sheep/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC013",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "siamese-cat",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "暹罗猫头盔套",
+    "nameEn": "Siamese Cat Helmet Cover",
+    "tags": [
+      "white",
+      "blue",
+      "cat",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 110,
+    "description": "白色卷卷毛绒头盔套，暹罗猫配色的奶茶色耳朵和脸，画着小胡须，耳边别着一条浅蓝色小鱼。",
+    "descriptionEn": "Curly white plush helmet cover in Siamese-cat colors — latte-brown ears and face, little whiskers, and a light-blue fish clipped by the ear.",
+    "images": [
+      "images/siamese-cat/1.jpg",
+      "images/siamese-cat/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC014",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "black-moon-cat",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "黑猫月亮头盔套",
+    "nameEn": "Black Moon Cat Helmet Cover",
+    "tags": [
+      "black",
+      "pink",
+      "yellow",
+      "cat",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 120,
+    "description": "黑色卷卷毛绒头盔套，粉色猫耳，额头一枚黄色弯月亮，黄色眼睛配粉色腮红。",
+    "descriptionEn": "Curly black plush helmet cover with pink cat ears, a yellow crescent moon on the forehead, yellow eyes and pink cheeks.",
+    "images": [
+      "images/black-moon-cat/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC015",
+        "size": "均码"
+      }
+    ]
   }
 ]

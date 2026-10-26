@@ -35,6 +35,18 @@ describe("迁移与种子数据", () => {
     expect(res.rows.some((r) => r.brand === "ISEE MIGGA")).toBe(true);
   });
 
+  it("采购价可以不填，但不能是负数", async () => {
+    const item = await db.query<{ purchase_cents: number | null }>(
+      "select purchase_cents from public.inventory_items limit 1",
+    );
+    expect(item.rows[0].purchase_cents).toBeNull();
+    await db.query("update public.inventory_items set purchase_cents = 12900 where code = (select min(code) from public.inventory_items)");
+    await expect(
+      db.query("update public.inventory_items set purchase_cents = -1 where code = (select min(code) from public.inventory_items)"),
+    ).rejects.toThrow();
+    await db.query("update public.inventory_items set purchase_cents = null");
+  });
+
   it("品类只能是 成套/连体服/上衣/裤子", async () => {
     await expect(
       db.query(

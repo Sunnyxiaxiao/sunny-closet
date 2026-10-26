@@ -17,13 +17,13 @@ import {
   listStyles,
   stylePriceTable,
 } from "@/lib/catalog";
-import { checkoutDefaults, getCustomer } from "@/lib/account/customer";
 import { parseDescription } from "@/lib/description";
 import { helmetColorTags } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { priceTiers } from "@/lib/pricing";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
 import { getMessages } from "@/messages";
+import { StyleReviews } from "@/components/style-reviews";
 
 /** 库存里颜色存的是中文名（例如「绿色」），按中文标签名对应库存 */
 const ZH_TAGS = getMessages("zh").helmet.tags;
@@ -57,12 +57,11 @@ async function HelmetCoverDetail({
   const cover = await getStyleBySlug(slug, { kind: "helmet_cover", locale });
   if (!cover) notFound();
 
-  const [settings, today, availability, allCovers, customer] = await Promise.all([
+  const [settings, today, availability, allCovers] = await Promise.all([
     getSettings(),
     getToday(),
     getAvailability({ styleId: cover.id }),
     listStyles({ kind: "helmet_cover", locale }),
-    getCustomer(),
   ]);
   const sizes = availability.get(cover.id) ?? [];
   const prices = stylePriceTable(cover, settings);
@@ -175,7 +174,6 @@ async function HelmetCoverDetail({
         paddings={settings.paddings}
         initial={initial}
         hideSize
-        customer={checkoutDefaults(customer)}
         locale={locale}
       />
     );
@@ -200,7 +198,6 @@ async function HelmetCoverDetail({
             maxRentalDays: settings.maxRentalDays,
             paddings: settings.paddings,
             initial,
-            customer: checkoutDefaults(customer),
             locale,
           }}
         />
@@ -214,6 +211,8 @@ async function HelmetCoverDetail({
           </div>
         </div>
       )}
+
+      <StyleReviews styleId={cover.id} locale={locale} />
 
       {related.length > 0 && (
         <section className="px-2 pt-14 md:px-0">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { getMessages } from "@/messages";
+import { CartLink } from "./cart-link";
 import { LanguageSwitch } from "./language-switch";
 import { MobileMenu } from "./mobile-menu";
 
@@ -59,13 +60,14 @@ export function SiteHeader({ locale, hideLanguageSwitch }: { locale: Locale; hid
               href={localePath(locale, "/account")}
               aria-label={t.nav.account}
               title={t.nav.account}
-              className="-mr-1.5 p-1.5 sm:mr-0"
+              className="p-1.5"
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <circle cx="12" cy="8.5" r="3.75" />
                 <path d="M4.5 20c1.2-3.6 4.1-5.5 7.5-5.5s6.3 1.9 7.5 5.5" strokeLinecap="round" />
               </svg>
             </Link>
+            <CartLink locale={locale} label={t.nav.cart} />
             {/* 搜索入口（进全部雪服）：手机上放不下收进菜单；宽屏菜单里已经有“全部雪服”，也不显示 */}
             <Link href={localePath(locale, "/styles")} aria-label={t.nav.styles} className="-mr-2 hidden p-2 sm:block lg:hidden">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6">

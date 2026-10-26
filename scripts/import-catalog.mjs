@@ -56,6 +56,12 @@ if (!url || !secretKey) {
 const ACCESSORIES = new Set(["helmet_cover", "gloves"]);
 /** 单件的默认起租价和押金（美元），与 settings 里的外套 / 雪裤价目表第 1 档一致 */
 const SEPARATES = { jacket: { dailyPrice: 35, deposit: 150 }, pants: { dailyPrice: 25, deposit: 100 } };
+/** 背带雪裤（bib 标签）按外套收、卫衣（hoodie 标签）按雪裤收，与 stylePriceTable 一致 */
+function separateDefaults(entry) {
+  if (entry.category === "pants" && entry.tags.includes("bib")) return SEPARATES.jacket;
+  if (entry.category === "jacket" && entry.tags.includes("hoodie")) return SEPARATES.pants;
+  return SEPARATES[entry.category];
+}
 
 const entrySchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "slug 只能用小写字母、数字和连字符"),
@@ -81,6 +87,9 @@ const entrySchema = z.object({
   sortOrder: z.number().int().default(0),
   sourceUrl: z.string().default(""),
   images: z.array(z.string().min(1)).default([]),
+  // 组合套装（店主搭配、非官方套装）：由哪几件单品组成（填单品的 slug，单品要先导入）。套装自己不填 items
+  // 只有 1 件单品 + 'with-black-pants' 标签 = 只有上衣的款式出的“上衣 + 随机黑色滑雪裤”选项
+  bundle: z.array(z.string()).min(1).max(5).optional(),
   items: z
     .array(
       z.object({
@@ -89,8 +98,14 @@ const entrySchema = z.object({
         image: z.number().int().min(1).optional(),
       }),
     )
-    .min(1),
+    .default([]),
 }).superRefine((entry, ctx) => {
+  if (!entry.bundle && entry.items.length === 0) {
+    ctx.addIssue({ code: "custom", path: ["items"], message: "要填 items（库存件）" });
+  }
+  if (entry.bundle && entry.items.length > 0) {
+    ctx.addIssue({ code: "custom", path: ["items"], message: "组合套装不放库存，库存放在各件单品里" });
+  }
   if (entry.category === "helmet_cover" && !entry.tier) {
     ctx.addIssue({ code: "custom", path: ["tier"], message: "头盔套要填 tier：regular 或 premium" });
   }
@@ -201,7 +216,7 @@ async function toJpeg(buffer, source) {
       .rotate()
       .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
       .flatten({ background: "#ffffff" })
-      .jpeg({ quality: 85, mozjpeg: true })
+      .jpeg({ quality: 90, mozjpeg: true })
       .toBuffer();
   try {
     return await encode(buffer);
@@ -267,6 +282,17 @@ async function uploadImages(entry) {
   return { urls, stale: existing.filter((o) => IMPORTED_NAME.test(o.name) && !keep.has(o.name)).map((o) => `${entry.slug}/${o.name}`) };
 }
 
+/** 组合套装的单品 slug → 款式 id（按填写顺序） */
+async function bundleStyleIds(entry) {
+  const { data, error } = await supabase.from("styles").select("id, slug").in("slug", entry.bundle);
+  if (error) throw new Error(`读取单品失败：${error.message}`);
+  return entry.bundle.map((slug) => {
+    const part = data.find((s) => s.slug === slug);
+    if (!part) throw new Error(`${entry.slug} 的单品 ${slug} 还没导入（要排在套装前面）`);
+    return part.id;
+  });
+}
+
 /** 数据库已经改用新图片地址后，再删掉旧图（先删的话网站会短暂显示不出图） */
 async function removeStaleImages(paths) {
   if (paths.length === 0) return;
@@ -315,12 +341,14 @@ for (const entry of entries) {
       description: resolveDescription(entry, catalogDir),
       description_en: resolveDescription(entry, catalogDir, "en"),
       daily_price_cents: cents(
-        entry.dailyPrice ?? SEPARATES[entry.category]?.dailyPrice ?? entry.prices?.[0] ?? entry.standalonePrices?.oneDay ?? 15,
+        entry.dailyPrice ?? separateDefaults(entry)?.dailyPrice ?? entry.prices?.[0] ?? entry.standalonePrices?.oneDay ?? 15,
       ),
-      deposit_cents: cents(entry.deposit ?? SEPARATES[entry.category]?.deposit ?? 0),
+      deposit_cents: cents(entry.deposit ?? separateDefaults(entry)?.deposit ?? 0),
       ...helmetFields(entry),
       ...glovesFields(entry),
       variant_images: variantImages(entry),
+      tags: entry.tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean),
+      bundle_style_ids: entry.bundle ? await bundleStyleIds(entry) : null,
       sort_order: entry.sortOrder,
       source_url: entry.sourceUrl,
       image_urls: imageUrls,
@@ -334,6 +362,7 @@ for (const entry of entries) {
     console.log("完成");
   }
 
+  if (entry.items.length === 0) continue;
   const { error: itemsError } = await supabase.from("inventory_items").upsert(
     entry.items.map((item) => ({ style_id: styleId, code: item.code, size: item.size })),
     { onConflict: "code" },
