@@ -4,12 +4,12 @@ import { connection } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
- * 后台的统一入口：每个后台页面、每个后台操作开头都要调用。
- * 没登录 → 去登录页；登录了但不在管理员名单里 → 也去登录页并提示。
- * 返回的 supabase 客户端带着管理员的登录状态，查询仍然受数据库 RLS 约束。
+ * Single entry point for admin: call it at the start of every admin page and admin action.
+ * Not signed in → sign-in page; signed in but not on the admin list → sign-in page with a message.
+ * The returned supabase client carries the admin's session, so queries are still subject to database RLS.
  */
 export async function requireAdmin() {
-  // Supabase 校验登录状态时会读当前时间，只能在请求时执行，不能参与预渲染
+  // Supabase reads the current time when validating the session, so this must run at request time, not during prerendering
   await connection();
   const supabase = await createSupabaseServerClient();
 

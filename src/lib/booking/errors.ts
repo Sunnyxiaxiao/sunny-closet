@@ -1,6 +1,6 @@
 /**
- * 数据库函数 create_booking 抛出的错误码 → 给顾客看的提示（中文 / 英文见 messages.bookingErrors）。
- * 错误码见 supabase/migrations 里的 create_booking。
+ * Error codes raised by the database function create_booking → messages shown to customers (Chinese / English in messages.bookingErrors).
+ * See create_booking in supabase/migrations for the codes.
  */
 
 import type { Locale } from "@/i18n/config";
@@ -24,7 +24,7 @@ export type BookingErrorCode = (typeof BOOKING_ERROR_CODES)[number];
 
 export const DEFAULT_BOOKING_ERROR = getMessages("zh").bookingErrors.default;
 
-/** 数据库报错里带的错误码；认不出来时返回 null */
+/** The error code in a database error, or null if unrecognized */
 export function bookingErrorCode(message: string | null | undefined): BookingErrorCode | null {
   if (!message) return null;
   return BOOKING_ERROR_CODES.find((code) => message.includes(code)) ?? null;

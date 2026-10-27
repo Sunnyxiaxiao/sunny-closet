@@ -1,9 +1,9 @@
--- Sunny Closet：背带雪裤按外套价、卫衣按雪裤价
+-- Sunny Closet: bib pants at jacket prices, hoodies at pants prices
 --
--- 单租的上衣 / 雪裤默认按品类计价（外套价目表、雪裤价目表）。两个例外靠标签区分：
---   - 雪裤带 'bib' 标签（背带雪裤）：按外套价目表
---   - 上衣带 'hoodie' 标签（卫衣）：按雪裤价目表
--- 押金不变，仍按款式自己填的 deposit_cents。
+-- Separately rented tops / pants are priced by category by default (jacket table, pants table). Two exceptions are marked by tags:
+--   - Pants tagged 'bib' (bib pants): jacket table
+--   - Tops tagged 'hoodie': pants table
+-- Deposits are unchanged and still come from the style's deposit_cents.
 
 create or replace function public.style_rental_price_cents(p_style_id uuid, p_days integer)
 returns integer

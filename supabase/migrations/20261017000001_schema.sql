@@ -1,12 +1,12 @@
--- Sunny Closet：核心表结构、防超订约束、预订与可用性函数
--- 日期全部使用 date 类型（只有日期、没有时刻），避免时区问题。
--- 租期规则：取件日与归还日都算在内；占用区间 = [取件日, 归还日 + 1 + 缓冲天数)
+-- Sunny Closet: core tables, overbooking constraint, booking and availability functions
+-- All dates use the date type (no time of day) to avoid time zone issues.
+-- Rental rule: pickup and return days are both included; occupied range = [pickup day, return day + 1 + buffer days)
 
 create schema if not exists extensions;
 create extension if not exists btree_gist with schema extensions;
 
 -- ---------------------------------------------------------------------------
--- 通用：自动维护 updated_at
+-- Shared: keep updated_at current automatically
 -- ---------------------------------------------------------------------------
 create or replace function public.set_updated_at()
 returns trigger
@@ -20,7 +20,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 店铺配置（只有一行）
+-- Shop settings (a single row)
 -- ---------------------------------------------------------------------------
 create table public.settings (
   id boolean primary key default true check (id),
@@ -36,7 +36,7 @@ create trigger settings_updated_at
 insert into public.settings (id) values (true) on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
--- 款式
+-- Styles
 -- ---------------------------------------------------------------------------
 create table public.styles (
   id uuid primary key default gen_random_uuid(),
@@ -57,7 +57,7 @@ create trigger styles_updated_at
   for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------------
--- 具体库存件
+-- Individual inventory items
 -- ---------------------------------------------------------------------------
 create table public.inventory_items (
   id uuid primary key default gen_random_uuid(),
@@ -77,7 +77,7 @@ create trigger inventory_items_updated_at
   for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------------
--- 预订
+-- Bookings
 -- ---------------------------------------------------------------------------
 create table public.bookings (
   id uuid primary key default gen_random_uuid(),
@@ -115,7 +115,7 @@ create table public.bookings (
     fulfillment_method = 'pickup'
     or (shipping_address is not null and length(trim(shipping_address)) > 0)
   ),
-  -- 防超订的核心：同一件库存、仍占用库存的订单，其占用区间（含缓冲天数）不得重叠。
+  -- The core of overbooking prevention: for the same inventory item, occupied ranges (including buffer days) of orders that still hold inventory must not overlap.
   constraint bookings_no_overlap exclude using gist (
     inventory_item_id with =,
     blocked_range with &&
@@ -129,7 +129,7 @@ create trigger bookings_updated_at
   before update on public.bookings
   for each row execute function public.set_updated_at();
 
--- 仍占用库存的订单状态（与上面排他约束的 where 条件保持一致）
+-- Order statuses that still occupy inventory (keep in sync with the exclusion constraint's where clause above)
 create or replace function public.is_blocking_status(p_status text)
 returns boolean
 language sql
@@ -140,7 +140,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 防刷：记录提交次数（只由服务端写入）
+-- Abuse protection: submission counts (written only by the server)
 -- ---------------------------------------------------------------------------
 create table public.rate_limits (
   id bigint generated always as identity primary key,
@@ -151,7 +151,7 @@ create table public.rate_limits (
 
 create index rate_limits_lookup_idx on public.rate_limits (bucket, key_hash, created_at desc);
 
--- 原子地“记一次并判断是否超限”。返回 true 表示允许。
+-- Atomically "record one hit and check the limit". Returns true when allowed.
 create or replace function public.hit_rate_limit(
   p_bucket text,
   p_key_hash text,
@@ -187,7 +187,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 预订编号：SC- 加 8 位易读字符（去掉 0/O/1/I 等易混字符）
+-- Order number: SC- plus 8 readable characters (without easily confused ones such as 0/O/1/I)
 -- ---------------------------------------------------------------------------
 create or replace function public.generate_booking_no()
 returns text
@@ -197,7 +197,7 @@ set search_path = ''
 as $$
 declare
   v_alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  -- uuid v4 的第 0–3、10–15 字节是完全随机的
+  -- Bytes 0–3 and 10–15 of a v4 uuid are fully random
   v_bytes bytea := uuid_send(gen_random_uuid());
   v_positions constant integer[] := array[0, 1, 2, 3, 10, 11, 12, 13];
   v_result text := 'SC-';
@@ -211,8 +211,8 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 可用性查询：返回每个款式、每个尺码在指定日期段内可租的件数。
--- 不传日期时返回各尺码的可租件总数（不考虑排期）。
+-- Availability: returns how many items of each style and size are available for the given dates.
+-- Without dates, returns the total count per size (ignoring the schedule).
 -- ---------------------------------------------------------------------------
 create or replace function public.get_availability(
   p_start date default null,
@@ -267,10 +267,10 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 创建预订：自动分配一件可用库存。
--- 只允许服务端（service_role）调用；价格由服务端的价格函数算好后传入，这里做一致性校验。
--- 并发安全：真正的保证来自 bookings_no_overlap 排他约束；
--- 如果两个请求同时抢到同一件，后提交的会触发 exclusion_violation，这里捕获后换下一件。
+-- Creates a booking and assigns an available inventory item automatically.
+-- Callable only by the server (service_role); prices are computed by the server's pricing code and passed in, and checked for consistency here.
+-- Concurrency safety: the real guarantee is the bookings_no_overlap exclusion constraint;
+-- if two requests grab the same item at once, the later commit raises exclusion_violation, which is caught here to try the next item.
 -- ---------------------------------------------------------------------------
 create or replace function public.create_booking(
   p_style_id uuid,
@@ -364,7 +364,7 @@ begin
       return;
     exception
       when exclusion_violation then
-        -- 这件刚被并发请求占用，继续尝试下一件
+        -- This item was just taken by a concurrent request; try the next one
         null;
     end;
   end loop;

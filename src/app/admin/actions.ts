@@ -41,8 +41,8 @@ const statusChangeSchema = z.object({
 });
 
 /**
- * 修改订单状态。页面上的按钮只是方便，真正的规则在这里：
- * 重新读取订单现在的状态，只允许合法的下一步，并且只在状态没被别人改过时才更新。
+ * Changes an order's status. The buttons are just a convenience; the real rules live here:
+ * re-read the order's current status, allow only a valid next step, and update only if nobody changed the status in the meantime.
  */
 export async function updateBookingStatus(formData: FormData) {
   const { supabase } = await requireAdmin();
@@ -63,7 +63,7 @@ export async function updateBookingStatus(formData: FormData) {
     .maybeSingle();
   if (readError) throw new Error(`读取订单失败：${readError.message}`);
 
-  // 订单不存在，或页面已经过期（状态已经被改过）：不改，刷新页面显示最新状态
+  // Order missing or the page is stale (status already changed): don't update; refresh to show the latest status
   if (!current || !canTransition(current.status, nextStatus)) {
     revalidatePath("/admin");
     return;
@@ -77,8 +77,8 @@ export async function updateBookingStatus(formData: FormData) {
     .select("id");
   if (error) throw new Error(`更新订单状态失败：${error.message}`);
 
-  // 确认订单后给顾客发邮件（付款方式、订单链接）；子订单跟着主订单走，只在主订单确认时发。
-  // 同时有人改过状态（这次没更新到）就不发
+  // Email the customer after confirming (payment methods, order link); child orders follow the main order, so only send for the main order.
+  // Don't send if someone else changed the status concurrently (this update didn't apply)
   if (nextStatus === "confirmed" && !current.parent_booking_id && updated.length > 0) {
     const origin = await publicOrigin();
     after(() => notifyOrderConfirmed(bookingId, origin));

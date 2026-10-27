@@ -33,7 +33,7 @@ export async function createTestDb(options: { seed?: boolean } = {}) {
 
 type Role = "anon" | "authenticated" | "service_role";
 
-/** 以指定数据库角色（及可选的登录用户 id）执行，结束后恢复为超级用户。 */
+/** Runs as the given database role (and optional signed-in user id), then restores the superuser. */
 export async function withRole<T>(
   db: PGlite,
   role: Role,

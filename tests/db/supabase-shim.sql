@@ -1,6 +1,6 @@
--- 仅用于测试：在 PGlite 中模拟 Supabase 提供的角色、auth 与 storage，
--- 让真实的迁移文件可以原样运行。默认权限模仿 Supabase（public 下新对象默认授予 anon/authenticated），
--- 这样能验证迁移里的 revoke / RLS 确实生效。
+-- Test only: simulates the roles, auth and storage Supabase provides, inside PGlite,
+-- so the real migration files run unchanged. Default privileges mimic Supabase (new objects in public are granted to anon/authenticated by default),
+-- which lets the tests verify that the migrations' revokes and RLS actually take effect.
 
 create role anon nologin;
 create role authenticated nologin;

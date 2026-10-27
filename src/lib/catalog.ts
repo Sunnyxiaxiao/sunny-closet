@@ -12,8 +12,8 @@ import type { SettingsRow, StyleRow } from "@/lib/supabase/database.types";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 /**
- * 前台读取商品与可用性的唯一入口（匿名身份，受 RLS 约束）。
- * 每个函数先调用 connection()，表示数据在请求时实时读取，不在构建时预渲染。
+ * The storefront's single entry point for products and availability (anonymous role, subject to RLS).
+ * Every function calls connection() first, so data is read at request time rather than prerendered at build time.
  */
 
 export type PublicStyle = Pick<
@@ -42,13 +42,13 @@ const STYLE_COLUMNS =
 
 type StyleRowWithEnglish = PublicStyle & Pick<StyleRow, "name_en" | "description_en">;
 
-/** 英文页面用英文名称和介绍（没填英文时退回中文） */
+/** English pages use English names and descriptions (falling back to Chinese when missing) */
 function localize({ name_en, description_en, ...style }: StyleRowWithEnglish, locale: Locale): PublicStyle {
   if (locale !== "en") return style;
   return { ...style, name: name_en || style.name, description: description_en || style.description };
 }
 
-/** 款式分三类：雪服（成套 / 连体服 / 上衣 / 裤子）、头盔套、手套 */
+/** Styles come in three kinds: outfits (set / one-piece / jacket / pants), helmet covers, gloves */
 export type StyleKind = "outfit" | "helmet_cover" | "gloves";
 
 const ACCESSORY_CATEGORIES = [HELMET_COVER_CATEGORY, GLOVES_CATEGORY] as const;
@@ -59,7 +59,7 @@ export function styleKind(category: StyleRow["category"]): StyleKind {
     : "outfit";
 }
 
-/** 这个品类最长能租几天：手套单独算，其它都按 maxRentalDays */
+/** Maximum rental days for this category: gloves have their own limit, everything else uses maxRentalDays */
 export function maxRentalDaysFor(
   category: StyleRow["category"],
   settings: Pick<ShopSettings, "maxRentalDays" | "glovesMaxRentalDays">,
@@ -70,31 +70,31 @@ export function maxRentalDaysFor(
 export interface ShopSettings {
   bufferDays: number;
   maxRentalDays: number;
-  /** 单租手套最长几天（手套 3 天起封顶，不限天数就可能被租一整个雪季） */
+  /** Maximum days for a standalone glove rental (gloves cap out from day 3, so without a limit they could be rented for a whole season) */
   glovesMaxRentalDays: number;
-  /** 完整套装的价目表：第 n 项是租 n 天的总租金（美分），超出的天数用最后一档 */
+  /** Full-set price table: item n is the total rental for n days (cents); longer rentals use the last tier */
   rentalPricesCents: number[];
-  /** Mix & Match：只租外套 / 只租雪裤的价目表 */
+  /** Mix & Match: price tables for jacket-only / pants-only rentals */
   jacketPricesCents: number[];
   pantsPricesCents: number[];
-  /** Crystal Collection 雪服的正价表（成套 / 上衣 / 雪裤） */
+  /** Regular price tables for Crystal Collection outfits (set / jacket / pants) */
   crystalPricesCents: number[];
   crystalJacketPricesCents: number[];
   crystalPantsPricesCents: number[];
-  /** 感恩节 & 圣诞特惠截止日（含当天）；为空表示没有特惠 */
+  /** Last day (inclusive) of the Thanksgiving & Christmas promotion; empty means no promotion */
   crystalPromoEndsOn: IsoDate | null;
-  /** 今天（店铺时区）是否在特惠期内：是就按普通价收，正价划掉 */
+  /** Whether today (shop time zone) is within the promotion: if so, charge standard outfit prices and show the Crystal regular prices struck through */
   crystalPromoActive: boolean;
-  /** 邮寄的最短租期（天） */
+  /** Minimum rental days for shipping */
   shippingMinDays: number;
-  /** 到店自取 / 邮寄在滑雪日前后各占用几天库存（不收费） */
+  /** Days of inventory occupied before and after the ski days for pickup / shipping (not billed) */
   paddings: FulfillmentPaddings;
 }
 
 export interface SizeAvailability {
   size: string;
   total: number;
-  /** 未指定日期时等于 total */
+  /** Equals total when no dates are given */
   available: number;
 }
 
@@ -158,8 +158,8 @@ export async function getSettings(): Promise<ShopSettings> {
 }
 
 /**
- * 上架的款式。默认只列雪服；头盔套传 kind: "helmet_cover"，手套传 kind: "gloves"。名称和介绍按 locale 返回。
- * “上衣 + 黑色雪裤”套装不单独展示（在上衣页面里当选项），要用时传 withPantsOptions: true
+ * Active styles. Lists outfits by default; pass kind: "helmet_cover" for helmet covers or kind: "gloves" for gloves. Names and descriptions follow locale.
+ * "Top + black snow pants" sets aren't listed on their own (they're an option on the top's page); pass withPantsOptions: true to include them
  */
 export async function listStyles({
   kind = "outfit",
@@ -197,11 +197,11 @@ export async function getStyleBySlug(
 }
 
 /**
- * 这个款式按哪张价目表计价：有自己的价目表就用自己的（头盔套、手套），
- * 否则按品类：外套 / 雪裤用 Mix & Match 价目表，成套和连体服用完整套装价目表。
- * 例外：背带雪裤（bib 标签）按外套价，卫衣（hoodie 标签）按雪裤价。
- * Crystal Collection 雪服有自己的正价表，特惠期内按普通价收（见 crystalRegularTable）。
- * 数据库的 style_rental_price_cents 是同样的规则，下单时会再校验一次。
+ * Which price table this style uses: its own if it has one (helmet covers, gloves),
+ * otherwise by category: jackets / pants use the Mix & Match tables, sets and one-pieces use the full-set table.
+ * Exceptions: bib pants (bib tag) use jacket prices and hoodies (hoodie tag) use pants prices.
+ * Crystal Collection outfits have their own regular price table and charge standard prices during the promotion (see crystalRegularTable).
+ * The database's style_rental_price_cents applies the same rules and re-validates when the order is placed.
  */
 export function stylePriceTable(style: PricedStyle, settings: PriceSettings): number[] {
   if (style.rental_prices_cents) return style.rental_prices_cents;
@@ -210,7 +210,7 @@ export function stylePriceTable(style: PricedStyle, settings: PriceSettings): nu
   return { suit: settings.rentalPricesCents, jacket: settings.jacketPricesCents, pants: settings.pantsPricesCents }[kind];
 }
 
-/** 特惠期内 Crystal 雪服的正价表（页面上划掉显示）；不在特惠期或不是 Crystal 雪服时为 null */
+/** Regular price table of Crystal outfits during the promotion (shown struck through); null outside the promotion or for non-Crystal outfits */
 export function crystalRegularTable(style: PricedStyle, settings: PriceSettings): number[] | null {
   if (style.rental_prices_cents || !isCrystal(style) || !settings.crystalPromoActive) return null;
   return crystalTables(settings)[priceKind(style)];
@@ -228,7 +228,7 @@ type PriceSettings = Pick<
   | "crystalPromoActive"
 >;
 
-/** 按哪一类计价：背带雪裤算上衣，卫衣算雪裤，其余雪服算成套 */
+/** Which category to price by: bib pants count as jackets, hoodies as pants, all other outfits as sets */
 function priceKind(style: PricedStyle): "suit" | "jacket" | "pants" {
   if (style.category === "pants") return style.tags.includes(BIB_TAG) ? "jacket" : "pants";
   if (style.category === "jacket") return style.tags.includes(HOODIE_TAG) ? "pants" : "jacket";
@@ -244,8 +244,8 @@ function crystalTables(settings: PriceSettings) {
 }
 
 /**
- * 同款不同色：带同一个 series: 标签的款式（例如 series:isee-cross），详情页互相显示为“同款其他颜色”。
- * 可以是整套和单件上衣混着（某个颜色只有上衣）。
+ * Same style, different colors: styles sharing a series: tag (e.g. series:isee-cross) show each other as "Other colors" on the product page.
+ * Full sets and jacket-only styles can be mixed (some colors only come as a jacket).
  */
 export function sameSeries<T extends Pick<PublicStyle, "id" | "tags">>(style: T, all: T[]): T[] {
   const series = style.tags.filter((tag) => tag.startsWith("series:"));
@@ -253,21 +253,21 @@ export function sameSeries<T extends Pick<PublicStyle, "id" | "tags">>(style: T,
   return all.filter((s) => s.id !== style.id && s.tags.some((tag) => series.includes(tag)));
 }
 
-/** 背带雪裤按外套价、卫衣按雪裤价（见 stylePriceTable） */
+/** Bib pants use jacket prices and hoodies use pants prices (see stylePriceTable) */
 export const BIB_TAG = "bib";
 export const HOODIE_TAG = "hoodie";
 /**
- * 只有上衣的款式出的“上衣 + 随机黑色滑雪裤”套装（只含 1 件单品的组合套装）。
- * 不单独展示，是上衣页面下单时的一个选项：按套装价收费，占用那件上衣的库存
+ * The "top + random black snow pants" set offered by jacket-only styles (a bundle with a single separate).
+ * Not listed on its own; it's an option when ordering from the top's page, charged at set prices and occupying that top's inventory
  */
 export const WITH_PANTS_TAG = "with-black-pants";
 
-/** 外套、雪裤单租（Mix & Match 区） */
+/** Jacket and pants rentals (Mix & Match section) */
 export function isSeparate(style: Pick<PublicStyle, "category">) {
   return style.category === "jacket" || style.category === "pants";
 }
 
-/** 每个款式在这段时间（不传日期则不看排期）一共有几件可租，用于头盔套这类不分尺码的款式 */
+/** Total available count of each style for these dates (ignores scheduling without dates), for styles without sizes such as helmet covers */
 export function availableCounts(availability: Map<string, SizeAvailability[]>): Map<string, number> {
   return new Map(
     [...availability].map(([styleId, sizes]) => [styleId, sizes.reduce((sum, s) => sum + s.available, 0)]),
@@ -275,8 +275,8 @@ export function availableCounts(availability: Map<string, SizeAvailability[]>): 
 }
 
 /**
- * 返回 款式 id → 各尺码可租件数。传入日期（滑雪日）时按排期计算：
- * 含取件方式对应的前置 / 后置天数和清洁缓冲，默认按到店自取（占用时间最短）。
+ * Returns style id → available count per size. With dates (ski days), it follows the schedule:
+ * including the lead / tail days of the fulfillment method and the cleaning buffer; defaults to local pickup (the shortest occupancy).
  */
 export async function getAvailability(options: {
   start?: IsoDate;

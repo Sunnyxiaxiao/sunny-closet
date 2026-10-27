@@ -1,14 +1,14 @@
--- Sunny Closet：头盔套（装饰配件）
+-- Sunny Closet: helmet covers (decorative accessories)
 --
--- 1) 头盔套也是一个“款式”（styles.category = 'helmet_cover'），库存、排期、防超订全部沿用原来的表和约束。
---    新增字段：档位 tier（regular / premium）、标签 tags、搭配加购价、重置价值、单独的价目表。
---    styles.rental_prices_cents 不为空时，这个款式按自己的价目表计价，否则用 settings 里的全店价目表。
--- 2) 搭配雪服加购：加购的头盔套是一笔“子订单”（bookings.parent_booking_id 指向雪服订单），
---    日期与雪服相同，租金为固定的加购价，不按天数计算。主订单改状态时，子订单自动跟着改。
--- 3) 后台手动锁定日期：inventory_blocks，锁定期间这件库存不可被预订。
+-- 1) A helmet cover is also a "style" (styles.category = 'helmet_cover') and reuses the existing tables and constraints for inventory, scheduling and overbooking.
+--    New columns: tier (regular / premium), tags, add-on price, replacement value, and a separate price table.
+--    When styles.rental_prices_cents is set, the style is priced by its own table; otherwise by the shop-wide table in settings.
+-- 2) Add-on to an outfit: an added helmet cover is a "child order" (bookings.parent_booking_id points to the outfit order)
+--    with the same dates as the outfit and a flat add-on price regardless of days. When the main order's status changes, child orders follow automatically.
+-- 3) Manual date blocks in admin: inventory_blocks; the item can't be booked while blocked.
 
 -- ---------------------------------------------------------------------------
--- 款式：头盔套字段
+-- Styles: helmet cover columns
 -- ---------------------------------------------------------------------------
 alter table public.styles drop constraint styles_category_check;
 
@@ -32,7 +32,7 @@ alter table public.styles
     or (tier is not null and addon_price_cents is not null and rental_prices_cents is not null)
   );
 
--- 某个款式租 p_days 天的租金：优先用款式自己的价目表
+-- Rental for a style for p_days days: the style's own price table takes precedence
 create or replace function public.style_rental_price_cents(p_style_id uuid, p_days integer)
 returns integer
 language sql
@@ -50,7 +50,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 手动锁定日期
+-- Manual date blocks
 -- ---------------------------------------------------------------------------
 create table public.inventory_blocks (
   id uuid primary key default gen_random_uuid(),
@@ -77,7 +77,7 @@ create policy inventory_blocks_admin_insert on public.inventory_blocks
 create policy inventory_blocks_admin_delete on public.inventory_blocks
   for delete to authenticated using (public.is_admin());
 
--- 某件库存在占用区间 p_range 内是否空闲（没有占用中的订单，也没有被手动锁定）
+-- Whether an inventory item is free within the occupied range p_range (no occupying orders and no manual blocks)
 create or replace function public.is_item_free(p_item_id uuid, p_range daterange)
 returns boolean
 language sql
@@ -99,7 +99,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 订单：加购子订单
+-- Bookings: add-on child orders
 -- ---------------------------------------------------------------------------
 alter table public.bookings
   add column parent_booking_id uuid references public.bookings (id) on delete restrict,
@@ -107,7 +107,7 @@ alter table public.bookings
 
 create index bookings_parent_idx on public.bookings (parent_booking_id) where parent_booking_id is not null;
 
--- 主订单改状态时，仍和主订单处于同一状态的加购子订单跟着改
+-- When the main order's status changes, add-on child orders still in the same status follow it
 create or replace function public.sync_addon_status()
 returns trigger
 language plpgsql
@@ -130,7 +130,7 @@ create trigger bookings_sync_addon_status
   execute function public.sync_addon_status();
 
 -- ---------------------------------------------------------------------------
--- 可用性查询：额外排除手动锁定的日期
+-- Availability: also exclude manually blocked dates
 -- ---------------------------------------------------------------------------
 create or replace function public.get_availability(
   p_start date default null,
@@ -176,8 +176,8 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 分配一件空闲库存并写入一行订单（create_booking 内部使用）
--- 并发安全仍由 bookings_no_overlap 排他约束保证：抢到同一件时换下一件。
+-- Assigns a free inventory item and writes one booking row (used inside create_booking)
+-- Concurrency safety is still guaranteed by the bookings_no_overlap exclusion constraint: if the same item is taken, try the next one.
 -- ---------------------------------------------------------------------------
 create or replace function public.insert_booking_row(
   p_booking_no text,
@@ -251,8 +251,8 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 创建预订（雪服或单租头盔套），可附带加购的头盔套
--- p_addon_style_ids / p_addon_cents：加购款式和服务端算好的加购价，一一对应
+-- Creates a booking (an outfit or a standalone helmet cover), optionally with helmet-cover add-ons
+-- p_addon_style_ids / p_addon_cents: add-on styles and their server-computed prices, matched by position
 -- ---------------------------------------------------------------------------
 drop function public.create_booking(
   uuid, text, date, date, text, text, text, text, text, text, integer, integer, integer
@@ -350,7 +350,7 @@ begin
       p_fulfillment_method, p_shipping_address, p_customer_note,
       v_addon.addon_price_cents, v_addon.addon_price_cents, 0
     );
-    -- 抛出异常会让整个预订（含雪服那一行）一起回滚
+    -- Raising an exception rolls back the whole booking (including the outfit row)
     if not found then
       raise exception 'addon_unavailable' using errcode = 'P0001';
     end if;
@@ -364,7 +364,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 函数权限：新建的函数默认对 public 开放，这里统一收回再按需授予
+-- Function privileges: new functions are open to public by default, so revoke and grant only as needed
 -- ---------------------------------------------------------------------------
 revoke execute on function
   public.style_rental_price_cents(uuid, integer),

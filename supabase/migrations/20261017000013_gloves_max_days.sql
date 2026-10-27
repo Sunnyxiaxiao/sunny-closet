@@ -1,8 +1,8 @@
--- Sunny Closet：单租手套最长 10 天
+-- Sunny Closet: standalone glove rentals capped at 10 days
 --
--- 手套按自己的价目表封顶（普通手套 3 天起 $25），如果不限天数就可能被单租一整个雪季。
--- 规则：和雪服一起租的跟雪服一起归还（雪服最长 max_rental_days 天）；单租手套最长 gloves_max_rental_days 天。
--- 只改了 create_booking 里“租期太长”的判断，其它逻辑与 20261017000008 相同。
+-- Gloves' price tables cap out (regular gloves $25 from 3 days), so without a limit they could be rented for a whole season.
+-- Rule: gloves rented with an outfit are returned with it (outfits max max_rental_days); standalone gloves max gloves_max_rental_days.
+-- Only the "rental too long" check in create_booking changes; everything else is the same as 20261017000008.
 
 alter table public.settings
   add column gloves_max_rental_days integer not null default 10
@@ -110,7 +110,7 @@ begin
       p_fulfillment_method, p_shipping_address, p_customer_note,
       v_addon.addon_price_cents, v_addon.addon_price_cents, 0
     );
-    -- 抛出异常会让整个预订（含雪服那一行）一起回滚
+    -- Raising an exception rolls back the whole booking (including the outfit row)
     if not found then
       raise exception 'addon_unavailable' using errcode = 'P0001';
     end if;

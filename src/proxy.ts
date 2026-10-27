@@ -4,11 +4,11 @@ import { DEFAULT_LOCALE, LOCALES } from "@/i18n/config";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
 
 /**
- * 1. 语言：前台页面都在 app/[lang] 下。中文网址不带前缀（/styles），这里转到内部的 /zh/styles；
- *    英文网址本身就带 /en，原样放行；有人直接打开 /zh/... 时跳回不带前缀的地址，避免同一页两个网址。
- * 2. 登录状态：Supabase 的登录凭证会定期过期，需要在请求进来时续期并写回 cookie，
- *    否则顾客或管理员会莫名其妙被退出登录。只在浏览器带着登录 cookie 时才做，没登录的访客不多一次网络请求。
- *    这里不做权限判断。后台的权限检查在每个后台页面和操作里（见 src/lib/admin/auth.ts）。
+ * 1. Locale: storefront pages live under app/[lang]. Chinese URLs have no prefix (/styles) and are rewritten here to the internal /zh/styles;
+ *    English URLs already carry /en and pass through; direct visits to /zh/... redirect to the unprefixed URL so a page never has two URLs.
+ * 2. Session: Supabase auth tokens expire periodically and must be refreshed on incoming requests and written back to cookies,
+ *    or customers and the admin get signed out unexpectedly. Only done when the browser has an auth cookie, so signed-out visitors cost no extra request.
+ *    No authorization happens here. Admin access is checked in every admin page and action (see src/lib/admin/auth.ts).
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,7 +33,7 @@ function hasAuthCookie(request: NextRequest) {
   return request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
 }
 
-/** makeResponse 每次调用都要生成新的响应（带上最新的请求 cookie），续期后把新 cookie 写回浏览器 */
+/** makeResponse must build a fresh response on every call (with the latest request cookies), so refreshed cookies get written back to the browser */
 async function refreshSession(request: NextRequest, makeResponse: () => NextResponse) {
   let response = makeResponse();
   if (!hasAuthCookie(request)) return response;
@@ -56,13 +56,13 @@ async function refreshSession(request: NextRequest, makeResponse: () => NextResp
     },
   });
 
-  // 必须调用 getUser()：它会在需要时续期登录状态
+  // getUser() must be called: it refreshes the session when needed
   await supabase.auth.getUser();
 
   return response;
 }
 
 export const config = {
-  // 跳过接口、Next.js 内部文件和带扩展名的静态文件（图片、favicon 等）
+  // Skip API routes, Next.js internals and static files with an extension (images, favicon, etc.)
   matcher: ["/((?!api/|_next/|.*\\..*).*)"],
 };

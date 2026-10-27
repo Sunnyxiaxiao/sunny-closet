@@ -1,7 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 
-/** 当前网站的地址（例如 https://sunnycloset.com），用来生成确认邮件、重设密码邮件里的链接 */
+/** The current site origin (e.g. https://sunnycloset.com), used to build links in confirmation and password-reset emails */
 export async function siteOrigin(): Promise<string> {
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
@@ -10,15 +10,15 @@ export async function siteOrigin(): Promise<string> {
 }
 
 /**
- * 邮件里用的网站地址：上线后在环境变量 NEXT_PUBLIC_SITE_URL 填正式网址（例如 https://sunnycloset.com），
- * 这样从后台、预览地址触发的邮件也会链接到正式网站；没填时用当前访问的地址。
+ * Site origin for emails: after launch, set NEXT_PUBLIC_SITE_URL to the production URL (e.g. https://sunnycloset.com)
+ * so emails triggered from admin or preview deployments still link to the production site; falls back to the current origin when unset.
  */
 export async function publicOrigin(): Promise<string> {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
   return configured || siteOrigin();
 }
 
-/** 只允许跳回本站的路径（防止被拿去跳到别的网站） */
+/** Only allow redirects to paths on this site (prevents open redirects to other sites) */
 export function safeNextPath(value: unknown, fallback: string): string {
   return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : fallback;
 }

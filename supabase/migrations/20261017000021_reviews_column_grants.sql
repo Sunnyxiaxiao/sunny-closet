@@ -1,9 +1,9 @@
--- Sunny Closet：评价表按最小权限收紧登录用户能读的列
+-- Sunny Closet: least-privilege columns on reviews for signed-in users
 --
--- 之前登录用户（authenticated）能读 reviews 的所有列，包括 booking_id、status。
--- 现在和访客对齐，只开放商品页展示需要的列。
--- 列权限是按数据库角色授的，没法只给管理员多开几列；管理员后台改走 admin_list_reviews()，
--- 函数里先核对是不是管理员，再返回整行。
+-- Previously, signed-in users (authenticated) could read every column of reviews, including booking_id and status.
+-- They now match visitors and only get the columns the product page displays.
+-- Column grants are per database role, so the admin can't get extra columns alone; the admin dashboard uses admin_list_reviews() instead,
+-- which checks for admin first and then returns full rows.
 
 revoke select on public.reviews from authenticated;
 grant select (id, style_id, rating, body, display_name, locale, published_at) on public.reviews to authenticated;

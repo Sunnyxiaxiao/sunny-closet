@@ -56,16 +56,16 @@ function parseJson(value: string): unknown {
 }
 
 /**
- * 顾客提交购物车，生成一笔订单（一个预订编号）。
+ * The customer submits the cart and it becomes one order (one order number).
  *
- * 安全原则：浏览器传来的一切都不可信。
- * 价格、日期是否合法、款式是否在售，全部由这里重新查库、重新计算（邮寄全美包邮，没有运费）；
- * 是否有货由数据库的 create_order 在事务里决定，并发也不会重复分配，任何一件没货整单不成立。
+ * Security rule: nothing from the browser is trusted.
+ * Prices, date validity and whether styles are active are all re-read and recomputed here (free shipping nationwide, no shipping fee);
+ * availability is decided by create_order in a database transaction, so concurrent orders never share an item, and if any item is unavailable the whole order fails.
  */
 export async function submitOrder(_previous: BookingFormState, formData: FormData): Promise<BookingFormState> {
   const raw = Object.fromEntries(formData);
   const values = readValues(raw);
-  // 表单所在页面的语言，提示文字和跳转的预订详情页都用这种语言
+  // The language of the page the form was on; messages and the order page redirect use it
   const locale = isLocale(raw.locale) ? raw.locale : DEFAULT_LOCALE;
   const messages = getMessages(locale);
   const t = messages.cart;
@@ -76,7 +76,7 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     values,
   });
 
-  // 蜜罐：真人看不到这个输入框，机器人会填
+  // Honeypot: humans can't see this field, bots fill it in
   if (text(raw, "website").trim() !== "") return fail(defaultError);
 
   const parsed = createCheckoutSchema(messages.validation).safeParse(raw);
@@ -88,7 +88,7 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   if (!linesParsed.success) return fail(t.invalidCart);
   const shipping = input.fulfillment === "shipping";
 
-  // 重新读取价格与店铺设置（只用数据库里的，不信任页面传来的）
+  // Re-read prices and shop settings (trust only the database, never the page)
   let cart: Awaited<ReturnType<typeof priceCart>>;
   try {
     cart = await priceCart(linesParsed.data, locale);
@@ -117,7 +117,7 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     }
   }
 
-  // 防刷：同一网络 10 分钟最多 6 次；同一邮箱 1 小时最多 3 次
+  // Rate limits: at most 6 per network per 10 minutes and 3 per email per hour
   const requestHeaders = await headers();
   const ip =
     requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -178,12 +178,12 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   if (error || !order) {
     if (!bookingErrorCode(error?.message)) console.error("[submitOrder] 创建订单失败", error);
     const message = mapBookingError(error?.message, locale);
-    // 数据库报错带着是第几件（例如 no_availability line=2），只有一件时不用说
+    // Database errors say which item failed (e.g. no_availability line=2); no need to mention it for a single item
     const line = /line=(\d+)/.exec(error?.message ?? "")?.[1];
     return fail(line && lines.length > 1 ? t.lineError(Number(line), message) : message);
   }
 
-  // 登录状态下下的单记到这个账号名下（含子订单），“我的账号”里能看到
+  // Orders placed while signed in are linked to the account (child orders included) and show up in "My account"
   const user = (await hasAuthCookie())
     ? (await (await createSupabaseServerClient()).auth.getUser()).data.user
     : null;
@@ -195,10 +195,10 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     if (linkError) console.error("[submitOrder] 关联账号失败", linkError);
   }
 
-  // 发邮件通知店主有新订单（响应发出去之后再发，不让顾客等）
+  // Email the owner about the new order (after the response is sent, so the customer doesn't wait)
   const origin = await publicOrigin();
   after(() => notifyNewOrder(order.booking_id, origin));
 
-  // 页面先清空购物车再跳转（直接 redirect 的话页面来不及清空）
+  // The page clears the cart before navigating (a direct redirect wouldn't give it time to clear)
   return { redirectTo: localePath(locale, `/booking/${order.booking_no}`) };
 }

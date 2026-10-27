@@ -1,10 +1,10 @@
--- Sunny Closet：管理员、行级安全（RLS）与权限
--- 原则：匿名访客（anon）只能读上架商品、调用可用性查询；
---      预订只能经由服务端（service_role）调用 create_booking 提交；
---      订单与顾客信息只有管理员可读写。
+-- Sunny Closet: admins, row-level security (RLS) and privileges
+-- Principles: anonymous visitors (anon) can only read active products and call the availability query;
+--      bookings can only be submitted by the server (service_role) through create_booking;
+--      orders and customer data are readable and writable by the admin only.
 
 -- ---------------------------------------------------------------------------
--- 管理员名单
+-- Admin list
 -- ---------------------------------------------------------------------------
 create table public.admin_users (
   user_id uuid primary key references auth.users (id) on delete cascade,
@@ -25,7 +25,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 先收回所有默认权限，再按需授予
+-- Revoke every default privilege first, then grant only what is needed
 -- ---------------------------------------------------------------------------
 revoke all on table
   public.settings,
@@ -47,7 +47,7 @@ revoke execute on function
 from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 开启 RLS
+-- Enable RLS
 -- ---------------------------------------------------------------------------
 alter table public.settings enable row level security;
 alter table public.styles enable row level security;
@@ -56,7 +56,7 @@ alter table public.bookings enable row level security;
 alter table public.rate_limits enable row level security;
 alter table public.admin_users enable row level security;
 
--- settings：所有人可读（前台需要缓冲天数等），管理员可改
+-- settings: readable by everyone (the storefront needs buffer days etc.), editable by the admin
 grant select on public.settings to anon, authenticated;
 grant update (buffer_days, max_rental_days) on public.settings to authenticated;
 
@@ -69,7 +69,7 @@ create policy settings_admin_update on public.settings
   using (public.is_admin())
   with check (public.is_admin());
 
--- styles：访客只能看上架的；管理员可看全部、新增、编辑（不提供删除，用“停用”代替）
+-- styles: visitors see active styles only; the admin can see all, insert and edit (no delete; deactivate instead)
 grant select on public.styles to anon, authenticated;
 grant insert, update on public.styles to authenticated;
 
@@ -86,7 +86,7 @@ create policy styles_admin_update on public.styles
   using (public.is_admin())
   with check (public.is_admin());
 
--- inventory_items：仅管理员（访客通过 get_availability 只拿到件数）
+-- inventory_items: admin only (visitors only get counts through get_availability)
 grant select, insert, update on public.inventory_items to authenticated;
 
 create policy inventory_admin_select on public.inventory_items
@@ -102,7 +102,7 @@ create policy inventory_admin_update on public.inventory_items
   using (public.is_admin())
   with check (public.is_admin());
 
--- bookings：仅管理员可读、可改状态与备注；任何人都不能直接 insert/delete
+-- bookings: admin only can read and change status and notes; nobody can insert/delete directly
 grant select on public.bookings to authenticated;
 grant update (status, admin_note) on public.bookings to authenticated;
 
@@ -115,17 +115,17 @@ create policy bookings_admin_update on public.bookings
   using (public.is_admin())
   with check (public.is_admin());
 
--- admin_users：已登录用户只能看到自己那一行（用于判断自己是不是管理员）
+-- admin_users: signed-in users can only see their own row (to check whether they are an admin)
 grant select on public.admin_users to authenticated;
 
 create policy admin_users_self_read on public.admin_users
   for select to authenticated
   using (user_id = auth.uid());
 
--- rate_limits：不开放给 anon / authenticated，只有 service_role 使用
+-- rate_limits: not exposed to anon / authenticated; used by service_role only
 
 -- ---------------------------------------------------------------------------
--- 函数执行权限
+-- Function execute privileges
 -- ---------------------------------------------------------------------------
 grant execute on function public.is_blocking_status(text) to anon, authenticated;
 grant execute on function public.is_admin() to anon, authenticated;

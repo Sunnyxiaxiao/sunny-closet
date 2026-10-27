@@ -1,12 +1,12 @@
--- Sunny Closet：Crystal Collection 雪服的正价 + 感恩节 & 圣诞特惠
+-- Sunny Closet: regular prices for Crystal Collection outfits + Thanksgiving & Christmas promotion
 --
--- 带 'crystal' 标签的雪服（成套 / 连体服 / 上衣 / 雪裤）有自己的正价表（大约是普通价 × 59/49）：
---   成套：$59、$95、$113、$131、$143、$155、$167
---   上衣：$42、$60、$72、$84、$96、$102、$108
---   雪裤：$30、$42、$54、$66、$78、$84、$90
--- 特惠期内（店铺所在时区的今天 ≤ crystal_promo_ends_on）按普通价收，页面上把正价划掉；
--- 过了截止日自动恢复正价。crystal_promo_ends_on 为空表示没有特惠。
--- 手套、头盔套有自己的 rental_prices_cents，不受影响。
+-- Outfits tagged 'crystal' (set / one-piece / jacket / pants) have their own regular price tables (roughly standard × 59/49):
+--   Set:    $59, $95, $113, $131, $143, $155, $167
+--   Jacket: $42, $60, $72, $84, $96, $102, $108
+--   Pants:  $30, $42, $54, $66, $78, $84, $90
+-- During the promotion (today in the shop's time zone ≤ crystal_promo_ends_on), standard prices apply and the regular prices are shown struck through;
+-- after the end date regular prices return automatically. A null crystal_promo_ends_on means no promotion.
+-- Gloves and helmet covers have their own rental_prices_cents and are unaffected.
 
 alter table public.settings
   add column crystal_prices_cents integer[] not null
@@ -32,7 +32,7 @@ grant update (
   crystal_prices_cents, crystal_jacket_prices_cents, crystal_pants_prices_cents, crystal_promo_ends_on
 ) on public.settings to authenticated;
 
--- 特惠是否还在进行（按店铺时区 America/New_York 的日期）
+-- Whether the promotion is still running (by date in the shop's time zone, America/New_York)
 create or replace function public.crystal_promo_active()
 returns boolean
 language sql
@@ -58,7 +58,7 @@ as $$
     select coalesce(
       st.rental_prices_cents,
       case
-        -- 先按品类定用哪张表（背带雪裤按上衣、卫衣按雪裤），Crystal 款过了特惠期用正价表
+        -- Pick the table by category first (bib pants as tops, hoodies as pants); Crystal styles use the regular table after the promotion
         when b.kind = 'jacket' and b.crystal then s.crystal_jacket_prices_cents
         when b.kind = 'jacket' then s.jacket_prices_cents
         when b.kind = 'pants' and b.crystal then s.crystal_pants_prices_cents

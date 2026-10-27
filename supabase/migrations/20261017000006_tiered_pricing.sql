@@ -1,11 +1,11 @@
--- Sunny Closet：阶梯定价 + 邮寄最短租期
+-- Sunny Closet: tiered pricing + minimum shipping rental
 --
--- 租金不再是“天数 × 日租价”，而是按租期天数查价目表：
---   rental_prices_cents[n] = 租 n 天的总租金（美分）；超过数组长度的天数使用最后一档。
---   默认：1 天 $49、2 天 $79、3 天 $99、4 天 $119、5 天及以上 $149。
--- 最长租期改为 7 天（价目表只覆盖到 5–7 天）。
--- 到店自取最短 1 天；邮寄最短 shipping_min_days 天（默认 2）。
--- 价格和最短租期都在 create_booking 里再校验一遍，页面上的旧价格无法提交。
+-- Rental is no longer "days × daily price" but looked up in a price table by rental length:
+--   rental_prices_cents[n] = total rental for n days (cents); days beyond the array length use the last tier.
+--   Defaults: 1 day $49, 2 days $79, 3 days $99, 4 days $119, 5+ days $149.
+-- Maximum rental becomes 7 days (the price table only covers up to 5–7 days).
+-- Local pickup minimum is 1 day; shipping minimum is shipping_min_days (default 2).
+-- Prices and minimum days are re-validated in create_booking, so stale prices on a page can't be submitted.
 
 alter table public.settings
   add column rental_prices_cents integer[] not null
@@ -20,11 +20,11 @@ alter table public.settings
 
 update public.settings set max_rental_days = 7 where id;
 
--- 款式上的 daily_price_cents 现在只用作列表页的“起价”，统一设为价目表第 1 档
+-- daily_price_cents on styles is now only the "from" price on listings, set to tier 1 of the table
 update public.styles
 set daily_price_cents = (select rental_prices_cents[1] from public.settings where id);
 
--- 租 p_days 天应付的租金（美分）
+-- Rental due for p_days days (cents)
 create or replace function public.rental_price_cents(p_days integer)
 returns integer
 language sql
@@ -88,7 +88,7 @@ begin
     raise exception 'style_not_found' using errcode = 'P0001';
   end if;
 
-  -- 租金按价目表校验；押金仍以款式上的押金为准
+  -- Rental is validated against the price table; the deposit still comes from the style
   if p_rental_cents <> public.rental_price_cents(p_end - p_start + 1)
      or p_deposit_cents <> v_style.deposit_cents then
     raise exception 'price_changed' using errcode = 'P0001';

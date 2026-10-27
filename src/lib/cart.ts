@@ -1,7 +1,7 @@
 /**
- * 购物车：存在顾客自己的浏览器里（localStorage），不登录也能用。
- * 只存“哪一款、哪个尺码、哪几天、加购了哪些头盔套”；名称、价格、是否有货每次打开购物车时向服务端重新查询，
- * 提交订单时服务端和数据库还会再校验一遍。
+ * Cart: stored in the customer's own browser (localStorage), so no account is needed.
+ * It stores only which style, size, dates and helmet-cover add-ons; names, prices and availability are re-fetched from the server every time the cart opens,
+ * and the server and database validate everything again when the order is submitted.
  */
 
 import { useSyncExternalStore } from "react";
@@ -11,13 +11,13 @@ import type { IsoDate } from "@/lib/dates";
 export { MAX_CART_LINES };
 
 export interface CartLine {
-  /** 购物车里这一行的编号（浏览器生成），删除时用 */
+  /** ID of this cart line (generated in the browser), used for removal */
   id: string;
   styleId: string;
   size: string;
   start: IsoDate;
   end: IsoDate;
-  /** 加购的头盔套款式 id（只有雪服能加购） */
+  /** Style ids of helmet-cover add-ons (outfits only) */
   addOnIds: string[];
 }
 
@@ -48,7 +48,7 @@ function readRaw(): string | null {
   }
 }
 
-/** 读购物车。内容没变时返回同一个数组（useSyncExternalStore 需要） */
+/** Reads the cart. Returns the same array while the contents are unchanged (required by useSyncExternalStore) */
 export function getCart(): CartLine[] {
   if (typeof window === "undefined") return EMPTY;
   const raw = readRaw();
@@ -68,7 +68,7 @@ function save(lines: CartLine[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
   } catch {
-    // 隐私模式等存不了时，购物车只在这个页面里有效
+    // When storage isn't available (e.g. private mode), the cart only lasts for this page
     cache = { raw: JSON.stringify(lines), lines };
   }
   window.dispatchEvent(new Event(CHANGE_EVENT));
@@ -80,7 +80,7 @@ function newId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-/** 放进购物车；满了返回 false */
+/** Adds to the cart; returns false when full */
 export function addToCart(line: Omit<CartLine, "id">): boolean {
   const lines = getCart();
   if (lines.length >= MAX_CART_LINES) return false;
@@ -98,7 +98,7 @@ export function clearCart() {
 
 function subscribe(onChange: () => void) {
   window.addEventListener(CHANGE_EVENT, onChange);
-  // 其他标签页改了购物车
+  // Another tab changed the cart
   window.addEventListener("storage", onChange);
   return () => {
     window.removeEventListener(CHANGE_EVENT, onChange);
@@ -106,7 +106,7 @@ function subscribe(onChange: () => void) {
   };
 }
 
-/** 在组件里读购物车，内容变了自动刷新。服务端渲染时是空的 */
+/** Reads the cart in a component and re-renders on changes. Empty during SSR */
 export function useCart(): CartLine[] {
   return useSyncExternalStore(subscribe, getCart, () => EMPTY);
 }

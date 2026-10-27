@@ -1,8 +1,8 @@
--- Sunny Closet：只有上衣的款式，可以出一个“上衣 + 随机黑色滑雪裤”的选项
+-- Sunny Closet: jacket-only styles can offer a "top + random black snow pants" option
 --
--- 做法：组合套装允许只有 1 件单品。套装按套装价目表收费，下单时占用那件上衣的库存，
--- 和单租上衣不会撞单；黑色滑雪裤是店里的基础款，随机配，不单独记库存。
--- 页面上用 'with-black-pants' 标签区分这种套装和店主搭配的多件套装。
+-- How: bundles may now have a single separate. The set is charged by the set price table and occupies that top's inventory when ordered,
+-- so it never double-books with the top rented alone; the black pants are a shop basic, assigned at random and not tracked as inventory.
+-- Pages use the 'with-black-pants' tag to tell this set apart from multi-piece bundles curated by the owner.
 
 do $$
 declare

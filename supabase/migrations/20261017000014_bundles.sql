@@ -1,11 +1,11 @@
--- Sunny Closet：组合套装（店主搭配的一套，上下装也能单独租）
+-- Sunny Closet: bundles (sets curated by the owner whose pieces can also be rented separately)
 --
--- styles.bundle_style_ids：这一套由哪几件单品组成（外套、雪裤各是一个款式，各有自己的库存）。
---   组合套装自己不放库存：
---   - 可租件数 = 每件单品同一尺码可租件数的最小值（get_availability）
---   - 下单时同时占用每件单品的真实库存（create_booking），所以整套和单租不会撞单
--- bookings.bundle_part：组合套装里除第一件以外的单品子订单（0 元，跟着主订单走），
---   和头盔套加购子订单区分开。
+-- styles.bundle_style_ids: the separates a bundle consists of (the jacket and pants are each a style with their own inventory).
+--   Bundles hold no inventory of their own:
+--   - Available count = the minimum available count of each separate in the same size (get_availability)
+--   - Ordering reserves each separate's real inventory at once (create_booking), so bundles and separates never double-book
+-- bookings.bundle_part: child orders for the bundle's separates after the first ($0, following the main order),
+--   distinct from helmet-cover add-on child orders.
 
 alter table public.styles
   add column bundle_style_ids uuid[]
@@ -74,7 +74,7 @@ begin
   from counts c
   where p_style_id is null or c.style_id = p_style_id
   union all
-  -- 组合套装：每件单品都有这个尺码才算，件数取最小值
+  -- Bundles: every separate must have this size, and the count is the minimum
   select b.id, c.size, min(c.total_count)::integer, min(c.available_count)::integer
   from bundles b
   cross join lateral unnest(b.bundle_style_ids) as part(style_id)
@@ -157,9 +157,9 @@ begin
     raise exception 'invalid_addons' using errcode = 'P0001';
   end if;
 
-  -- 普通款式：占用自己的一件库存。
-  -- 组合套装：主订单占用第一件单品（记在套装名下，收套装的租金和押金），
-  --           其余单品各写一行 0 元的子订单（bundle_part），任何一件没空都整单回滚。
+  -- Regular styles: occupy one of their own items.
+  -- Bundles: the main order occupies the first separate (recorded under the bundle, charging the bundle's rental and deposit),
+  --           and every other separate gets a $0 child order (bundle_part); if any of them is unavailable, the whole order rolls back.
   select * into v_main from public.insert_booking_row(
     v_booking_no, null, coalesce(v_style.bundle_style_ids[1], p_style_id), p_size, p_start, p_end,
     v_settings.buffer_days, v_padding.lead_days, v_padding.tail_days,
@@ -208,7 +208,7 @@ begin
       p_fulfillment_method, p_shipping_address, p_customer_note,
       v_addon.addon_price_cents, v_addon.addon_price_cents, 0
     );
-    -- 抛出异常会让整个预订（含雪服那一行）一起回滚
+    -- Raising an exception rolls back the whole booking (including the outfit row)
     if not found then
       raise exception 'addon_unavailable' using errcode = 'P0001';
     end if;

@@ -1,12 +1,12 @@
--- Sunny Closet：只按滑雪日计费
+-- Sunny Closet: bill ski days only
 --
--- 订单的 start_date / end_date 改为“第一个 / 最后一个滑雪日”，租金只按这几天计算（价目表不变）。
--- 但东西在顾客手上的时间更长，这段时间库存要一起占住：
---   到店自取：滑雪前一天晚上取件，最后一个滑雪日的次日中午前归还 → 前 1 天、后 1 天
---   邮寄：滑雪前 3 天寄出；顾客最晚次日寄回，回程运输约 3 天   → 前 3 天、后 4 天
--- 之后再加原来的清洁缓冲天数（buffer_days）。
--- 这几个天数存在 settings 里，可以按实际物流调整；每笔订单下单时把当时的天数记在 lead_days / tail_days，
--- 以后改设置不影响已有订单。已有订单的 lead_days / tail_days 为 0，占用区间和原来完全一样。
+-- start_date / end_date on bookings become the first / last ski day, and rental is charged for those days only (price tables unchanged).
+-- But the item is with the customer longer, and inventory must be reserved for that time too:
+--   Local pickup: pick up the evening before skiing, return by noon the day after the last ski day → 1 day before, 1 day after
+--   Shipping: ships 3 days before skiing; the customer ships it back by the next day, return transit about 3 days → 3 days before, 4 days after
+-- The existing cleaning buffer (buffer_days) follows.
+-- These day counts live in settings and can be adjusted to real logistics; each order records the values at order time in lead_days / tail_days,
+-- so changing settings later doesn't affect existing orders. Existing orders get lead_days / tail_days = 0, so their occupied ranges are unchanged.
 
 alter table public.settings
   add column pickup_lead_days integer not null default 1 check (pickup_lead_days between 0 and 14),
@@ -14,7 +14,7 @@ alter table public.settings
   add column shipping_lead_days integer not null default 3 check (shipping_lead_days between 0 and 14),
   add column shipping_tail_days integer not null default 4 check (shipping_tail_days between 0 and 14);
 
--- 某种取件方式在滑雪日前后各要占用几天
+-- Days occupied before and after the ski days for a fulfillment method
 create or replace function public.fulfillment_padding(p_fulfillment_method text)
 returns table (lead_days integer, tail_days integer)
 language sql
@@ -29,8 +29,8 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 订单占用区间 = [第一个滑雪日 − 前置天数, 最后一个滑雪日 + 1 + 后置天数 + 清洁天数)
--- 生成列不能直接改表达式，先拆掉排他约束和旧列，再按新公式建回来
+-- Occupied range = [first ski day − lead days, last ski day + 1 + tail days + cleaning days)
+-- A generated column's expression can't be altered, so drop the exclusion constraint and the old column, then recreate them with the new formula
 -- ---------------------------------------------------------------------------
 alter table public.bookings drop constraint bookings_no_overlap;
 alter table public.bookings drop column blocked_range;
@@ -46,7 +46,7 @@ alter table public.bookings
     blocked_range with &&
   ) where (status in ('pending', 'confirmed', 'picked_up', 'returned'));
 
--- 某件库存在 p_start–p_end 这几个滑雪日、按 p_fulfillment_method 取件时的占用区间
+-- Occupied range of an item for ski days p_start–p_end with fulfillment method p_fulfillment_method
 create or replace function public.rental_blocked_range(p_start date, p_end date, p_fulfillment_method text)
 returns daterange
 language sql
@@ -60,7 +60,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 可用性查询：多一个取件方式参数（默认到店自取，占用时间最短）
+-- Availability: adds a fulfillment method parameter (defaults to local pickup, the shortest occupancy)
 -- ---------------------------------------------------------------------------
 drop function public.get_availability(date, date, uuid);
 
@@ -107,7 +107,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 写入订单行：记录前置 / 后置天数
+-- Write the booking row: record lead / tail days
 -- ---------------------------------------------------------------------------
 drop function public.insert_booking_row(
   text, uuid, uuid, text, date, date, integer, text, text, text, text, text, text, integer, integer, integer
@@ -187,7 +187,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 创建预订：参数不变，按取件方式记录前置 / 后置天数
+-- Create a booking: same parameters, records lead / tail days for the fulfillment method
 -- ---------------------------------------------------------------------------
 create or replace function public.create_booking(
   p_style_id uuid,
@@ -285,7 +285,7 @@ begin
       p_fulfillment_method, p_shipping_address, p_customer_note,
       v_addon.addon_price_cents, v_addon.addon_price_cents, 0
     );
-    -- 抛出异常会让整个预订（含雪服那一行）一起回滚
+    -- Raising an exception rolls back the whole booking (including the outfit row)
     if not found then
       raise exception 'addon_unavailable' using errcode = 'P0001';
     end if;
@@ -299,7 +299,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 权限
+-- Privileges
 -- ---------------------------------------------------------------------------
 revoke execute on function
   public.fulfillment_padding(text),

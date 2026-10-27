@@ -1,6 +1,6 @@
--- Sunny Closet：每套雪服独立展示
--- 1) 款式新增“品牌”和“品类”
--- 2) 清理第一版演示数据（含儿童款）。若这些款式已有真实订单，外键会阻止删除并报错，不会误删。
+-- Sunny Closet: one page per outfit
+-- 1) Add "brand" and "category" to styles
+-- 2) Remove the first round of demo data (including kids' styles). If any of these styles has real orders, the foreign key blocks the delete and errors instead of deleting by mistake.
 
 alter table public.styles
   add column brand text not null default '',

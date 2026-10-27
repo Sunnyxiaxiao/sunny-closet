@@ -1,9 +1,9 @@
--- Sunny Closet：顾客账号 + 后台改价格
+-- Sunny Closet: customer accounts + editing prices in admin
 --
--- 1) 顾客资料 profiles：注册后保存姓名、手机号、微信号，下单时自动填好。每个人只能读写自己的那一行。
--- 2) 订单 bookings.user_id：登录状态下提交的订单记在这个账号名下，“我的账号”页面可以看到。
---    订单仍然只由服务端（service_role）读写，顾客不能直接查订单表。
--- 3) 后台可以修改价目表和邮寄最短天数（只有管理员能改，见 settings_admin_update 策略）。
+-- 1) Customer profiles: name, phone and WeChat saved after sign-up and prefilled at checkout. Everyone can only read and write their own row.
+-- 2) bookings.user_id: orders submitted while signed in are linked to the account and shown on "My account".
+--    Bookings are still read and written only by the server (service_role); customers can't query the table directly.
+-- 3) The admin can edit the price tables and minimum shipping days (admin only, see the settings_admin_update policy).
 
 create table public.profiles (
   user_id uuid primary key references auth.users (id) on delete cascade,

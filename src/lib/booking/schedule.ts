@@ -1,7 +1,7 @@
 /**
- * 取件 / 归还时间说明（纯函数）。只按滑雪日计费，前后的取件、归还、运输时间不收费：
- * - 到店自取：第一个滑雪日前一晚起可取件，最后一个滑雪日的次日中午前归还
- * - 邮寄：提前寄出，保证第一个滑雪日前送到；最后一个滑雪日的次日前把包裹交给快递寄回
+ * Pickup / return timing text (pure functions). Only ski days are billed; pickup, return and transit time around them is free:
+ * - Local pickup: available from the evening before the first ski day, returned by noon the day after the last ski day
+ * - Shipping: sent early enough to arrive before the first ski day; hand the package to the carrier by the day after the last ski day
  */
 
 import type { FulfillmentMethod } from "@/config/shop";
@@ -11,21 +11,21 @@ import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/messages";
 
 export interface Handover {
-  /** 到店自取：最早取件日（晚上）；邮寄：寄出日 */
+  /** Local pickup: earliest pickup date (evening); shipping: ship date */
   out: string;
-  /** 到店自取：归还截止日（中午）；邮寄：寄回截止日 */
+  /** Local pickup: return deadline (noon); shipping: ship-back deadline */
   back: string;
 }
 
 export function handover(range: RentalRange, padding: Padding): Handover {
   return {
     out: addDays(range.start, -padding.leadDays),
-    // 旧订单没有后置天数，归还日就是最后一天
+    // Older orders have no tail days, so the return date is the last day
     back: padding.tailDays > 0 ? addDays(range.end, 1) : range.end,
   };
 }
 
-/** 例：“12月19日晚上起可取件，12月23日中午前归还” / “12月17日寄出，请在12月23日前寄回”（英文同理） */
+/** E.g. "Pick up from the evening of Dec 19, return by noon Dec 23" / "Ships Dec 17, please send back by Dec 23" (same in Chinese) */
 export function handoverText(
   range: RentalRange,
   method: FulfillmentMethod,

@@ -1,5 +1,5 @@
--- Sunny Closet：商品图片存储桶
--- 桶设为公开：任何人可以通过公开链接查看图片；只有管理员可以上传、替换、删除。
+-- Sunny Closet: product image storage bucket
+-- The bucket is public: anyone can view images by their public URL; only the admin can upload, replace and delete.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

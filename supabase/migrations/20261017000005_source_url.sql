@@ -1,6 +1,6 @@
--- Sunny Closet：真实商品上架
--- 1) 款式新增“来源链接”（图片与参数来自品牌官网时，详情页注明出处）
--- 2) 清理第二版演示数据。若这些款式已有真实订单，外键会阻止删除并报错，不会误删。
+-- Sunny Closet: listing real products
+-- 1) Add a "source URL" to styles (when images and specs come from the brand's site, the product page credits the source)
+-- 2) Remove the second round of demo data. If any of these styles has real orders, the foreign key blocks the delete and errors instead of deleting by mistake.
 
 alter table public.styles
   add column source_url text not null default '';

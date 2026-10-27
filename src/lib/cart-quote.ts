@@ -21,11 +21,11 @@ import { createSupabasePublicClient } from "@/lib/supabase/public";
 import type { CartLineInput } from "@/lib/validation/booking-request";
 
 /**
- * 购物车的价格和可租情况。价格只用数据库里的（不信任浏览器传来的），
- * 购物车页面（/api/cart）和提交订单（submitOrder）用同一套计算。
+ * Cart pricing and availability. Prices come only from the database (nothing from the browser is trusted);
+ * the cart page (/api/cart) and order submission (submitOrder) use the same calculation.
  */
 
-/** 这一件为什么不能下单 */
+/** Why this item can't be ordered */
 export type CartLineProblem =
   | "style_not_found"
   | "invalid_dates"
@@ -63,7 +63,7 @@ export function storefrontPath(kind: StyleKind, slug: string) {
   return `${STOREFRONT_PATH[kind]}/${slug}`;
 }
 
-/** 按数据库里的价格给购物车每一件算租金、押金、加购价；不查是否有货 */
+/** Prices each cart item's rental, deposit and add-ons from the database; does not check availability */
 export async function priceCart(
   lines: CartLineInput[],
   locale: Locale,
@@ -114,7 +114,7 @@ export async function priceCart(
       return { ...empty, style, problem };
     }
 
-    // 只有雪服能加购头盔套
+    // Only outfits can have helmet-cover add-ons
     const addOnProblem =
       input.addOnIds.length > 0 && (kind !== "outfit" || input.addOnIds.length > MAX_ADD_ONS_PER_OUTFIT)
         ? "invalid_addons"
@@ -156,7 +156,7 @@ export interface CartQuoteLine {
   rentalCents: number;
   depositCents: number;
   addOns: { id: string; name: string; cents: number; pickupOk: boolean; shippingOk: boolean }[];
-  /** 这件（含加购）在这段时间到店自取 / 邮寄是否还有货（同一购物车里重复的同款同尺码会累加计算） */
+  /** Whether this item (with add-ons) is available for pickup / shipping on these dates (duplicates of the same style and size in one cart are counted together) */
   pickupOk: boolean;
   shippingOk: boolean;
 }
@@ -165,7 +165,7 @@ export interface CartQuote {
   lines: CartQuoteLine[];
   shippingMinDays: number;
   shippingLeadDays: number;
-  /** 邮寄最早能选的第一个滑雪日 */
+  /** Earliest first ski day available for shipping */
   earliestShippingStart: IsoDate;
 }
 
@@ -173,11 +173,11 @@ function withPath({ slug, ...style }: NonNullable<PricedLine["style"]>) {
   return { ...style, path: storefrontPath(style.kind, slug) };
 }
 
-/** 购物车页面用：价格 + 每件到店自取 / 邮寄是否有货 */
+/** For the cart page: prices + per-item pickup / shipping availability */
 export async function quoteCart(lines: CartLineInput[], locale: Locale): Promise<CartQuote> {
   const { settings, today, lines: priced } = await priceCart(lines, locale);
 
-  // 同一段日期只查一次：款式 id → 各尺码可租件数
+  // Look up each date range only once: style id → available count per size
   const ranges = [...new Set(priced.filter((l) => !l.problem).map((l) => `${l.input.start}|${l.input.end}`))];
   const availability = new Map(
     await Promise.all(
@@ -192,7 +192,7 @@ export async function quoteCart(lines: CartLineInput[], locale: Locale): Promise
     ),
   );
 
-  // 购物车里同款、同尺码、同日期的件数（第 n 件要有 n 件空着才够）
+  // Count of the same style, size and dates in the cart (the nth item needs n free items)
   const demand = new Map<string, number>();
   const need = (key: string) => {
     const n = (demand.get(key) ?? 0) + 1;

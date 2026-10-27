@@ -1,11 +1,11 @@
--- Sunny Closet：Mix & Match（外套、雪裤单租）+ 新的成套价目表
+-- Sunny Closet: Mix & Match (jacket and pants rentals) + new full-set price table
 --
--- 价目表（第 n 项 = 租 n 天的总租金，美分）：
---   完整套装（成套 / 连体服）：1 天 $49、2 天 $79、3 天 $94、4 天 $109、5 天 $119、6 天 $129、7 天 $139
---   只租外套（category = 'jacket'）：$35、$50、$60、$70、$80、$85、$90
---   只租雪裤（category = 'pants'）：  $25、$35、$45、$55、$65、$70、$75
--- 款式自己填了 rental_prices_cents（头盔套、手套）时仍以款式自己的为准。
--- create_booking 用 style_rental_price_cents 校验价格，所以只要改这个函数，下单时就按品类收费。
+-- Price tables (item n = total rental for n days, in cents):
+--   Full set (set / one-piece): 1 day $49, 2 days $79, 3 days $94, 4 days $109, 5 days $119, 6 days $129, 7 days $139
+--   Jacket only (category = 'jacket'): $35, $50, $60, $70, $80, $85, $90
+--   Pants only (category = 'pants'):   $25, $35, $45, $55, $65, $70, $75
+-- Styles with their own rental_prices_cents (helmet covers, gloves) still use their own.
+-- create_booking validates prices with style_rental_price_cents, so changing this function alone makes orders charge by category.
 
 alter table public.settings
   add column jacket_prices_cents integer[] not null
@@ -27,7 +27,7 @@ update public.settings
 set rental_prices_cents = array[4900, 7900, 9400, 10900, 11900, 12900, 13900]
 where id;
 
--- 某个款式租 p_days 天的租金：款式自己的价目表 → 外套 / 雪裤价目表 → 完整套装价目表
+-- Rental for a style for p_days days: the style's own table → jacket / pants table → full-set table
 create or replace function public.style_rental_price_cents(p_style_id uuid, p_days integer)
 returns integer
 language sql
@@ -51,7 +51,7 @@ as $$
   where p_days >= 1;
 $$;
 
--- daily_price_cents 只用作“起价”展示，按新的价目表第 1 档同步
+-- daily_price_cents is only shown as the "from" price; sync it to tier 1 of the new tables
 update public.styles st
 set daily_price_cents = case st.category
   when 'jacket' then s.jacket_prices_cents[1]

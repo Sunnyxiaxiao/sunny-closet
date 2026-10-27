@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** 预订编号：SC- 加 8 位（去掉了容易混淆的 0/O/1/I），先在这里挡掉明显不对的地址 */
+/** Order number: SC- plus 8 characters (without the easily confused 0/O/1/I); reject obviously invalid URLs here first */
 const BOOKING_NO_RE = /^SC-[A-HJ-NP-Z2-9]{8}$/;
 
 export default async function BookingPage({ params }: PageProps<"/[lang]/booking/[bookingNo]">) {
@@ -45,8 +45,8 @@ async function BookingDetail({
   if (!BOOKING_NO_RE.test(bookingNo)) notFound();
   await connection();
 
-  // 订单表不对匿名访客开放，所以这里用服务端密钥按编号查。
-  // 只取展示需要的字段，不读取顾客的电话、邮箱和地址。
+  // The bookings table isn't open to anonymous visitors, so look it up by number with the service key.
+  // Select display fields only; never read the customer's phone, email or address.
   const service = createSupabaseServiceClient();
   const { data: booking, error } = await service
     .from("bookings")
@@ -56,18 +56,18 @@ async function BookingDetail({
     .eq("booking_no", bookingNo)
     .maybeSingle();
   if (error) throw new Error(`读取预订失败：${error.message}`);
-  // 加购子订单没有单独的详情页，顾客只用主订单编号
+  // Add-on child orders have no page of their own; customers only use the main order number
   if (!booking || booking.parent_booking_id) notFound();
 
   const { data: children, error: childError } = await service
     .from("bookings")
     .select("id, booking_no, style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, total_cents, lead_days, tail_days, cart_item")
     .eq("parent_booking_id", booking.id)
-    // 组合套装里的其他单品是 0 元子订单，顾客只看到整套
+    // Other separates in a bundle are $0 child orders; the customer only sees the whole set
     .eq("bundle_part", false)
     .order("booking_no");
   if (childError) throw new Error(`读取订单明细失败：${childError.message}`);
-  // 购物车订单：第 1 件是主订单，其余每件是 cart_item 子订单；其他子订单是加购的头盔套
+  // Cart orders: item 1 is the main order, every other item is a cart_item child order; remaining child orders are helmet-cover add-ons
   const lines = [booking, ...children.filter((c) => c.cart_item)];
   const addOns = children.filter((c) => !c.cart_item);
 
@@ -83,7 +83,7 @@ async function BookingDetail({
   const totalCents = booking.total_cents + children.reduce((sum, a) => sum + a.total_cents, 0);
   const depositCents = lines.reduce((sum, l) => sum + l.deposit_cents, 0);
   const multi = lines.length > 1;
-  // 每件日期一样时取件 / 归还只写一次
+  // When every item has the same dates, show pickup / return only once
   const sameDates = lines.every((l) => l.start_date === booking.start_date && l.end_date === booking.end_date);
   const handover = (l: (typeof lines)[number]) =>
     handoverText(
@@ -94,7 +94,7 @@ async function BookingDetail({
     );
 
   const status = booking.status;
-  // 已归还的订单可以写评价，买了几件就可以写几条；写过的显示自己写的那条
+  // Returned orders can be reviewed, one review per item; show the customer's own review once written
   const reviews =
     status === "returned"
       ? ((

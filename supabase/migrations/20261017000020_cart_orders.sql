@@ -1,16 +1,16 @@
--- Sunny Closet：购物车（一次下单多件）
+-- Sunny Closet: cart (several items in one order)
 --
--- 顾客把几件雪服 / 配件放进购物车，一起提交成一笔订单，只用一个预订编号。邮寄全美本土包邮，不收运费。
+-- Customers put several outfits / accessories in a cart and submit them as one order with one order number. Free shipping across the contiguous US.
 --
--- 订单结构沿用“主订单 + 子订单”：
---   第 1 件是主订单（预订编号 SC-XXXXXXXX）；
---   其余每件是子订单（编号 SC-XXXXXXXX-1、-2……，cart_item = true），有自己的租金和押金；
---   各件加购的头盔套、组合套装里的其他单品也都挂在主订单下面。
---   主订单改状态时，子订单跟着改（触发器 bookings_sync_addon_status）。
+-- Orders keep the "main order + child orders" structure:
+--   item 1 is the main order (order number SC-XXXXXXXX);
+--   every other item is a child order (SC-XXXXXXXX-1, -2, …, cart_item = true) with its own rental and deposit;
+--   each item's helmet-cover add-ons and other bundle separates also hang off the main order.
+--   When the main order's status changes, child orders follow (trigger bookings_sync_addon_status).
 --
--- create_order 逐件调用 create_booking（价格、库存、最短租期都在那里校验），
--- 任何一件失败整单回滚，报错里带上是第几件（例如 no_availability line=2）。
--- 邮寄的订单一起寄出，所以每件的滑雪日必须相同。
+-- create_order calls create_booking for each item (prices, inventory and minimum days are validated there);
+-- if any item fails the whole order rolls back, and the error says which item (e.g. no_availability line=2).
+-- Shipped orders go out together, so every item must have the same ski days.
 
 alter table public.bookings
   add column cart_item boolean not null default false;
@@ -52,7 +52,7 @@ begin
   end if;
 
   if p_fulfillment_method = 'shipping' then
-    -- 一起寄出：每件的滑雪日要一样
+    -- Shipped together: every item's ski days must match
     v_first_start := (p_lines -> 0 ->> 'start')::date;
     v_first_end := (p_lines -> 0 ->> 'end')::date;
     if exists (
@@ -82,7 +82,7 @@ begin
       );
     exception
       when raise_exception then
-        -- 报错带上是第几件，页面上能告诉顾客哪一件出了问题
+        -- Include which item failed in the error so the page can tell the customer
         raise exception '% line=%', sqlerrm, v_index using errcode = 'P0001';
       when invalid_text_representation or invalid_datetime_format or datetime_field_overflow
            or null_value_not_allowed or not_null_violation then
@@ -94,7 +94,7 @@ begin
       v_main_no := v_result.booking_no;
       select count(*) into v_seq from public.bookings b where b.parent_booking_id = v_main_id;
     else
-      -- 第 2 件起：这件和它的加购 / 套装单品都挂到主订单下面，编号接着主订单往下排
+      -- Items 2+: the item and its add-ons / bundle parts hang off the main order, numbered after it
       for v_row in
         select b.id from public.bookings b
         where b.id = v_result.booking_id or b.parent_booking_id = v_result.booking_id

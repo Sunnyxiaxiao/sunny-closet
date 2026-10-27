@@ -1,12 +1,12 @@
 /**
- * 订单状态流转规则（纯函数）。后台按钮只会出现“允许的下一步”，服务端也会再校验一次。
+ * Order status transitions (pure functions). Admin buttons only show allowed next steps, and the server validates again.
  *
- * 待确认 → 已确认 / 已拒绝 / 已取消
- * 已确认 → 已取件 / 已取消
- * 已取件 → 已归还
- * 已归还、已拒绝、已取消 是终点，不能再改。
+ * pending → confirmed / rejected / cancelled
+ * confirmed → picked up / cancelled
+ * picked up → returned
+ * returned, rejected and cancelled are final and can't change.
  *
- * 不允许“从已释放库存的状态改回占用库存的状态”，否则可能和别人新订的日期冲突。
+ * Moving from a status that released inventory back to one that occupies it is not allowed, since it could clash with dates someone else has booked since.
  */
 
 import type { BookingStatus } from "@/lib/supabase/database.types";
@@ -41,7 +41,7 @@ export function isBookingStatus(value: unknown): value is BookingStatus {
   return typeof value === "string" && (BOOKING_STATUSES as readonly string[]).includes(value);
 }
 
-/** 后台订单列表的分类标签 */
+/** Filter tabs in the admin order list */
 export const ADMIN_FILTERS = [
   { key: "pending", statuses: ["pending"] },
   { key: "confirmed", statuses: ["confirmed"] },

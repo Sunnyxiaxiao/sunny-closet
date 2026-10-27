@@ -1,30 +1,30 @@
 /**
- * 价格计算（纯函数）。金额单位统一为“分”（美分），避免小数误差。
+ * Price calculation (pure functions). All amounts are in cents to avoid floating-point errors.
  *
- * 当前规则：阶梯定价。租金 = 价目表里“租 n 天”对应的总价，超出价目表长度的天数用最后一档；
- * 合计 = 租金 + 加购 + 押金。价目表存放在数据库 settings.rental_prices_cents，
- * 例如 [4900, 7900, 9400, 10900, 11900, 12900, 13900] 表示 1 天 $49、2 天 $79、3 天 $94……7 天 $139。
- * 款式可以有自己的价目表（styles.rental_prices_cents，例如头盔套 [1500, 2000, 2000, 2500]）。
- * 加购（搭配雪服的头盔套）是整个租期的固定价，不随天数变化。
- * 数据库的 create_booking 用同一规则再校验一遍。
+ * Current rule: tiered pricing. Rental = the table's total for n days; days beyond the table use the last tier;
+ * total = rental + add-ons + deposit. The price table lives in the database at settings.rental_prices_cents,
+ * e.g. [4900, 7900, 9400, 10900, 11900, 12900, 13900] means 1 day $49, 2 days $79, 3 days $94 … 7 days $139.
+ * Styles can have their own table (styles.rental_prices_cents, e.g. helmet covers [1500, 2000, 2000, 2500]).
+ * Add-ons (helmet covers with an outfit) are a flat price for the whole rental, regardless of days.
+ * The database's create_booking re-validates with the same rules.
  */
 
 import { rentalDays, type RentalRange } from "@/lib/booking/rules";
 
 export interface PriceInput extends RentalRange {
-  /** 价目表：第 n 项是租 n 天的总租金 */
+  /** Price table: item n is the total rental for n days */
   rentalPricesCents: readonly number[];
   depositCents: number;
-  /** 加购配件的固定价（整个租期一次性），可以有多件 */
+  /** Flat prices of add-on accessories (once per rental); there can be several */
   addOnPricesCents?: readonly number[];
 }
 
 export interface Quote {
   rentalDays: number;
   rentalCents: number;
-  /** 平均每天多少钱（四舍五入，仅用于记录和展示） */
+  /** Average per day (rounded, for records and display only) */
   averageDailyCents: number;
-  /** 加购配件合计 */
+  /** Add-ons total */
   addOnCents: number;
   depositCents: number;
   totalCents: number;
@@ -36,7 +36,7 @@ function assertCents(name: string, value: number) {
   }
 }
 
-/** 租 days 天的总租金 */
+/** Total rental for `days` days */
 export function rentalPriceCents(prices: readonly number[], days: number): number {
   if (prices.length === 0) throw new Error("价目表不能为空");
   if (!Number.isInteger(days) || days < 1) throw new Error("租期天数必须是正整数");
@@ -64,14 +64,14 @@ export function calculateQuote(input: PriceInput): Quote {
 }
 
 export interface PriceTier {
-  /** 例如 “1 天”“2–3 天”“5–7 天” */
+  /** E.g. "1 day", "2–3 days", "5–7 days" */
   label: string;
-  /** 这一档的最长天数 */
+  /** Longest day count in this tier */
   maxDays: number;
   cents: number;
 }
 
-/** 把价目表整理成展示用的档位列表：价格相同的连续天数合并成一档，例如 [15, 20, 20, 25] → 1 天 / 2–3 天 / 4–7 天 */
+/** Turns a price table into display tiers: consecutive days with the same price merge into one tier, e.g. [15, 20, 20, 25] → 1 day / 2–3 days / 4–7 days */
 export function priceTiers(prices: readonly number[], maxRentalDays: number, locale: "zh" | "en" = "zh"): PriceTier[] {
   const tiers: { from: number; to: number; cents: number }[] = [];
   for (let day = 1; day <= maxRentalDays; day += 1) {

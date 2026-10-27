@@ -15,7 +15,7 @@ export interface ReviewFormState {
 
 const schema = z.object({
   locale: z.enum(["zh", "en"]),
-  /** 评价哪一件：主订单编号（第 1 件），或购物车里其他件的编号（SC-XXXXXXXX-1 这种） */
+  /** Which item is being reviewed: the main order number (item 1) or another cart item's number (like SC-XXXXXXXX-1) */
   lineNo: z.string().regex(/^SC-[A-HJ-NP-Z2-9]{8}(-\d{1,3})?$/),
   rating: z.coerce.number().int().min(1).max(5),
   name: z.string().trim().min(1).max(40),
@@ -23,9 +23,9 @@ const schema = z.object({
 });
 
 /**
- * 顾客在订单页写评价。订单编号就是凭证（详情页也是靠编号打开的）。
- * 只接受已归还（returned）的订单；一笔订单里买了几件，每件可以各写一条（加购的头盔套不单独评价）。
- * 写入后是待审核状态，管理员发布后才出现在那件商品的页面上。
+ * Customers write reviews on the order page. The order number is the credential (it is also what opens the order page).
+ * Only returned orders are accepted; each item in an order can get its own review (helmet-cover add-ons are not reviewed separately).
+ * New reviews are pending and appear on that product's page only after the admin publishes them.
  */
 export async function submitReview(_previous: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
   const raw = Object.fromEntries(formData) as Record<string, string>;
@@ -55,7 +55,7 @@ export async function submitReview(_previous: ReviewFormState, formData: FormDat
     console.error("[submitReview] 读取订单失败", error);
     return { message: t.errorGeneric, values };
   }
-  // 主订单（第 1 件）或购物车里的其他件；加购的头盔套、套装里的单品不能单独评价
+  // The main order (item 1) or another cart item; helmet-cover add-ons and bundle parts can't be reviewed separately
   const isLine = booking && (!booking.parent_booking_id || booking.cart_item);
   if (!booking || !isLine || booking.status !== "returned") {
     return { message: t.errorNotReturned, values };

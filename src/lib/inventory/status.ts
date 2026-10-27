@@ -1,12 +1,12 @@
 /**
- * 库存件“现在是什么状态”（纯函数）。不单独存数据库，由订单和手动锁定推算出来，不会和订单对不上：
+ * An inventory item's current status (pure function). Not stored in the database but derived from orders and blocked dates, so it can't drift from the orders:
  *
- * - 不可租：后台停用了这件，或今天在手动锁定的日期里
- * - 已出租：有一笔“已取件”的订单（东西在顾客手上）
- * - 已归还：订单已归还，还没过归还日（到店自取是最后一个滑雪日的次日；邮寄是预计寄到的日子）
- * - 清洁中：订单已归还，在归还日之后的缓冲天数里
- * - 已预订：今天在一笔待确认 / 已确认订单的“取件前一晚 / 寄出日 ～ 最后一个滑雪日”里，等顾客取件或等寄出
- * - 可租：以上都不是
+ * - Unavailable: disabled in admin, or today falls within manually blocked dates
+ * - Rented out: has a picked-up order (the item is with the customer)
+ * - Returned: the order was returned and the return date hasn't passed (local pickup: the day after the last ski day; shipping: the expected arrival date)
+ * - Cleaning: the order was returned and we're within the buffer days after the return date
+ * - Booked: today falls between the evening before pickup / ship date and the last ski day of a pending / confirmed order, waiting for pickup or shipping
+ * - Available: none of the above
  */
 
 import { addDays, compareDates, type IsoDate } from "@/lib/dates";
@@ -18,11 +18,11 @@ export const ITEM_STATES = ["available", "reserved", "rented", "returned", "clea
 export type ItemState = (typeof ITEM_STATES)[number];
 
 export interface ItemBooking {
-  /** 第一个 / 最后一个滑雪日 */
+  /** First / last ski day */
   start: IsoDate;
   end: IsoDate;
   bufferDays: number;
-  /** 滑雪日前后占用的天数（取件前一晚、归还日、邮寄运输）；旧订单为 0 */
+  /** Days occupied around the ski days (evening before pickup, return day, shipping transit); 0 for older orders */
   leadDays?: number;
   tailDays?: number;
   status: BookingStatus;
@@ -47,7 +47,7 @@ export function itemState(input: {
   if (input.status === "inactive") return "unavailable";
   if (bookings.some((b) => b.status === "picked_up")) return "rented";
 
-  // 归还日 = 最后一个滑雪日 + 后置天数（到店自取是次日；邮寄是包裹寄到的日子）
+  // Return date = last ski day + tail days (local pickup: the next day; shipping: the day the package arrives)
   const backBy = (b: ItemBooking) => addDays(b.end, b.tailDays ?? 0);
   const recentReturn = bookings.find(
     (b) =>
@@ -58,7 +58,7 @@ export function itemState(input: {
   if (recentReturn) return compareDates(today, backBy(recentReturn)) <= 0 ? "returned" : "cleaning";
 
   if (input.blocks.some((block) => covers(block, today))) return "unavailable";
-  // 从取件前一晚 / 寄出日起，到最后一个滑雪日，都算“已预订”（等待取件或寄出）
+  // From the evening before pickup / ship date through the last ski day counts as "booked" (waiting for pickup or shipping)
   if (
     bookings.some(
       (b) =>
@@ -71,7 +71,7 @@ export function itemState(input: {
   return "available";
 }
 
-/** 还没结束的占用订单（还没到归还日），按第一个滑雪日排序 */
+/** Occupying orders that haven't ended (return date not reached), sorted by first ski day */
 export function upcomingBookings<T extends ItemBooking>(bookings: readonly T[], today: IsoDate): T[] {
   return bookings
     .filter(

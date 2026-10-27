@@ -1,6 +1,6 @@
 /**
- * 数据库类型定义，与 supabase/migrations 中的表结构保持一致。
- * 修改表结构时请同步修改这里。
+ * Database types, kept in sync with the table definitions in supabase/migrations.
+ * Update this file whenever the schema changes.
  */
 
 export type BookingStatus =
@@ -31,13 +31,13 @@ export type Database = {
           rental_prices_cents: number[];
           jacket_prices_cents: number[];
           pants_prices_cents: number[];
-          /** Crystal 雪服正价表；特惠期内（今天 ≤ crystal_promo_ends_on）按普通价 */
+          /** Regular price table for Crystal outfits; during the promotion (today ≤ crystal_promo_ends_on) standard prices apply */
           crystal_prices_cents: number[];
           crystal_jacket_prices_cents: number[];
           crystal_pants_prices_cents: number[];
           crystal_promo_ends_on: string | null;
           shipping_min_days: number;
-          /** 滑雪日前后额外占用库存的天数（不收费）：到店自取前一晚取、次日还；邮寄提前寄出、用完寄回 */
+          /** Extra days of inventory occupied around the ski days (not billed): local pickup the evening before and return the next day; shipping goes out early and comes back after */
           pickup_lead_days: number;
           pickup_tail_days: number;
           shipping_lead_days: number;
@@ -92,10 +92,10 @@ export type Database = {
           tags: string[];
           addon_price_cents: number | null;
           replacement_value_cents: number | null;
-          /** 不为空时按款式自己的价目表计价，否则用 settings 的全店价目表 */
+          /** When set, the style is priced by its own table; otherwise by the shop-wide tables in settings */
           rental_prices_cents: number[] | null;
           variant_images: Record<string, number>;
-          /** 组合套装由哪几件单品（款式 id）组成；普通款式为 null */
+          /** The separates (style ids) a bundle consists of; null for regular styles */
           bundle_style_ids: string[] | null;
           name_en: string;
           description_en: string;
@@ -157,7 +157,7 @@ export type Database = {
           code: string;
           status: InventoryStatus;
           notes: string;
-          /** 采购价（美分），没录入时为 null */
+          /** Purchase cost (cents); null when not entered */
           purchase_cents: number | null;
           created_at: string;
           updated_at: string;
@@ -198,7 +198,7 @@ export type Database = {
           start_date: string;
           end_date: string;
           buffer_days: number;
-          /** 下单时记录的前置 / 后置天数（第一个滑雪日之前、最后一个之后占用库存的天数） */
+          /** Lead / tail days recorded at order time (days of inventory occupied before the first ski day and after the last) */
           lead_days: number;
           tail_days: number;
           blocked_range: string;
@@ -215,13 +215,13 @@ export type Database = {
           deposit_cents: number;
           total_cents: number;
           admin_note: string;
-          /** 加购子订单指向它所属的雪服订单；普通订单为 null */
+          /** Add-on child orders point to the outfit order they belong to; null for regular orders */
           parent_booking_id: string | null;
-          /** 组合套装里的其他单品（0 元子订单），区别于头盔套加购 */
+          /** Other separates in a bundle ($0 child orders), as opposed to helmet-cover add-ons */
           bundle_part: boolean;
-          /** 购物车订单里的第 2 件起（有自己的租金和押金，挂在第 1 件的主订单下面） */
+          /** Items 2+ of a cart order (with their own rental and deposit, attached to item 1's main order) */
           cart_item: boolean;
-          /** 登录状态下提交的订单记在这个账号名下 */
+          /** Orders submitted while signed in are linked to this account */
           user_id: string | null;
           created_at: string;
           updated_at: string;
@@ -230,7 +230,7 @@ export type Database = {
         Update: {
           status?: BookingStatus;
           admin_note?: string;
-          /** 只有服务端（service_role）会写 */
+          /** Written only by the server (service_role) */
           user_id?: string | null;
         };
         Relationships: [
@@ -374,7 +374,7 @@ export type Database = {
           p_daily_price_cents: number;
           p_rental_cents: number;
           p_deposit_cents: number;
-          /** 加购款式 id 与服务端算好的加购价，一一对应 */
+          /** Add-on style ids and their server-computed prices, matched by position */
           p_addon_style_ids?: string[];
           p_addon_cents?: number[];
         };
@@ -386,7 +386,7 @@ export type Database = {
       };
       create_order: {
         Args: {
-          /** 购物车每一件：款式、尺码、滑雪日、服务端算好的价格、加购的头盔套 */
+          /** Each cart item: style, size, ski days, server-computed prices, helmet-cover add-ons */
           p_lines: {
             style_id: string;
             size: string;
@@ -407,7 +407,7 @@ export type Database = {
         };
         Returns: { booking_id: string; booking_no: string }[];
       };
-      /** 管理员后台读评价全部字段（登录用户直接查表只能读展示用的列） */
+      /** Full review rows for the admin dashboard (signed-in users querying the table directly only get display columns) */
       admin_list_reviews: {
         Args: Record<string, never>;
         Returns: Database["public"]["Tables"]["reviews"]["Row"][];

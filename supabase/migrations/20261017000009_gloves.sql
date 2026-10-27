@@ -1,9 +1,9 @@
--- Sunny Closet：手套
+-- Sunny Closet: gloves
 --
--- 手套也是一个“款式”（styles.category = 'gloves'），库存、排期、防超订沿用原来的表和函数。
--- 手套按自己的价目表计价（rental_prices_cents，例如 1 天 $10、2 天 $18、3 天及以上 $25），不参与雪服加购。
--- 一个款式有多种颜色时，每件库存的 size 写成「颜色 · 尺码」，例如「芭比玫红 · S」；
--- variant_images 记录每个颜色对应 image_urls 里的第几张图（从 0 开始），选颜色时换到那张图。
+-- Gloves are also a "style" (styles.category = 'gloves') and reuse the existing tables and functions for inventory, scheduling and overbooking.
+-- Gloves are priced by their own table (rental_prices_cents, e.g. 1 day $10, 2 days $18, 3+ days $25) and aren't offered as outfit add-ons.
+-- When a style comes in several colors, each item's size is written as 「color · size」, e.g. 「芭比玫红 · S」;
+-- variant_images maps each color to an index into image_urls (0-based), so picking a color switches to that image.
 
 alter table public.styles drop constraint styles_category_check;
 

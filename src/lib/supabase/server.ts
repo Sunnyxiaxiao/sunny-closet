@@ -5,7 +5,7 @@ import type { Database } from "./database.types";
 import { getPublicSupabaseEnv } from "./env";
 
 /**
- * 带当前登录状态的服务端客户端（受 RLS 约束）。用于管理后台。
+ * Server-side client carrying the current session (subject to RLS). Used by the admin dashboard.
  */
 export async function createSupabaseServerClient() {
   const { url, publishableKey } = getPublicSupabaseEnv();
@@ -22,7 +22,7 @@ export async function createSupabaseServerClient() {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // 在 Server Component 中无法写 cookie；会话刷新由 proxy 负责。
+          // Server Components can't write cookies; session refresh is handled by the proxy.
         }
       },
     },

@@ -7,7 +7,7 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
-// NEXT_PUBLIC_ 变量必须以字面量形式访问，Next.js 才能在构建时把它们注入浏览器端代码。
+// NEXT_PUBLIC_ variables must be accessed literally so Next.js can inline them into browser code at build time.
 export function getPublicSupabaseEnv() {
   return {
     url: required("NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL),
