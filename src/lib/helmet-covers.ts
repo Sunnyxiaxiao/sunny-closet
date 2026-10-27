@@ -49,8 +49,11 @@ export function standalonePricesFrom(table: readonly number[]): StandalonePrices
 /** 筛选用的标签分组。标签存英文小写，界面显示中文（见 messages.helmet.tags），不在列表里的标签原样显示 */
 export const HELMET_TAG_GROUPS = {
   color: ["pink", "white", "black", "blue", "purple", "red", "yellow", "green", "brown", "colorful"],
-  style: ["bunny", "bear", "cat", "dog", "sheep", "devil", "fluffy", "cute", "funny", "statement"],
+  style: ["bunny", "bear", "cat", "dog", "sheep", "chick", "devil", "fluffy", "cute", "funny", "statement"],
 } as const;
+
+/** 每顶头盔套最后一张图都放这张 “Why You'll Love It” 介绍图（在详情页统一加上，不存进每个款式） */
+export const HELMET_COVER_INFO_IMAGE = "/images/helmet-cover-why-love-it.jpg";
 
 export type HelmetTagGroup = keyof typeof HELMET_TAG_GROUPS;
 

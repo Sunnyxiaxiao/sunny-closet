@@ -329,5 +329,33 @@
         "size": "均码"
       }
     ]
+  },
+  {
+    "slug": "little-chick",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "小鸡头盔套",
+    "nameEn": "Little Chick Helmet Cover",
+    "tags": [
+      "yellow",
+      "chick",
+      "fluffy",
+      "cute",
+      "funny"
+    ],
+    "sortOrder": 130,
+    "description": "奶黄色小鸡毛绒头盔套，头顶一撮红色鸡冠，两只圆圆的小耳朵，钩织的橙色小嘴配粉色腮红。",
+    "descriptionEn": "Plush cream-yellow chick helmet cover with a red tuft on top, two round little ears, a crocheted orange beak and pink blushing cheeks.",
+    "images": [
+      "images/little-chick/1.png",
+      "images/little-chick/2.png",
+      "images/little-chick/3.png"
+    ],
+    "items": [
+      {
+        "code": "HC016",
+        "size": "均码"
+      }
+    ]
   }
 ]

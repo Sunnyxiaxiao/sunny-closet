@@ -120,6 +120,7 @@ export const messages = {
       cat: "猫咪",
       dog: "小狗",
       sheep: "小羊",
+      chick: "小鸡",
       devil: "小恶魔",
       fluffy: "毛绒",
       cute: "可爱",

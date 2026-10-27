@@ -18,7 +18,7 @@ import {
   stylePriceTable,
 } from "@/lib/catalog";
 import { parseDescription } from "@/lib/description";
-import { helmetColorTags } from "@/lib/helmet-covers";
+import { HELMET_COVER_INFO_IMAGE, helmetColorTags } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { priceTiers } from "@/lib/pricing";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
@@ -78,6 +78,8 @@ async function HelmetCoverDetail({
   });
   const colorTagSet = new Set(helmetColorTags(cover.tags));
   const shownTags = colors.length > 0 ? cover.tags.filter((tag) => !colorTagSet.has(tag)) : cover.tags;
+  // 通用介绍图放在最后，选颜色换图的序号不受影响
+  const images = [...cover.image_urls, HELMET_COVER_INFO_IMAGE];
 
   const info = (
     <>
@@ -182,7 +184,7 @@ async function HelmetCoverDetail({
     <>
       {colors.length > 0 ? (
         <HelmetCoverStage
-          images={cover.image_urls}
+          images={images}
           alt={cover.name}
           imageIndexBySize={Object.fromEntries(colors.map((color) => [color.label, color.imageIndex]))}
           before={info}
@@ -203,7 +205,7 @@ async function HelmetCoverDetail({
         />
       ) : (
         <div className="md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.78fr)] md:gap-8">
-          <ProductGallery images={cover.image_urls} alt={cover.name} aspect="helmet" locale={locale} />
+          <ProductGallery images={images} alt={cover.name} aspect="helmet" locale={locale} />
           <div className="px-4 pt-5 md:sticky md:top-24 md:self-start md:px-0 md:pt-0">
             {info}
             <div className="mt-6 border-t border-neutral-200 pt-6">{booking}</div>

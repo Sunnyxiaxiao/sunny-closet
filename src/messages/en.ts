@@ -125,6 +125,7 @@ export const messages: Messages = {
       cat: "Cat",
       dog: "Dog",
       sheep: "Sheep",
+      chick: "Chick",
       devil: "Devil",
       fluffy: "Fluffy",
       cute: "Cute",
