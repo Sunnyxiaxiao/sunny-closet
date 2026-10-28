@@ -7,6 +7,7 @@ import { submitOrder } from "@/app/[lang]/cart/actions";
 import { localePath, type Locale } from "@/i18n/config";
 import { initialBookingFormState } from "@/lib/booking/form-state";
 import { clearCart, type CartLine } from "@/lib/cart";
+import { formatMoney } from "@/lib/money";
 import { SHIPPING_STATES, shippingPolicyArgs } from "@/lib/shipping";
 import { getMessages } from "@/messages";
 
@@ -41,6 +42,9 @@ export function CheckoutForm({
   shippingMinDays,
   fulfillment,
   onFulfillmentChange,
+  shippingState,
+  onShippingStateChange,
+  shippingCents,
   blocked,
   defaults,
   locale,
@@ -50,6 +54,11 @@ export function CheckoutForm({
   /** 取件方式由购物车页管理（邮寄和自取能不能下单的条件不同） */
   fulfillment: string;
   onFulfillmentChange: (method: string) => void;
+  /** 收件州也由购物车页管理（运费按州算） */
+  shippingState: string;
+  onShippingStateChange: (state: string) => void;
+  /** 邮寄这单的运费（分），0 = 包邮；还没算出来时为 null */
+  shippingCents: number | null;
   /** 有商品需要先处理（没货、不能邮寄等）：不能提交，显示这句提示 */
   blocked: string | null;
   /** 登录的顾客：预先填好的联系方式 */
@@ -62,6 +71,12 @@ export function CheckoutForm({
   const [state, formAction, pending] = useActionState(submitOrder, initialBookingFormState);
   const errors = state.fieldErrors ?? {};
   const shippingPolicy = messages.product.shippingPolicy(...shippingPolicyArgs(shippingMinDays));
+
+  // 提交失败回填表单时，把州也带回购物车页
+  const returnedState = state.values?.shippingState;
+  useEffect(() => {
+    if (returnedState) onShippingStateChange(returnedState);
+  }, [returnedState, onShippingStateChange]);
 
   useEffect(() => {
     if (!state.redirectTo) return;
@@ -162,7 +177,9 @@ export function CheckoutForm({
                     fulfillment === method ? "bg-white text-neutral-900" : "bg-emerald-50 text-emerald-700",
                   ].join(" ")}
                 >
-                  {t.freeShippingTag}
+                  {shippingCents === null || shippingCents === 0
+                    ? t.freeShippingTag
+                    : t.shippingFeeTag(formatMoney(shippingCents, { whole: true }))}
                 </span>
               )}
             </label>
@@ -206,7 +223,8 @@ export function CheckoutForm({
                 name="shippingState"
                 required
                 autoComplete="shipping address-level1"
-                defaultValue={state.values?.shippingState ?? ""}
+                value={shippingState}
+                onChange={(e) => onShippingStateChange(e.target.value)}
                 className={inputClass}
               >
                 <option value="">{t.statePlaceholder}</option>

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { shop } from "@/config/shop";
-import { formatShippingAddress, isShippingState, SHIPPING_STATES, shippingPolicyArgs, ZIP_RE } from "@/lib/shipping";
+import {
+  formatShippingAddress,
+  isShippingState,
+  qualifiesForFreeShipping,
+  SHIPPING_STATES,
+  shippingFeeCents,
+  shippingPolicyArgs,
+  ZIP_RE,
+} from "@/lib/shipping";
 import { getMessages } from "@/messages";
 
 describe("可邮寄地区", () => {
@@ -29,20 +37,48 @@ describe("formatShippingAddress", () => {
   });
 });
 
-describe("邮寄文案：全美包邮，不再分区收运费", () => {
-  it("配置里没有运费", () => {
-    expect(Object.keys(shop.shipping)).toEqual(["orderAheadDays"]);
+describe("运费：一套租满 2 天或满 $99 包邮，否则按州收", () => {
+  const set = (days: number, rental: number) => ({ category: "suit", rentalDays: days, rentalCents: rental, addOnCents: 0 });
+  const gloves = (rental: number) => ({ category: "gloves", rentalDays: 2, rentalCents: rental, addOnCents: 0 });
+
+  it("一套套装或连体服租满 2 天就包邮", () => {
+    expect(qualifiesForFreeShipping([set(2, 8900)])).toBe(true);
+    expect(qualifiesForFreeShipping([{ ...set(2, 8900), category: "one_piece" }])).toBe(true);
+    expect(shippingFeeCents([set(2, 8900)], "CA")).toBe(0);
   });
 
-  it("中英文都写明包邮、邮寄 2 天起、自取 1 天起，没有加收运费的说法", () => {
+  it("没有整套时：租金 + 加购满 $99 包邮，押金不算", () => {
+    const jacket = { category: "jacket", rentalDays: 2, rentalCents: 5000, addOnCents: 0 };
+    const pants = { category: "pants", rentalDays: 2, rentalCents: 3500, addOnCents: 0 };
+    expect(qualifiesForFreeShipping([jacket, pants])).toBe(false);
+    expect(qualifiesForFreeShipping([jacket, pants, { ...gloves(1400) }])).toBe(true);
+    expect(qualifiesForFreeShipping([{ ...jacket, addOnCents: 4900 }])).toBe(true);
+  });
+
+  it("不包邮时：东北部等 $15，远区（如 WA、CA）$25", () => {
+    expect(shippingFeeCents([gloves(2200)], "NY")).toBe(1500);
+    expect(shippingFeeCents([gloves(2200)], "DC")).toBe(1500);
+    expect(shippingFeeCents([gloves(2200)], "WA")).toBe(2500);
+    expect(shippingFeeCents([gloves(2200)], "CA")).toBe(2500);
+  });
+
+  it("远区州都在可邮寄地区里", () => {
+    for (const state of shop.shipping.farStates) expect(isShippingState(state)).toBe(true);
+  });
+});
+
+describe("邮寄文案", () => {
+  it("中英文都写明包邮条件、两档运费、邮寄 2 天起、自取 1 天起", () => {
     for (const locale of ["zh", "en"] as const) {
       const m = getMessages(locale);
       const texts = [m.product.shippingPolicy(...shippingPolicyArgs(2)), ...m.rentalInfo.shippingRules(...shippingPolicyArgs(2))];
       const all = texts.join("\n");
-      expect(all).toMatch(locale === "zh" ? /全美包邮/ : /free shipping/i);
+      expect(all).toMatch(/\$99/);
+      expect(all).toMatch(/\$15/);
+      expect(all).toMatch(/\$25/);
       expect(all).toMatch(locale === "zh" ? /2 天起租/ : /2-day minimum|2 days/);
       expect(all).toMatch(/Ithaca/);
-      expect(all).not.toMatch(/\$9\.99|另收|surcharge|shipping fee/i);
+      expect(all).not.toMatch(/全美包邮|free shipping nationwide/i);
     }
   });
 });

@@ -51,7 +51,7 @@ async function BookingDetail({
   const { data: booking, error } = await service
     .from("bookings")
     .select(
-      "id, booking_no, style_id, status, size, start_date, end_date, rental_days, rental_cents, deposit_cents, total_cents, fulfillment_method, parent_booking_id, lead_days, tail_days",
+      "id, booking_no, style_id, status, size, start_date, end_date, rental_days, rental_cents, deposit_cents, shipping_cents, total_cents, fulfillment_method, parent_booking_id, lead_days, tail_days",
     )
     .eq("booking_no", bookingNo)
     .maybeSingle();
@@ -163,6 +163,12 @@ async function BookingDetail({
           ))}
           <Row label={t.fulfillment} value={messages.fulfillment[booking.fulfillment_method]} />
           {sameDates && <Row label={t.handover} value={handover(booking)} />}
+          {booking.fulfillment_method === "shipping" && (
+            <Row
+              label={t.shipping}
+              value={booking.shipping_cents > 0 ? formatMoney(booking.shipping_cents) : t.freeShipping}
+            />
+          )}
           {depositCents > 0 && <Row label={t.deposit} value={formatMoney(depositCents)} />}
           <Row label={t.total} value={formatMoney(totalCents)} strong />
         </dl>

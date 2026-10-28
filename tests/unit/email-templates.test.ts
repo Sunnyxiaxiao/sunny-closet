@@ -37,6 +37,7 @@ const order: OrderEmailData = {
     },
   ],
   addOns: [{ name: "黑猫头盔套", nameEn: "Black Cat Helmet Cover", cents: 800 }],
+  shippingCents: 0,
   totalCents: 7900 + 20000 + 2200 + 800,
 };
 

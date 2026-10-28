@@ -8,7 +8,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 async function loadOrder(bookingId: string): Promise<OrderEmailData | null> {
   const service = createSupabaseServiceClient();
   const columns =
-    "id, booking_no, style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, total_cents, lead_days, tail_days, fulfillment_method, shipping_address, customer_name, customer_email, customer_phone, customer_note, cart_item, bundle_part, parent_booking_id";
+    "id, booking_no, style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, shipping_cents, total_cents, lead_days, tail_days, fulfillment_method, shipping_address, customer_name, customer_email, customer_phone, customer_note, cart_item, bundle_part, parent_booking_id";
   const [{ data: main, error }, { data: children, error: childError }] = await Promise.all([
     service.from("bookings").select(columns).eq("id", bookingId).maybeSingle(),
     service.from("bookings").select(columns).eq("parent_booking_id", bookingId).eq("bundle_part", false).order("booking_no"),
@@ -48,6 +48,7 @@ async function loadOrder(bookingId: string): Promise<OrderEmailData | null> {
       tailDays: l.tail_days,
     })),
     addOns: (children ?? []).filter((c) => !c.cart_item).map((a) => ({ ...names(a.style_id), cents: a.rental_cents })),
+    shippingCents: main.shipping_cents,
     totalCents: all.reduce((sum, b) => sum + b.total_cents, 0),
   };
 }

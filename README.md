@@ -310,7 +310,6 @@ The site has a Chinese version (`/styles`) and an English version (`/en/styles`)
 ### Replacing images
 
 - **Product images**: portrait 3:5 (e.g. 930×1550 or 1200×2000); the first image is the cover.
-- **Home page hero**: currently `public/hero.jpg` (snowboard graphic, 3200×667), shown at its full aspect ratio — full width on desktop, horizontally scrollable on phones. To replace it, put the new image in `public` and update `heroImage` (filename, width, height) in `src/config/shop.ts`.
 
 ## Helmet covers
 
@@ -328,15 +327,15 @@ The site has a Chinese version (`/styles`) and an English version (`/en/styles`)
 
 - **Tiered pricing** by category, plus a deposit:
 
-  | Days | Jacket only | Pants only | Full set (set / one-piece) |
-  |---|---|---|---|
-  | 1 | $35 | $25 | $49 |
-  | 2 | $50 | $35 | $79 |
-  | 3 | $60 | $45 | $94 |
-  | 4 | $70 | $55 | $109 |
-  | 5 | $80 | $65 | $119 |
-  | 6 | $85 | $70 | $129 |
-  | 7 | $90 | $75 | $139 |
+  | Days | Jacket only | Pants only | Full set (set / one-piece) | Crystal set |
+  |---|---|---|---|---|
+  | 1 | $35 | $25 | $49 | $58 |
+  | 2 | $50 | $35 | $89 | $108 |
+  | 3 | $60 | $45 | $99 | $118 |
+  | 4 | $70 | $55 | $109 | $128 |
+  | 5 | $80 | $65 | $119 | $138 |
+  | 6 | $85 | $70 | $129 | $158 |
+  | 7–10 | $90 | $75 | $139 | $168 |
 
   The price tables live in `settings` (in cents; item n = n days, longer rentals use the last tier):
   full set `rental_prices_cents`, jacket `jacket_prices_cents`, pants `pants_prices_cents`.
@@ -344,10 +343,11 @@ The site has a Chinese version (`/styles`) and an English version (`/en/styles`)
   `update public.settings set pants_prices_cents = array[2500,3500,4500,5500,6500,7000,7500] where id;`.
   Jackets and pants also appear on the **Mix & Match** page (`/mix-and-match`). Helmet covers and gloves have their own price tables.
 - **Deposit**: $200 for a full set, $150 for a jacket, $100 for pants (defaults when `deposit` is omitted in the catalog).
-- **Maximum rental** 7 days (`settings.max_rental_days`). **Minimum rental**: 1 day for local pickup, 2 days for shipping (`settings.shipping_min_days`).
+- **Maximum rental** 10 days (`settings.max_rental_days`). **Minimum rental**: 1 day for local pickup, 2 days for shipping (`settings.shipping_min_days`).
   The database re-validates prices and minimum days when the order is placed.
 - **Shipping**:
-  - Contiguous 48 states + Washington, DC only (no Alaska, Hawaii or territories), **free shipping nationwide**; order total = rental + deposit.
+  - Contiguous 48 states + Washington, DC only (no Alaska, Hawaii or territories).
+  - **Free shipping** when the order has a full set (suit / one-piece) rented for 2+ days, or rental + add-ons reach $99 (deposit excluded). Otherwise one fee per order: $15, or $25 for far states (the list lives in `shop.shipping.farStates`). The rule is one pure function (`shippingFeeCents` in `src/lib/shipping.ts`) shared by the cart page and the server action; the fee is stored once on the main order (`bookings.shipping_cents`), and order total = rental + deposit + shipping.
   - Shipped items have a 2-day minimum (editable under Pricing); local pickup in Ithaca starts at 1 day. Shipped orders need about 7 days' notice (`shop.shipping.orderAheadDays` in `src/config/shop.ts`).
   - Shipped items go out together, so every item in the cart must have the same ski dates (pickup orders can differ).
   - The shipping address is split into street, city, state (dropdown, 48 states + DC only) and ZIP, with state and ZIP validated; it is stored as one line in the order's `shipping_address`.

@@ -11,7 +11,7 @@ import { earliestShippingStart } from "@/lib/booking/rules";
 import { priceCart } from "@/lib/cart-quote";
 import { formatShortDate } from "@/lib/dates";
 import { notifyNewOrder } from "@/lib/email/order-notifications";
-import { formatShippingAddress } from "@/lib/shipping";
+import { formatShippingAddress, shippingFeeCents } from "@/lib/shipping";
 import { publicOrigin } from "@/lib/site-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -59,7 +59,7 @@ function parseJson(value: string): unknown {
  * The customer submits the cart and it becomes one order (one order number).
  *
  * Security rule: nothing from the browser is trusted.
- * Prices, date validity and whether styles are active are all re-read and recomputed here (free shipping nationwide, no shipping fee);
+ * Prices, date validity, whether styles are active and the shipping fee are all re-read and recomputed here;
  * availability is decided by create_order in a database transaction, so concurrent orders never share an item, and if any item is unavailable the whole order fails.
  */
 export async function submitOrder(_previous: BookingFormState, formData: FormData): Promise<BookingFormState> {
@@ -147,6 +147,19 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     return fail(messages.submitErrors.tooFrequent);
   }
 
+  // Shipping fee from the recomputed prices (free with a 2-day set or $99+ rental and add-ons)
+  const shippingCents = shipping
+    ? shippingFeeCents(
+        lines.map((l) => ({
+          category: l.style?.category ?? "",
+          rentalDays: l.rentalDays,
+          rentalCents: l.rentalCents,
+          addOnCents: l.addOns.reduce((sum, a) => sum + a.cents, 0),
+        })),
+        input.shippingState,
+      )
+    : 0;
+
   const { data, error } = await service.rpc("create_order", {
     p_lines: lines.map((l) => ({
       style_id: l.input.styleId,
@@ -172,6 +185,7 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
         })
       : null,
     p_customer_note: buildCustomerNote(input),
+    p_shipping_cents: shippingCents,
   });
 
   const order = data?.[0];

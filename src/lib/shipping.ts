@@ -1,6 +1,6 @@
 /**
- * 邮寄：只寄美国本土 48 州 + 华盛顿特区，全美包邮（不收运费）。
- * 这里是结算表单的州下拉选项、邮编格式，以及存进订单的一行地址怎么拼。
+ * 邮寄：只寄美国本土 48 州 + 华盛顿特区。
+ * 这里是结算表单的州下拉选项、邮编格式、存进订单的一行地址怎么拼，以及运费怎么算。
  */
 
 import { shop } from "@/config/shop";
@@ -74,7 +74,35 @@ export function formatShippingAddress(a: { street: string; city: string; state: 
   return `${a.street}, ${a.city}, ${a.state} ${a.zip}`;
 }
 
-/** 文案（款式页、下单表单、租赁须知）里用到的数字：邮寄最短天数、提前几天下单 */
-export function shippingPolicyArgs(minDays: number): [number, number] {
-  return [minDays, shop.shipping.orderAheadDays];
+/**
+ * 文案（款式页、下单表单、租赁须知）里用到的数字：邮寄最短天数、提前几天下单、
+ * 包邮要一套租满几天、包邮门槛、近区运费、远区运费（金额是美元整数）
+ */
+export function shippingPolicyArgs(minDays: number): [number, number, number, number, number, number] {
+  const s = shop.shipping;
+  return [minDays, s.orderAheadDays, s.freeSetMinDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100];
+}
+
+/** 算运费用到的每件信息 */
+export interface ShippingLine {
+  category: string;
+  rentalDays: number;
+  rentalCents: number;
+  addOnCents: number;
+}
+
+/** 套装和连体服算“一套” */
+const SET_CATEGORIES = new Set(["suit", "one_piece"]);
+
+/** 满足其一就包邮：有一套租满 2 天，或租金 + 加购满 $99（押金不算） */
+export function qualifiesForFreeShipping(lines: readonly ShippingLine[]): boolean {
+  const s = shop.shipping;
+  if (lines.some((l) => SET_CATEGORIES.has(l.category) && l.rentalDays >= s.freeSetMinDays)) return true;
+  return lines.reduce((sum, l) => sum + l.rentalCents + l.addOnCents, 0) >= s.freeSubtotalCents;
+}
+
+/** 这单邮寄到这个州的运费（分）；包邮返回 0。还没选州时按近区算 */
+export function shippingFeeCents(lines: readonly ShippingLine[], state: string): number {
+  if (qualifiesForFreeShipping(lines)) return 0;
+  return (shop.shipping.farStates as readonly string[]).includes(state) ? shop.shipping.farFeeCents : shop.shipping.feeCents;
 }

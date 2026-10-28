@@ -48,6 +48,8 @@ export interface OrderEmailData {
   lines: OrderEmailLine[];
   /** 加购的头盔套 */
   addOns: { name: string; nameEn: string; cents: number }[];
+  /** 运费（已含在 totalCents 里），0 = 包邮或自取 */
+  shippingCents: number;
   totalCents: number;
 }
 
@@ -102,7 +104,12 @@ function itemRows(order: OrderEmailData, language: "zh" | "en"): [string, string
 }
 
 function handoverRows(order: OrderEmailData): [string, string][] {
-  const method = order.fulfillment === "shipping" ? "Shipping (free)" : "In-store pickup";
+  const method =
+    order.fulfillment === "pickup"
+      ? "In-store pickup"
+      : order.shippingCents > 0
+        ? `Shipping (${formatMoney(order.shippingCents)})`
+        : "Shipping (free)";
   const first = order.lines[0];
   const sameDates = order.lines.every((l) => l.start === first.start && l.end === first.end);
   const handover = (l: OrderEmailLine) =>

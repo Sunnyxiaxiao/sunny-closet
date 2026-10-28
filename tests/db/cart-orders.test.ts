@@ -41,12 +41,17 @@ function line(l: Line) {
 }
 
 /** 以服务端身份调用 create_order，与网站的调用方式一致 */
-function order(lines: Line[], options: { fulfillment?: "pickup" | "shipping" } = {}) {
+function order(lines: Line[], options: { fulfillment?: "pickup" | "shipping"; shippingCents?: number } = {}) {
   const shipping = options.fulfillment === "shipping";
   return withRole(db, "service_role", () =>
     db.query<{ booking_id: string; booking_no: string }>(
-      `select * from public.create_order($1::jsonb, '顾客', 'a@b.co', '5551234567', $2, $3, '')`,
-      [JSON.stringify(lines.map(line)), options.fulfillment ?? "pickup", shipping ? "1 Main St, Ithaca, NY 14850" : null],
+      `select * from public.create_order($1::jsonb, '顾客', 'a@b.co', '5551234567', $2, $3, '', $4)`,
+      [
+        JSON.stringify(lines.map(line)),
+        options.fulfillment ?? "pickup",
+        shipping ? "1 Main St, Ithaca, NY 14850" : null,
+        options.shippingCents ?? 0,
+      ],
     ),
   );
 }
@@ -60,12 +65,13 @@ async function rows(bookingNo: string) {
       cart_item: boolean;
       rental_cents: number;
       deposit_cents: number;
+      shipping_cents: number;
       total_cents: number;
       shipping_address: string | null;
       status: string;
     }>(
       `select booking_no, style_id, parent_booking_id, cart_item, rental_cents, deposit_cents,
-              total_cents, shipping_address, status
+              shipping_cents, total_cents, shipping_address, status
        from public.bookings where booking_no = $1 or booking_no like $1 || '-%' order by booking_no`,
       [bookingNo],
     )
@@ -137,8 +143,27 @@ describe("create_order 购物车下单", () => {
       cart_item: false,
       total_cents: HELMET_ADDON,
     });
-    // 整单合计 = 两件租金 + 两份押金 + 头盔套（邮寄全美包邮，没有运费）
+    // 整单合计 = 两件租金 + 两份押金 + 头盔套（这单包邮，没有运费）
     expect(all.reduce((sum, r) => sum + r.total_cents, 0)).toBe(7900 * 2 + DEPOSIT * 2 + HELMET_ADDON);
+    expect(all.map((r) => r.shipping_cents)).toEqual([0, 0, 0]);
+  });
+
+  it("运费只记在主订单上，并算进合计", async () => {
+    const res = await order([{ styleId: suitA, start: "2027-02-06", end: "2027-02-07" }], {
+      fulfillment: "shipping",
+      shippingCents: 2500,
+    });
+    const [main] = await rows(res.rows[0].booking_no);
+    expect(main).toMatchObject({ shipping_cents: 2500, total_cents: 7900 + DEPOSIT + 2500 });
+  });
+
+  it("到店自取不能收运费，运费也不能是负数", async () => {
+    await expect(
+      order([{ styleId: suitA, start: "2027-02-13", end: "2027-02-13" }], { shippingCents: 1500 }),
+    ).rejects.toThrow(/invalid_cart/);
+    await expect(
+      order([{ styleId: suitA, start: "2027-02-13", end: "2027-02-14" }], { fulfillment: "shipping", shippingCents: -1 }),
+    ).rejects.toThrow(/invalid_cart/);
   });
 
   it("到店自取可以每件日期不同", async () => {

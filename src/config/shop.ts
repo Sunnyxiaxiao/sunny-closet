@@ -9,18 +9,21 @@ export const shop = {
   timeZone: "America/New_York",
   fulfillmentMethods: ["pickup", "shipping"] as const,
   /**
-   * 邮寄：只寄美国本土 48 州 + DC，全美包邮，不收运费。
+   * 邮寄：只寄美国本土 48 州 + DC。
+   * 包邮条件（满足其一）：订单里有一套套装/连体服租满 2 天，或租金 + 加购满 $99（不含押金）。
+   * 不满足就按收件州收一次运费：远区 $25，其余（东北部、中西部等）$15。
    * 邮寄最短租期在后台“价格”里改（settings.shipping_min_days）；到店自取 1 天起。
    */
   shipping: {
     /** 文案里写的“邮寄需提前约几天下单” */
     orderAheadDays: 7,
+    freeSetMinDays: 2,
+    freeSubtotalCents: 9900,
+    feeCents: 1500,
+    farFeeCents: 2500,
+    /** 收远区运费的州，以后可以按真实运费调整 */
+    farStates: ["FL", "TX", "LA", "OK", "KS", "NE", "SD", "ND", "CO", "UT", "WY", "MT", "ID", "NV", "AZ", "NM", "CA", "OR", "WA"],
   },
-  /**
-   * 首页大图：按图片原本的比例完整显示（电脑上铺满宽度，手机上左右滑动看全图）。
-   * 换图：把图片放到 public 文件夹，再改这里的文件名和宽高（像素）。
-   */
-  heroImage: { src: "/hero.jpg", width: 3200, height: 667 },
   /** 地址和营业时间要写中英两种，在 src/messages/zh-CN.ts 和 en.ts 的 contact 里改 */
   contact: {
     email: "sunnycloset.rentals@gmail.com",

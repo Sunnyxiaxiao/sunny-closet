@@ -112,6 +112,9 @@ export function AdminOrderCard({
               { leadDays: booking.lead_days, tailDays: booking.tail_days },
             )}
           />
+          {booking.fulfillment_method === "shipping" && (
+            <Line label="运费" value={booking.shipping_cents > 0 ? formatMoney(booking.shipping_cents) : "包邮"} />
+          )}
           <Line
             label={`${t.rental} / ${t.deposit} / ${t.total}`}
             value={`${formatMoney(rentalTotal)} / ${formatMoney(depositTotal)} / ${formatMoney(orderTotal)}`}

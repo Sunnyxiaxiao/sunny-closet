@@ -213,6 +213,8 @@ export type Database = {
           daily_price_cents: number;
           rental_cents: number;
           deposit_cents: number;
+          /** Shipping fee, stored once on the main order (0 = free shipping or pickup) */
+          shipping_cents: number;
           total_cents: number;
           admin_note: string;
           /** Add-on child orders point to the outfit order they belong to; null for regular orders */
@@ -404,6 +406,8 @@ export type Database = {
           p_fulfillment_method: "pickup" | "shipping";
           p_shipping_address: string | null;
           p_customer_note: string;
+          /** Shipping fee computed by the server (0 for pickup or free shipping) */
+          p_shipping_cents: number;
         };
         Returns: { booking_id: string; booking_no: string }[];
       };

@@ -8,11 +8,12 @@ import { removeFromCart, useCart } from "@/lib/cart";
 import type { CartQuote, CartQuoteLine } from "@/lib/cart-quote";
 import { formatDateRange, formatShortDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { shippingFeeCents, shippingPolicyArgs } from "@/lib/shipping";
 import { getMessages, sizeLabel } from "@/messages";
 
 const noop = () => () => {};
 
-/** 购物车页：每一件的价格和可租情况（向 /api/cart 查询）、订单金额、结算表单。邮寄全美包邮，没有运费 */
+/** 购物车页：每一件的价格和可租情况（向 /api/cart 查询）、订单金额（含邮寄运费）、结算表单 */
 export function CartView({
   locale,
   shippingMinDays,
@@ -30,6 +31,7 @@ export function CartView({
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
   const [result, setResult] = useState<{ key: string; quote?: CartQuote; failed?: boolean } | null>(null);
   const [fulfillment, setFulfillment] = useState("pickup");
+  const [shippingState, setShippingState] = useState("");
 
   const key = JSON.stringify([lines, locale]);
   useEffect(() => {
@@ -89,6 +91,19 @@ export function CartView({
   const rentalCents = valid.reduce((sum, l) => sum + l.rentalCents, 0);
   const addOnCents = valid.reduce((sum, l) => sum + l.addOns.reduce((s, a) => s + a.cents, 0), 0);
   const depositCents = valid.reduce((sum, l) => sum + l.depositCents, 0);
+  // 运费和服务端用同一个函数算，提交时服务端会按数据库价格重算
+  const shippingCents = quote
+    ? shippingFeeCents(
+        valid.map((l) => ({
+          category: l.style?.category ?? "",
+          rentalDays: l.rentalDays,
+          rentalCents: l.rentalCents,
+          addOnCents: l.addOns.reduce((s, a) => s + a.cents, 0),
+        })),
+        shippingState,
+      )
+    : null;
+  const [, , freeSetDays, freeSubtotal] = shippingPolicyArgs(shippingMinDays);
   const datesDiffer =
     shipping && quote !== null && quote.lines.some((l) => l.start !== quote.lines[0].start || l.end !== quote.lines[0].end);
   const hasIssue = quote !== null && quote.lines.some((l) => issueOf(l, quote) !== null);
@@ -170,10 +185,23 @@ export function CartView({
               <SummaryRow label={t.rental} value={formatMoney(rentalCents)} />
               {addOnCents > 0 && <SummaryRow label={t.addOns} value={formatMoney(addOnCents)} />}
               {depositCents > 0 && <SummaryRow label={t.depositTotal} value={formatMoney(depositCents)} />}
+              {shipping && (
+                <SummaryRow
+                  label={t.shipping}
+                  value={shippingCents ? formatMoney(shippingCents) : t.freeShipping}
+                />
+              )}
               <div className="flex justify-between gap-3 border-t border-neutral-200 pt-2 text-base">
                 <dt className="font-semibold">{t.total}</dt>
-                <dd className="font-bold">{formatMoney(rentalCents + addOnCents + depositCents)}</dd>
+                <dd className="font-bold">
+                  {formatMoney(rentalCents + addOnCents + depositCents + (shipping ? (shippingCents ?? 0) : 0))}
+                </dd>
               </div>
+              {shipping && shippingCents !== 0 && (
+                <p className="pt-1 text-xs text-neutral-500">
+                  {t.freeShippingHint(freeSetDays, formatMoney(freeSubtotal * 100, { whole: true }))}
+                </p>
+              )}
             </dl>
           ) : (
             <p className="mt-3 text-sm text-neutral-500">{current?.failed ? t.loadFailed : t.loading}</p>
@@ -185,6 +213,9 @@ export function CartView({
           shippingMinDays={shippingMinDays}
           fulfillment={fulfillment}
           onFulfillmentChange={setFulfillment}
+          shippingState={shippingState}
+          onShippingStateChange={setShippingState}
+          shippingCents={shippingCents}
           blocked={blocked}
           defaults={defaults}
           locale={locale}
