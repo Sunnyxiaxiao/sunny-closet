@@ -204,23 +204,23 @@ In `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your o
 
 - **New order** → email to the owner with every item, dates, pickup / shipping address, customer contact info and a dashboard link; replying goes straight to the customer.
 - **Admin clicks "Confirm"** → email to the customer with the amount due, payment methods (Zelle / Venmo from `src/config/shop.ts`) and the order link.
-- Emails are in English and sent from the shop Gmail (same account and app password as above). Set these in `.env.local` (and in Vercel environment variables in production):
+- Emails are in English and sent from the shop Gmail (same account and app password as above). Set these in `.env.local` (and in the Netlify environment variables in production):
   `SMTP_USER` (shop Gmail), `SMTP_PASS` (16-character app password); set `ADMIN_NOTIFY_EMAIL` to send new-order alerts somewhere else.
 - If they're not set, ordering and status changes work as usual and no email is sent (the server log says the send was skipped). A failed send never affects the order.
 - Email content is in `src/lib/email/templates.ts`; sending is in `src/lib/email/send.ts`.
 
-### Launch: deployment, domain, analytics
+### Launch: deployment and domain
 
-1. **Deploy to Vercel**: sign in to [vercel.com](https://vercel.com) with GitHub → Add New Project → pick the `sunny-closet` repo → Deploy.
-   Every push to `main` redeploys automatically.
-2. **Environment variables** (Vercel project → Settings → Environment Variables): add
+1. **Deploy to Netlify** (free plan): sign in to [netlify.com](https://www.netlify.com) with GitHub → Add new project → Import an existing project → pick the `sunny-closet` repo.
+   Netlify detects Next.js and fills in the build settings. Every push to `main` redeploys automatically.
+2. **Environment variables** (Project configuration → Environment variables): add
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SMTP_USER` and `SMTP_PASS` from `.env.local`
    (`SUPABASE_DB_URL` is only for running migrations locally), plus `NEXT_PUBLIC_SITE_URL` = your production URL. Redeploy once for the changes to take effect.
-3. **Domain**: buy a domain (Namecheap, GoDaddy, Squarespace, …) → Vercel project → Settings → Domains → add it,
-   then add the DNS records it asks for at your registrar. It takes minutes to hours; Vercel sets up HTTPS automatically.
+3. **Domain**: Netlify project → Domain management → add the domain, then at your registrar point the apex `A` record to Netlify's load balancer
+   and `www` (`CNAME`) to `<project>.netlify.app`. Netlify sets up HTTPS automatically once DNS resolves.
 4. **Supabase**: under Authentication → URL Configuration, change Site URL to the production URL and add `https://your-domain/**` to Redirect URLs.
-5. **Analytics**: Vercel project → Analytics → Enable, to see daily visitors, top pages and referrers.
-   No cookies and no consent banner; admin pages and local development are not tracked.
+5. **Keep-alive**: free Supabase projects pause after 7 idle days; `.github/workflows/keep-supabase-awake.yml` pings it every 3 days
+   (needs the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` repository secrets).
 6. **Search engines**: the site serves `/sitemap.xml` (all sections and active products, both languages) and `/robots.txt` (admin, cart, orders and account are excluded).
    To get indexed faster, add the site in [Google Search Console](https://search.google.com/search-console) and submit `https://your-domain/sitemap.xml`.
 

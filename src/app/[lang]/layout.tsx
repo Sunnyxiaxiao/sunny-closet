@@ -1,4 +1,3 @@
-import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -45,8 +44,6 @@ export default async function SiteLayout({ children }: LayoutProps<"/[lang]">) {
         <SiteHeader locale={locale} />
         <main className="flex-1">{children}</main>
         <SiteFooter locale={locale} />
-        {/* Vercel 网站流量统计（不用 cookie）：部署到 Vercel 并在项目里打开 Analytics 后生效，本地开发不统计。后台页面不统计 */}
-        <Analytics />
       </body>
     </html>
   );
