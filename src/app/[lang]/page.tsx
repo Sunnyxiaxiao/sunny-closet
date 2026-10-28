@@ -1,10 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { HelmetCoverCard } from "@/components/helmet-cover-card";
 import { ProductCard, ProductGridSkeleton } from "@/components/product-card";
 import { StyleImage } from "@/components/style-image";
-import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getAvailability, getSettings, listStyles, crystalRegularTable,
@@ -17,38 +15,10 @@ export default async function HomePage() {
   const t = getMessages(locale).home;
   return (
     <div>
-      <section className="relative bg-neutral-950 text-white">
-        {/*
-          大图按原比例显示：屏幕够宽（约 1400px 以上）时整张铺满；更窄时保持最低高度放得下文字，
-          左右滑动看全图。文字叠在图上，pointer-events-none 让手指在文字上也能滑动图片。
-        */}
-        <div className="no-scrollbar overflow-x-auto">
-          <Image
-            src={shop.heroImage.src}
-            width={shop.heroImage.width}
-            height={shop.heroImage.height}
-            alt=""
-            priority
-            unoptimized
-            sizes="100vw"
-            className="block h-[max(18rem,20.85vw)] w-auto min-w-full max-w-none object-cover"
-          />
-        </div>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-black/30 sm:bg-transparent bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.25)_45%,transparent_75%)] px-5 text-center [text-shadow:0_1px_12px_rgba(0,0,0,0.6)]">
-          {/* 第一次来的人一眼看出这是租赁，不是卖衣服 */}
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/90 sm:text-xs">{t.heroEyebrow}</p>
-          <h1 className="mt-2 whitespace-pre-line text-2xl font-black leading-tight sm:text-4xl xl:text-5xl">
-            {t.heroTitle}
-          </h1>
-          <p className="mt-2 max-w-md text-xs text-white/90 sm:text-sm">{t.heroSubtitle}</p>
-          <Link
-            href={localePath(locale, "/styles")}
-            className="pointer-events-auto mt-4 inline-flex h-10 items-center rounded-full bg-white/90 px-7 text-sm font-bold tracking-widest text-neutral-900 [text-shadow:none] transition hover:bg-white sm:h-11"
-          >
-            {t.browseCta}
-          </Link>
-          <p className="absolute inset-x-0 bottom-2 text-[11px] text-white/70 min-[1400px]:hidden">{t.heroSwipe}</p>
-        </div>
+      {/* 一行说清楚这是租赁、不是卖衣服，尽量少占地方，让商品早点露出来 */}
+      <section className="px-4 pt-5 text-center">
+        <h1 className="text-xl font-semibold text-neutral-800 sm:text-3xl">{t.heroTitle}</h1>
+        <p className="mt-1 text-xs text-neutral-500 sm:text-sm">{t.heroSubtitle}</p>
       </section>
 
       <Suspense
@@ -143,7 +113,7 @@ async function HomeCatalog({ locale }: { locale: Locale }) {
   return (
     <>
       {categories.length > 1 && (
-        <section className="mx-auto max-w-7xl pt-12 sm:px-4">
+        <section className="mx-auto max-w-7xl pt-6 sm:px-4">
           <h2 className="px-4 text-2xl font-black sm:px-0">{t.categoriesTitle}</h2>
           <ul className="no-scrollbar mt-5 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible sm:px-0">
             {categories.map(({ category, cover }) => (

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import { shop } from "@/config/shop";
 import { localePath } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getMessages } from "@/messages";
@@ -16,18 +14,6 @@ export default async function StoryPage() {
   const t = getMessages(locale).story;
   return (
     <article>
-      {/* 首页那张滑雪板图，横向完整显示；手机上可以左右滑动 */}
-      <div className="no-scrollbar overflow-x-auto bg-neutral-950">
-        <Image
-          src={shop.heroImage.src}
-          width={shop.heroImage.width}
-          height={shop.heroImage.height}
-          alt=""
-          unoptimized
-          sizes="100vw"
-          className="block h-48 w-auto min-w-full max-w-none object-cover sm:h-auto sm:w-full sm:max-w-full"
-        />
-      </div>
       <div className="mx-auto max-w-2xl px-5 py-12 sm:py-16">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">{t.eyebrow}</p>
         <h1 className="mt-3 whitespace-pre-line text-3xl font-black leading-tight sm:text-4xl">{t.heading}</h1>

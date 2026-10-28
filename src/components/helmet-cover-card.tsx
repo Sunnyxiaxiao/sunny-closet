@@ -60,6 +60,7 @@ export function HelmetCoverCard({
         )}
       </div>
       <div className="mt-2.5 space-y-0.5 px-0.5">
+        {cover.brand && <p className="text-[11px] uppercase tracking-widest text-neutral-500">{cover.brand}</p>}
         <p className="text-sm leading-snug">{cover.name}</p>
         {fromCents !== null && (
           <p className="text-sm">

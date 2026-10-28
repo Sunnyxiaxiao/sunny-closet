@@ -91,6 +91,7 @@ async function HelmetCoverDetail({
       <div className="mt-3 flex items-center gap-2">
         {cover.tier && <TierBadge tier={cover.tier} locale={locale} />}
       </div>
+      {cover.brand && <p className="mt-2 text-xs uppercase tracking-widest text-neutral-500">{cover.brand}</p>}
       <h1 className="mt-2 text-2xl font-bold leading-snug sm:text-3xl">{cover.name}</h1>
 
       {shownTags.length > 0 && (

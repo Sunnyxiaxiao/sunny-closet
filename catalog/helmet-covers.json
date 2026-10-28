@@ -70,11 +70,11 @@
     ]
   },
   {
-    "slug": "hello-kitty",
+    "slug": "white-bow-kitty",
     "category": "helmet_cover",
     "tier": "regular",
-    "name": "Hello Kitty 头盔套",
-    "nameEn": "Hello Kitty Helmet Cover",
+    "name": "白色蝴蝶结小猫头盔套",
+    "nameEn": "White Bow Kitty Helmet Cover",
     "tags": [
       "white",
       "pink",
@@ -83,10 +83,10 @@
       "cute"
     ],
     "sortOrder": 30,
-    "description": "白色毛绒头盔套，粉色蝴蝶结和粉色包边，黄色鼻子。",
-    "descriptionEn": "White plush helmet cover with a pink bow, pink trim and a yellow nose.",
+    "description": "白色毛绒小猫，头顶一个粉色蝴蝶结，粉色包边，黄色小鼻子。",
+    "descriptionEn": "White plush kitty with a pink bow on top, pink trim and a little yellow nose.",
     "images": [
-      "images/hello-kitty/1.png"
+      "images/white-bow-kitty/1.png"
     ],
     "items": [
       {
@@ -96,11 +96,11 @@
     ]
   },
   {
-    "slug": "kuromi",
+    "slug": "black-skull-imp",
     "category": "helmet_cover",
     "tier": "regular",
-    "name": "库洛米头盔套",
-    "nameEn": "Kuromi Helmet Cover",
+    "name": "黑色骷髅小恶魔头盔套",
+    "nameEn": "Black Skull Imp Helmet Cover",
     "tags": [
       "black",
       "white",
@@ -109,10 +109,10 @@
       "devil"
     ],
     "sortOrder": 40,
-    "description": "黑白毛绒头盔套，头顶两个黑球，紫色蝴蝶结，额头一颗粉色骷髅。",
-    "descriptionEn": "Black-and-white plush helmet cover with two black pom-poms on top, a purple bow and a pink skull on the forehead.",
+    "description": "黑白毛绒小恶魔，头顶两个黑色毛球，紫色蝴蝶结，额头一颗粉色小骷髅。",
+    "descriptionEn": "Black-and-white plush imp with two black pom-poms on top, a purple bow and a little pink skull on the forehead.",
     "images": [
-      "images/kuromi/1.png"
+      "images/black-skull-imp/1.png"
     ],
     "items": [
       {
@@ -354,6 +354,506 @@
     "items": [
       {
         "code": "HC016",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "popsnow-reindeer",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "圣诞小鹿头盔套",
+    "nameEn": "Christmas Reindeer Helmet Cover",
+    "tags": [
+      "brown",
+      "red",
+      "deer",
+      "christmas",
+      "fluffy",
+      "cute",
+      "funny"
+    ],
+    "sortOrder": 140,
+    "description": "焦糖色卷毛小鹿，头顶一对棕色鹿角，一边系着红色蝴蝶结，一边点缀红白小绒球，正中一颗圆滚滚的红鼻子。圣诞季上雪场最应景的一顶。\n\n## 适配与穿戴\n- 适配 XS 到 XL 的滑雪/单板头盔（头围约 48–65 cm），常见品牌基本都能戴\n- 后面有雪镜扣开口；两侧弹力带勾住护耳，后脑抽绳收紧，滑得快也不会掉\n- 头盔顶部装了运动相机支架的话戴不了\n- 穿戴：松开抽绳，从前往后套上，让雪镜扣从开口露出来，再收紧抽绳调整\n- 外层毛绒、内衬柔软，多一层保暖\n- 请不要水洗，弄湿或沾雪用纸巾擦干就好",
+    "descriptionEn": "A curly caramel-brown reindeer with plush antlers, a red bow on one side, red-and-white pompoms on the other and a round red pom-pom nose. The most festive thing you can wear on the slopes this season.\n\n## Fit & Care\n- Fits ski and snowboard helmets from XS to XL (about 48–65 cm / 19–25.6 in), including most popular brands\n- A slot in the back leaves room for your goggle clip; elastic side straps hook around the ear pads and a drawstring cinches it snug, so it stays put at speed\n- Not compatible with a camera mount on top of the helmet\n- To put it on: loosen the drawstring, pull the cover on front to back, line the goggle clip up with the slot, then tighten\n- Plush outer with a soft lining for a little extra warmth\n- Please don't wash it — if it gets wet or snowy, just pat it dry with a tissue",
+    "images": [
+      "images/popsnow-reindeer/1.jpg",
+      "images/popsnow-reindeer/2.jpg",
+      "images/popsnow-reindeer/3.jpg",
+      "images/popsnow-reindeer/4.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC017",
+        "size": "均码"
+      }
+    ],
+    "brand": "PopSnow"
+  },
+  {
+    "slug": "popsnow-panda",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "熊猫头盔套",
+    "nameEn": "Panda Helmet Cover",
+    "tags": [
+      "white",
+      "black",
+      "panda",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 150,
+    "description": "雪白长毛熊猫，黑色圆耳朵和眼圈，眯眼笑的表情配粉色腮红，憨憨的很讨喜。\n\n## 适配与穿戴\n- 适配 XS 到 XL 的滑雪/单板头盔（头围约 48–65 cm），常见品牌基本都能戴\n- 后面有雪镜扣开口；两侧弹力带勾住护耳，后脑抽绳收紧，滑得快也不会掉\n- 头盔顶部装了运动相机支架的话戴不了\n- 穿戴：松开抽绳，从前往后套上，让雪镜扣从开口露出来，再收紧抽绳调整\n- 外层毛绒、内衬柔软，多一层保暖\n- 请不要水洗，弄湿或沾雪用纸巾擦干就好",
+    "descriptionEn": "A fluffy white panda with round black ears and eye patches, a sleepy squinting smile and pink blushing cheeks.\n\n## Fit & Care\n- Fits ski and snowboard helmets from XS to XL (about 48–65 cm / 19–25.6 in), including most popular brands\n- A slot in the back leaves room for your goggle clip; elastic side straps hook around the ear pads and a drawstring cinches it snug, so it stays put at speed\n- Not compatible with a camera mount on top of the helmet\n- To put it on: loosen the drawstring, pull the cover on front to back, line the goggle clip up with the slot, then tighten\n- Plush outer with a soft lining for a little extra warmth\n- Please don't wash it — if it gets wet or snowy, just pat it dry with a tissue",
+    "images": [
+      "images/popsnow-panda/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC018",
+        "size": "均码"
+      }
+    ],
+    "brand": "PopSnow"
+  },
+  {
+    "slug": "sniffly-pig",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "流鼻涕小猪头盔套",
+    "nameEn": "Sniffly Pig Helmet Cover",
+    "tags": [
+      "pink",
+      "pig",
+      "fluffy",
+      "cute",
+      "funny"
+    ],
+    "sortOrder": 160,
+    "description": "浅粉色长毛小猪，尖尖的粉耳朵，大大的刺绣猪鼻子下面挂着一滴蓝色鼻涕，又呆又好笑。\n\n## 适配与穿戴\n- 适配 XS 到 XL 的滑雪/单板头盔（头围约 48–65 cm），常见品牌基本都能戴\n- 后面有雪镜扣开口；两侧弹力带勾住护耳，后脑抽绳收紧，滑得快也不会掉\n- 头盔顶部装了运动相机支架的话戴不了\n- 穿戴：松开抽绳，从前往后套上，让雪镜扣从开口露出来，再收紧抽绳调整\n- 外层毛绒、内衬柔软，多一层保暖\n- 请不要水洗，弄湿或沾雪用纸巾擦干就好",
+    "descriptionEn": "A soft pale-pink pig with perky pink ears, a big embroidered snout and one little blue drip under its nose. Goofy in the best way.\n\n## Fit & Care\n- Fits ski and snowboard helmets from XS to XL (about 48–65 cm / 19–25.6 in), including most popular brands\n- A slot in the back leaves room for your goggle clip; elastic side straps hook around the ear pads and a drawstring cinches it snug, so it stays put at speed\n- Not compatible with a camera mount on top of the helmet\n- To put it on: loosen the drawstring, pull the cover on front to back, line the goggle clip up with the slot, then tighten\n- Plush outer with a soft lining for a little extra warmth\n- Please don't wash it — if it gets wet or snowy, just pat it dry with a tissue",
+    "images": [
+      "images/sniffly-pig/1.jpg",
+      "images/sniffly-pig/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC019",
+        "size": "均码"
+      }
+    ],
+    "brand": "PopSnow"
+  },
+  {
+    "slug": "shaggy-black-pup",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "黑色长毛小狗头盔套",
+    "nameEn": "Shaggy Black Pup Helmet Cover",
+    "tags": [
+      "black",
+      "dog",
+      "fluffy",
+      "funny",
+      "statement"
+    ],
+    "sortOrder": 170,
+    "description": "蓬蓬的黑色长毛，两只耷拉的耳朵，一双往旁边瞟的大白眼睛，很有表情的一款。\n\n## 适配与穿戴\n- 适配 XS 到 XL 的滑雪/单板头盔（头围约 48–65 cm），常见品牌基本都能戴\n- 后面有雪镜扣开口；两侧弹力带勾住护耳，后脑抽绳收紧，滑得快也不会掉\n- 头盔顶部装了运动相机支架的话戴不了\n- 穿戴：松开抽绳，从前往后套上，让雪镜扣从开口露出来，再收紧抽绳调整\n- 外层毛绒、内衬柔软，多一层保暖\n- 请不要水洗，弄湿或沾雪用纸巾擦干就好",
+    "descriptionEn": "A shaggy black pup with long fur, floppy ears and big sideways-glancing cartoon eyes. Full of attitude.\n\n## Fit & Care\n- Fits ski and snowboard helmets from XS to XL (about 48–65 cm / 19–25.6 in), including most popular brands\n- A slot in the back leaves room for your goggle clip; elastic side straps hook around the ear pads and a drawstring cinches it snug, so it stays put at speed\n- Not compatible with a camera mount on top of the helmet\n- To put it on: loosen the drawstring, pull the cover on front to back, line the goggle clip up with the slot, then tighten\n- Plush outer with a soft lining for a little extra warmth\n- Please don't wash it — if it gets wet or snowy, just pat it dry with a tissue",
+    "images": [
+      "images/shaggy-black-pup/1.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC020",
+        "size": "均码"
+      }
+    ],
+    "brand": "PopSnow"
+  },
+  {
+    "slug": "christmas-bear",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "圣诞小熊头盔套",
+    "nameEn": "Christmas Bear Helmet Cover",
+    "tags": [
+      "brown",
+      "white",
+      "bear",
+      "christmas",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 180,
+    "description": "焦糖色卷毛小熊，白色圆耳朵和白色口鼻，头顶戴着一顶迷你圣诞帽。\n\n## 适配与穿戴\n- 适配 XS 到 XL 的滑雪/单板头盔（头围约 48–65 cm），常见品牌基本都能戴\n- 后面有雪镜扣开口；两侧弹力带勾住护耳，后脑抽绳收紧，滑得快也不会掉\n- 头盔顶部装了运动相机支架的话戴不了\n- 穿戴：松开抽绳，从前往后套上，让雪镜扣从开口露出来，再收紧抽绳调整\n- 外层毛绒、内衬柔软，多一层保暖\n- 请不要水洗，弄湿或沾雪用纸巾擦干就好",
+    "descriptionEn": "A curly caramel teddy bear with round white ears, a white muzzle and a tiny Santa hat on top.\n\n## Fit & Care\n- Fits ski and snowboard helmets from XS to XL (about 48–65 cm / 19–25.6 in), including most popular brands\n- A slot in the back leaves room for your goggle clip; elastic side straps hook around the ear pads and a drawstring cinches it snug, so it stays put at speed\n- Not compatible with a camera mount on top of the helmet\n- To put it on: loosen the drawstring, pull the cover on front to back, line the goggle clip up with the slot, then tighten\n- Plush outer with a soft lining for a little extra warmth\n- Please don't wash it — if it gets wet or snowy, just pat it dry with a tissue",
+    "images": [
+      "images/christmas-bear/1.jpg",
+      "images/christmas-bear/2.jpg",
+      "images/christmas-bear/3.jpg",
+      "images/christmas-bear/4.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC021",
+        "size": "均码"
+      }
+    ],
+    "brand": "PopSnow"
+  },
+  {
+    "slug": "pink-hood-bunny",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "粉色兜帽垂耳兔头盔套",
+    "nameEn": "Pink Hooded Bunny Helmet Cover",
+    "tags": [
+      "pink",
+      "white",
+      "bunny",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 190,
+    "description": "粉白羊羔绒垂耳兔，粉色兜帽造型，两侧圆圆的粉色耳饰和垂下来的长耳朵，白色小脸配黄色小鼻子。",
+    "descriptionEn": "A pink-and-white sherpa bunny in a pink hood, with fluffy round ear puffs, long floppy ears and a little yellow nose.",
+    "images": [
+      "images/pink-hood-bunny/1.jpg",
+      "images/pink-hood-bunny/2.jpg",
+      "images/pink-hood-bunny/3.jpg",
+      "images/pink-hood-bunny/4.jpg",
+      "images/pink-hood-bunny/5.jpg",
+      "images/pink-hood-bunny/6.jpg",
+      "images/pink-hood-bunny/7.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC022",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "hot-pink-lace-cat",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "玫红蕾丝猫头盔套",
+    "nameEn": "Hot Pink Lace Cat Helmet Cover",
+    "tags": [
+      "pink",
+      "yellow",
+      "cat",
+      "fluffy",
+      "cute",
+      "statement"
+    ],
+    "sortOrder": 200,
+    "description": "亮玫红长毛猫咪，黄色毛绒耳朵镶着白色蕾丝边，刺绣的爱心叉叉大眼配小腮红，甜酷风。",
+    "descriptionEn": "A bright hot-pink faux-fur cat with lace-trimmed yellow ears, embroidered heart-and-X eyes and little blush marks. Sweet with an edge.",
+    "images": [
+      "images/hot-pink-lace-cat/1.jpg",
+      "images/hot-pink-lace-cat/2.jpg",
+      "images/hot-pink-lace-cat/3.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC023",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "purple-devil-bunny",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "紫黑恶魔兔头盔套",
+    "nameEn": "Purple & Black Devil Bunny Helmet Cover",
+    "tags": [
+      "purple",
+      "black",
+      "bunny",
+      "devil",
+      "fluffy",
+      "statement"
+    ],
+    "sortOrder": 210,
+    "description": "左黑右紫的撞色长毛兔，两只垂耳也是一黑一紫，头顶一对螺旋小恶魔角，刺绣叉叉眼和露出小尖牙的爱心嘴，酷酷的暗黑可爱风。",
+    "descriptionEn": "A split purple-and-black shaggy bunny with matching two-tone floppy ears, a pair of spiral devil horns, embroidered X eyes and a heart-shaped grin with a tiny fang. Cute with a dark side.",
+    "images": [
+      "images/purple-devil-bunny/1.jpg",
+      "images/purple-devil-bunny/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC024",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "cream-bow-lamb",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "奶白蝴蝶结小羊头盔套",
+    "nameEn": "Cream Bow Lamb Helmet Cover",
+    "tags": [
+      "white",
+      "pink",
+      "sheep",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 220,
+    "description": "奶白色卷卷羊羔毛，头顶一个粉色蝴蝶结和两颗粉色小绒球，两侧圆圆的毛球耳朵，刺绣金色眼睛配粉色腮红，温柔又软萌。",
+    "descriptionEn": "Curly cream-white sherpa lamb with a pink bow and two blush-pink pompoms on top, round fluffy ears, embroidered golden eyes and pink cheeks. Soft and sweet.",
+    "images": [
+      "images/cream-bow-lamb/1.jpg",
+      "images/cream-bow-lamb/2.jpg",
+      "images/cream-bow-lamb/3.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC025",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "yellow-bear",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "黄色笑脸小熊头盔套",
+    "nameEn": "Smiley Yellow Bear Helmet Cover",
+    "tags": [
+      "yellow",
+      "bear",
+      "fluffy",
+      "cute",
+      "funny"
+    ],
+    "sortOrder": 230,
+    "description": "亮黄色长毛小熊，圆圆的毛球耳朵，刺绣大眼睛、红鼻子和咧嘴笑，阳光又元气，在雪地里特别显眼。",
+    "descriptionEn": "A sunny yellow shaggy bear with round pompom ears, big embroidered eyes, a red nose and a wide grin. Impossible to miss on a snowy slope.",
+    "images": [
+      "images/yellow-bear/1.jpg",
+      "images/yellow-bear/2.jpg",
+      "images/yellow-bear/3.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC026",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "pink-star-puff",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "粉色星星眼毛球头盔套",
+    "nameEn": "Pink Star-Eyed Puff Helmet Cover",
+    "tags": [
+      "pink",
+      "yellow",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 240,
+    "description": "粉嫩长毛小圆球，两只圆耳朵，一边别着黄色小星星绒球，星星大眼睛和红腮红都是刺绣的。",
+    "descriptionEn": "A fluffy pink puff with round ears, a little yellow star pompom on one side, and embroidered starry eyes and rosy cheeks.",
+    "images": [
+      "images/pink-star-puff/1.jpg",
+      "images/pink-star-puff/2.jpg",
+      "images/pink-star-puff/3.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC027",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "sleepy-blue-elephant",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "蓝色瞌睡小象头盔套",
+    "nameEn": "Sleepy Blue Elephant Helmet Cover",
+    "tags": [
+      "blue",
+      "pink",
+      "yellow",
+      "elephant",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 250,
+    "description": "浅蓝色长毛小象，闭着眼睛的睡萌表情，翘起的小鼻子，两只粉色内里的大耳朵垂在两边，头顶一顶黄色小帽。",
+    "descriptionEn": "A pale-blue fluffy elephant with sleepy closed eyes, a little upturned trunk, big pink-lined ears hanging down each side and a yellow hat on top.",
+    "images": [
+      "images/sleepy-blue-elephant/1.jpg",
+      "images/sleepy-blue-elephant/2.jpg",
+      "images/sleepy-blue-elephant/3.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC028",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "brown-mouse",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "棕色小老鼠头盔套",
+    "nameEn": "Brown Mouse Helmet Cover",
+    "tags": [
+      "brown",
+      "mouse",
+      "fluffy",
+      "cute",
+      "funny"
+    ],
+    "sortOrder": 260,
+    "description": "棕色毛绒小老鼠，两只大耳朵，刺绣的大眼睛和胡须，浅色口鼻配一个机灵的笑。",
+    "descriptionEn": "A brown plush mouse with big ears, embroidered cartoon eyes and whiskers, and a cheeky smile on a light muzzle.",
+    "images": [
+      "images/brown-mouse/1.jpg",
+      "images/brown-mouse/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC029",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "yellow-lion-dance",
+    "brand": "Bear Fun Outdoor",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "黄色醒狮头盔套",
+    "nameEn": "Yellow Lion Dance Helmet Cover",
+    "tags": [
+      "yellow",
+      "white",
+      "lion",
+      "fluffy",
+      "cute",
+      "statement"
+    ],
+    "sortOrder": 270,
+    "description": "黄色醒狮毛绒头盔套：额头绣着“王”字，橙色大耳朵上点缀梅花刺绣，金鱼造型的立体鼻子配一双蓝色大眼睛，白色毛绒眉毛和包边。喜庆又有中国风，过年前后上雪场特别应景。\n\n## 做工细节\n- 鼻子是单独缝上的立体配件，层次更饱满\n- 眼睛、耳朵和鬓毛都是细密刺绣\n- 护耳内外撞色，和主体内衬用不同材质\n- 后面留有雪镜扣开口，抽绳可以收紧",
+    "descriptionEn": "A yellow lion-dance helmet cover with the Chinese character for “king” embroidered on the forehead, big orange ears dotted with plum-blossom embroidery, a 3D goldfish-shaped nose, wide blue eyes, and white plush brows and trim. Festive and full of Chinese New Year spirit.\n\n## Craftsmanship\n- The nose is a separate 3D piece for extra depth\n- Dense, detailed embroidery on the eyes, ears and whiskers\n- Two-tone ear flaps, with a different lining fabric from the body\n- Slot in the back for your goggle clip, plus a drawstring to cinch it snug",
+    "images": [
+      "images/yellow-lion-dance/1.jpg",
+      "images/yellow-lion-dance/2.jpg",
+      "images/yellow-lion-dance/3.jpg",
+      "images/yellow-lion-dance/4.jpg",
+      "images/yellow-lion-dance/5.jpg",
+      "images/yellow-lion-dance/6.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC030",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "green-dragon",
+    "brand": "Bear Fun Outdoor",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "青绿小龙头盔套",
+    "nameEn": "Green Dragon Helmet Cover",
+    "tags": [
+      "green",
+      "blue",
+      "yellow",
+      "dragon",
+      "fluffy",
+      "statement"
+    ],
+    "sortOrder": 280,
+    "description": "青绿色毛绒小龙：头顶一对黄色立体龙角，两侧是层层叠叠的蓝色鬓毛，蓝色眉毛下一双黄色大眼睛，中间是祥云纹的黄色立体鼻子，底边一圈深灰色毛绒。很有国风神兽的感觉。\n\n## 做工细节\n- 鼻子是单独缝上的立体配件\n- 眼睛和祥云纹都是细密刺绣\n- 鬓毛是多层双面绣拼接，很立体\n- 龙角立体有支撑，底座撞色\n- 后面留有雪镜扣开口，抽绳可以收紧",
+    "descriptionEn": "A teal-green plush dragon with a pair of 3D golden antlers, layered blue manes on both sides, big golden eyes under blue brows, a cloud-patterned 3D nose and dark grey fur trim. A mythical beast for the slopes.\n\n## Craftsmanship\n- The nose is a separate 3D piece\n- Dense, detailed embroidery on the eyes and cloud patterns\n- Layered, double-sided embroidered manes for a full 3D look\n- Structured 3D antlers on contrasting bases\n- Slot in the back for your goggle clip, plus a drawstring to cinch it snug",
+    "images": [
+      "images/green-dragon/1.jpg",
+      "images/green-dragon/2.jpg",
+      "images/green-dragon/3.jpg",
+      "images/green-dragon/4.jpg",
+      "images/green-dragon/5.jpg",
+      "images/green-dragon/6.jpg",
+      "images/green-dragon/7.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC031",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "purple-blossom",
+    "brand": "Bear Fun Outdoor",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "紫色繁花头盔套",
+    "nameEn": "Purple Blossom Helmet Cover",
+    "tags": [
+      "purple",
+      "pink",
+      "fluffy",
+      "cute",
+      "statement"
+    ],
+    "sortOrder": 290,
+    "description": "深紫色毛绒头盔套，正面铺满层层叠叠的淡紫和浅粉色立体花朵，一对大大的浅紫色蝶翼耳朵带银色刺绣，两侧点缀蜜桃色毛球，护耳下挂着盘扣和双色流苏。梦幻又有国风感。\n\n## 做工细节\n- 花朵是多层叠搭的立体刺绣，像一整片花丛\n- 耳朵内置骨架，可以随意弯折造型\n- 盘扣加深浅两色流苏\n- 护耳内外同材质撞色，内衬用不同材质\n- 后面留有雪镜扣开口，抽绳可以收紧",
+    "descriptionEn": "A deep-purple plush helmet cover blanketed in layered lavender and pale-pink 3D flowers, with big lilac butterfly-wing ears trimmed in silver embroidery, peach pompoms on the sides, and Chinese knot buttons with two-tone tassels hanging from the ear flaps. Dreamy with a traditional twist.\n\n## Craftsmanship\n- Layered 3D embroidered flowers that read like a whole flower bed\n- Wired ears you can bend into shape\n- Chinese knot buttons with two-tone tassels\n- Two-tone ear flaps in matching fabric, with a separate lining\n- Slot in the back for your goggle clip, plus a drawstring to cinch it snug",
+    "images": [
+      "images/purple-blossom/1.jpg",
+      "images/purple-blossom/2.jpg",
+      "images/purple-blossom/3.jpg",
+      "images/purple-blossom/4.jpg",
+      "images/purple-blossom/5.jpg",
+      "images/purple-blossom/6.jpg",
+      "images/purple-blossom/7.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC032",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "berry-pink-bear",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "name": "莓果粉小熊头盔套",
+    "nameEn": "Berry Pink Bear Helmet Cover",
+    "tags": [
+      "pink",
+      "black",
+      "bear",
+      "fluffy",
+      "cute"
+    ],
+    "sortOrder": 300,
+    "description": "莓果粉长毛小熊头盔套，圆圆的耳朵里是黑色绒毛，黑色亮面眼睛和小鼻子，毛茸茸的一大颗，戴上就是行走的玩偶。",
+    "descriptionEn": "A shaggy berry-pink bear helmet cover with black fluffy inner ears, shiny black eyes and a little black nose. One big fuzzy head that turns you into a walking plush toy.",
+    "images": [
+      "images/berry-pink-bear/1.jpg",
+      "images/berry-pink-bear/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC033",
         "size": "均码"
       }
     ]
