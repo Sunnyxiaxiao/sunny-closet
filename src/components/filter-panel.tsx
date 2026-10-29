@@ -12,9 +12,12 @@ export function FilterPanel({
   title,
   activeCount,
   closeLabel,
+  header,
   children,
 }: {
   title: string;
+  /** 页面标题和件数，放在筛选栏最上面（手机上在“筛选”按钮上方），商品图就能顶头显示 */
+  header?: ReactNode;
   /** 已选了几个筛选条件，显示在手机按钮上 */
   activeCount: number;
   closeLabel: string;
@@ -37,6 +40,7 @@ export function FilterPanel({
 
   return (
     <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
+      {header && <div className="mb-4 lg:mb-8">{header}</div>}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -81,7 +85,7 @@ export function FilterPanel({
 /** 列表页的左右两栏：左边筛选，右边商品 */
 export function ShopColumns({ filters, children }: { filters: ReactNode; children: ReactNode }) {
   return (
-    <div className="mt-4 lg:mt-8 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-12">
+    <div className="lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-12">
       {filters}
       <div className="min-w-0">{children}</div>
     </div>

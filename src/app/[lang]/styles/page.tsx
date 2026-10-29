@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function StylesPage({ searchParams }: PageProps<"/[lang]/styles">) {
   const locale = await getLocale();
   return (
-    <div className="mx-auto max-w-[88rem] px-2 py-8 sm:px-4 sm:py-12 lg:px-6">
+    <div className="mx-auto max-w-[88rem] px-2 pb-8 pt-4 sm:px-4 sm:pb-12 sm:pt-6 lg:px-6">
       <Suspense
         fallback={
           <>
@@ -112,6 +112,33 @@ async function StylesContent({
       title={messages.filterForm.title}
       activeCount={[collection, category, brand, size, search.kind === "valid" ? "dates" : undefined].filter(Boolean).length}
       closeLabel={messages.filterForm.close}
+      header={
+        <>
+          <h1 className="text-3xl font-black lg:text-2xl">
+            {[collection && "Crystal Collection", brand, category && messages.categories[category]]
+              .filter(Boolean)
+              .join(" · ") ||
+              t.title}
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            {search.kind === "valid"
+              ? t.availableSummary(
+                  formatDateRange(search.start, search.end, locale),
+                  size && sizeLabel(size, locale),
+                  rows.length,
+                )
+              : t.count(rows.length)}
+          </p>
+          {addOn && (
+            <p className="mt-4 space-y-1 bg-rose-50 px-3 py-2.5 text-xs text-rose-900">
+              <span className="block">{t.addOnBanner(addOn.name)}</span>
+              <Link href={listHref({ category, brand, collection, dropAddOn: true })} className="underline underline-offset-4">
+                {t.dropAddOn}
+              </Link>
+            </p>
+          )}
+        </>
+      }
     >
       {hasCrystal && (
         <FilterChips
@@ -156,33 +183,6 @@ async function StylesContent({
 
   return (
     <>
-      <div className="px-2 sm:px-0">
-        <h1 className="text-3xl font-black">
-          {[collection && "Crystal Collection", brand, category && messages.categories[category]]
-            .filter(Boolean)
-            .join(" · ") ||
-            t.title}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {search.kind === "valid"
-            ? t.availableSummary(
-                formatDateRange(search.start, search.end, locale),
-                size && sizeLabel(size, locale),
-                rows.length,
-              )
-            : t.count(rows.length)}
-        </p>
-
-        {addOn && (
-          <p className="mt-4 flex items-center justify-between gap-3 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-            <span>{t.addOnBanner(addOn.name)}</span>
-            <Link href={listHref({ category, brand, collection, dropAddOn: true })} className="shrink-0 underline underline-offset-4">
-              {t.dropAddOn}
-            </Link>
-          </p>
-        )}
-      </div>
-
       <ShopColumns filters={<div className="px-2 sm:px-0">{filters}</div>}>
         {search.kind === "invalid" && (
           <p className="mx-2 mt-4 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:mx-0 lg:mt-0">

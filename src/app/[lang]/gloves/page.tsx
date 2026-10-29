@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GlovesPage({ searchParams }: PageProps<"/[lang]/gloves">) {
   const locale = await getLocale();
   return (
-    <div className="mx-auto max-w-[88rem] px-2 py-8 sm:px-4 sm:py-12 lg:px-6">
+    <div className="mx-auto max-w-[88rem] px-2 pb-8 pt-4 sm:px-4 sm:pb-12 sm:pt-6 lg:px-6">
       <Suspense fallback={<HelmetGridSkeleton />}>
         <GlovesList searchParams={searchParams} locale={locale} />
       </Suspense>
@@ -53,12 +53,6 @@ async function GlovesList({
 
   return (
     <>
-      <div className="px-2 sm:px-0">
-        <h1 className="text-3xl font-black">{t.title}</h1>
-        <p className="mt-1 text-sm text-neutral-500">{t.subtitle}</p>
-
-      </div>
-
       <ShopColumns
         filters={
           <div className="px-2 sm:px-0">
@@ -66,6 +60,12 @@ async function GlovesList({
               title={messages.filterForm.title}
               activeCount={search.kind === "valid" ? 1 : 0}
               closeLabel={messages.filterForm.close}
+              header={
+                <>
+                  <h1 className="text-3xl font-black lg:text-2xl">{t.title}</h1>
+                  <p className="mt-1 text-sm text-neutral-500">{t.subtitle}</p>
+                </>
+              }
             >
               <FilterSection title={messages.filterForm.dates}>
                 <RentalFilterForm

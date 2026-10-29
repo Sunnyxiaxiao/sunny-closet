@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HelmetCoversPage({ searchParams }: PageProps<"/[lang]/helmet-covers">) {
   const locale = await getLocale();
   return (
-    <div className="mx-auto max-w-[88rem] px-2 py-8 sm:px-4 sm:py-12 lg:px-6">
+    <div className="mx-auto max-w-[88rem] px-2 pb-8 pt-4 sm:px-4 sm:pb-12 sm:pt-6 lg:px-6">
       <Suspense fallback={<HelmetGridSkeleton />}>
         <HelmetCovers searchParams={searchParams} locale={locale} />
       </Suspense>
@@ -85,20 +85,6 @@ async function HelmetCovers({
 
   return (
     <>
-      <div className="px-2 sm:px-0">
-        <h1 className="text-3xl font-black">{t.title}</h1>
-        <p className="mt-1 text-sm text-neutral-500">{t.subtitle}</p>
-
-        <Link
-          href={localePath(locale, "/styles")}
-          className="mt-4 flex items-center justify-between gap-3 bg-rose-50 px-4 py-3 text-sm text-rose-900"
-        >
-          <span>{t.addOnFrom(formatMoney(minAddOn, { whole: true }))}</span>
-          <span aria-hidden="true">→</span>
-        </Link>
-
-      </div>
-
       <ShopColumns
         filters={
           <div className="px-2 sm:px-0">
@@ -106,6 +92,19 @@ async function HelmetCovers({
               title={messages.filterForm.title}
               activeCount={[tier, color, style, search.kind === "valid" ? "dates" : undefined].filter(Boolean).length}
               closeLabel={messages.filterForm.close}
+              header={
+                <>
+                  <h1 className="text-3xl font-black lg:text-2xl">{t.title}</h1>
+                  <p className="mt-1 text-sm text-neutral-500">{t.subtitle}</p>
+                  <Link
+                    href={localePath(locale, "/styles")}
+                    className="mt-4 flex items-center justify-between gap-3 bg-rose-50 px-3 py-2.5 text-xs text-rose-900"
+                  >
+                    <span>{t.addOnFrom(formatMoney(minAddOn, { whole: true }))}</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </>
+              }
             >
               <FilterChips
                 label={t.filters.tier}
