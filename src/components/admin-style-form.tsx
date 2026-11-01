@@ -23,7 +23,6 @@ export interface StyleFormValues {
   category: StyleCategory;
   name: string;
   nameEn: string;
-  deposit: string;
   /** 款式自己的价目表（美元，逗号分隔），空 = 按品类价目表 */
   prices: string;
   /** 手套丢失赔偿价（美元），空 = 不显示 */
@@ -111,9 +110,6 @@ export function AdminStyleForm({ initial }: { initial: StyleFormValues }) {
             <input name="slug" maxLength={80} defaultValue={state.values?.slug} placeholder="pink-bow-ski-suit" className={inputClass} />
           </Field>
         )}
-        <Field label="押金（美元）" hint={isNew ? "不填按品类默认：成套 / 连体服 200、上衣 150、雪裤 100、手套 0" : undefined} error={errors.deposit}>
-          <input name="deposit" inputMode="decimal" defaultValue={v("deposit")} className={inputClass} />
-        </Field>
         <Field label="排序" hint="数字小的排前面" error={errors.sortOrder}>
           <input name="sortOrder" type="number" defaultValue={v("sortOrder")} className={inputClass} />
         </Field>

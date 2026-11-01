@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { HTML_LANG, LOCALES, localePath } from "@/i18n/config";
+import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "@/i18n/config";
 import { listStyles } from "@/lib/catalog";
 import { publicOrigin } from "@/lib/site-url";
 
@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/gloves",
     "/mix-and-match",
     "/rental-info",
+    "/terms",
     "/story",
     "/contact",
     ...outfits.map((s) => `/styles/${s.slug}`),
@@ -25,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...gloves.map((s) => `/gloves/${s.slug}`),
   ];
   return paths.map((path) => ({
-    url: `${origin}${localePath("zh", path)}`,
+    url: `${origin}${localePath(DEFAULT_LOCALE, path)}`,
     alternates: { languages: Object.fromEntries(LOCALES.map((l) => [HTML_LANG[l], `${origin}${localePath(l, path)}`])) },
   }));
 }

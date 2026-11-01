@@ -13,7 +13,6 @@ import {
   SLUG_RE,
   codePrefix,
   defaultDailyCents,
-  defaultDeposit,
   mergeTags,
   slugify,
 } from "@/lib/admin/style-form";
@@ -172,7 +171,7 @@ export async function deleteInventoryBlock(formData: FormData) {
 }
 
 /**
- * 雪服 / 手套的基本信息：品牌、品类、中英文名称、押金、价目表、标签、排序、中英文商品介绍、是否上架。
+ * 雪服 / 手套的基本信息：品牌、品类、中英文名称、价目表、标签、排序、中英文商品介绍、是否上架。
  * 没有 id 时是新增：同时建好第一件库存（可带采购价）和图片，然后跳到编辑页继续管理。
  */
 export async function saveStyle(_previous: AccountFormState, formData: FormData): Promise<AccountFormState> {
@@ -184,7 +183,6 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
     name: str("name"),
     nameEn: str("nameEn"),
     slug: str("slug").toLowerCase(),
-    deposit: str("deposit"),
     prices: str("prices"),
     replacementValue: str("replacementValue"),
     sortOrder: str("sortOrder"),
@@ -206,10 +204,6 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
   if (values.brand.length > 60) fieldErrors.brand = "品牌太长了（60 字以内）";
   if (!values.name || values.name.length > 60) fieldErrors.name = "请填写名称（60 字以内）";
   if (!values.nameEn || values.nameEn.length > 120) fieldErrors.nameEn = "请填写英文名称（120 字以内）";
-  const deposit = values.deposit === "" && !id ? null : dollarsToCents(values.deposit);
-  if (values.deposit !== "" || id) {
-    if (deposit === null) fieldErrors.deposit = "押金请填 0–5000 之间的数字";
-  }
   const prices = parsePriceList(values.prices);
   if (!prices.ok) fieldErrors.prices = "价目表请填数字，用逗号隔开，例如 15, 22, 22, 28";
   else if (gloves && prices.cents === null) fieldErrors.prices = "手套需要自己的价目表";
@@ -253,7 +247,8 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
     category: styleCategory,
     name: values.name,
     name_en: values.nameEn,
-    deposit_cents: deposit ?? defaultDeposit(styleCategory, tags) * 100,
+    // 不收押金
+    deposit_cents: 0,
     rental_prices_cents: rentalPrices,
     ...(gloves ? { replacement_value_cents: replacement } : {}),
     sort_order: sortOrder,

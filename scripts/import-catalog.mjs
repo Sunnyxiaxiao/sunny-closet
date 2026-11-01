@@ -54,8 +54,8 @@ if (!url || !secretKey) {
 }
 
 const ACCESSORIES = new Set(["helmet_cover", "gloves"]);
-/** 单件的默认起租价和押金（美元），与 settings 里的外套 / 雪裤价目表第 1 档一致 */
-const SEPARATES = { jacket: { dailyPrice: 35, deposit: 150 }, pants: { dailyPrice: 25, deposit: 100 } };
+/** 单件的默认起租价（美元），与 settings 里的外套 / 雪裤价目表第 1 档一致 */
+const SEPARATES = { jacket: { dailyPrice: 35 }, pants: { dailyPrice: 25 } };
 /** 背带雪裤（bib 标签）按外套收、卫衣（hoodie 标签）按雪裤收，与 stylePriceTable 一致 */
 function separateDefaults(entry) {
   if (entry.category === "pants" && entry.tags.includes("bib")) return SEPARATES.jacket;
@@ -73,7 +73,6 @@ const entrySchema = z.object({
   descriptionEn: z.string().default(""),
   template: z.string().regex(/^[a-z0-9-]+$/).optional(),
   dailyPrice: z.number().nonnegative().optional(),
-  deposit: z.number().nonnegative().optional(),
   // 以下只用于头盔套
   tier: z.enum(["regular", "premium"]).optional(),
   tags: z.array(z.string()).default([]),
@@ -115,8 +114,8 @@ const entrySchema = z.object({
       ctx.addIssue({ code: "custom", path: ["items", index, "image"], message: `只有 ${count} 张图` });
     }
   }
-  if (!ACCESSORIES.has(entry.category) && !SEPARATES[entry.category] && (entry.dailyPrice === undefined || entry.deposit === undefined)) {
-    ctx.addIssue({ code: "custom", path: ["dailyPrice"], message: "雪服要填 dailyPrice 和 deposit" });
+  if (!ACCESSORIES.has(entry.category) && !SEPARATES[entry.category] && entry.dailyPrice === undefined) {
+    ctx.addIssue({ code: "custom", path: ["dailyPrice"], message: "雪服要填 dailyPrice" });
   }
 });
 
@@ -343,7 +342,8 @@ for (const entry of entries) {
       daily_price_cents: cents(
         entry.dailyPrice ?? separateDefaults(entry)?.dailyPrice ?? entry.prices?.[0] ?? entry.standalonePrices?.oneDay ?? 15,
       ),
-      deposit_cents: cents(entry.deposit ?? separateDefaults(entry)?.deposit ?? 0),
+      // 不收押金
+      deposit_cents: 0,
       ...helmetFields(entry),
       ...glovesFields(entry),
       variant_images: variantImages(entry),

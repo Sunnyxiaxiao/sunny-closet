@@ -30,14 +30,6 @@ export function mergeTags(existing: readonly string[], checked: readonly string[
   ];
 }
 
-/** 新增时的默认押金（美元），和商品清单导入脚本一致 */
-export function defaultDeposit(category: StyleCategory, tags: readonly string[]) {
-  if (category === "gloves") return 0;
-  if (category === "pants") return tags.includes(BIB_TAG) ? 150 : 100;
-  if (category === "jacket") return tags.includes(HOODIE_TAG) ? 100 : 150;
-  return 200;
-}
-
 /** daily_price_cents 是旧字段（实际按价目表收费），新增时填一个合理的起租价 */
 export function defaultDailyCents(category: StyleCategory, ownPrices: number[] | null) {
   if (ownPrices) return ownPrices[0];

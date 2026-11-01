@@ -18,11 +18,14 @@ export function CartView({
   locale,
   shippingMinDays,
   defaults,
+  payByCard,
 }: {
   locale: Locale;
   /** 邮寄每件最短租几天（后台“价格”里设置） */
   shippingMinDays: number;
   defaults?: { name: string; email: string; phone: string; wechat: string };
+  /** 配置了 Stripe：提交后直接刷卡付款 */
+  payByCard: boolean;
 }) {
   const messages = getMessages(locale);
   const t = messages.cart;
@@ -218,6 +221,7 @@ export function CartView({
           shippingCents={shippingCents}
           blocked={blocked}
           defaults={defaults}
+          payByCard={payByCard}
           locale={locale}
         />
       </aside>

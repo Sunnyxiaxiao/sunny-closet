@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminOrderCard } from "@/components/admin-order-card";
 import { requireAdmin } from "@/lib/admin/auth";
+import { stripeEnabled } from "@/lib/stripe";
+import type { CardChargeRow } from "@/lib/supabase/database.types";
 import {
   ADMIN_FILTERS,
   matchesAdminFilter,
@@ -62,6 +64,18 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
   );
   const visible = orders.filter((b) => matchesAdminFilter(b.status, filter));
 
+  // Charges made later against the card a customer paid with (only when Stripe is configured)
+  const chargesByOrder = new Map<string, CardChargeRow[]>();
+  if (stripeEnabled() && visible.length > 0) {
+    const { data: charges, error: chargeError } = await supabase
+      .from("card_charges")
+      .select("*")
+      .in("booking_id", visible.map((b) => b.id))
+      .order("created_at");
+    if (chargeError) throw new Error(`读取押金扣款失败：${chargeError.message}`);
+    for (const c of charges) chargesByOrder.set(c.booking_id, [...(chargesByOrder.get(c.booking_id) ?? []), c]);
+  }
+
   return (
     <>
       <AdminNav current="orders" />
@@ -114,6 +128,7 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin">, "searchParams"
                 bundlePart: a.bundle_part,
                 cartItem: a.cart_item ? a : undefined,
               }))}
+              cardCharges={stripeEnabled() ? (chargesByOrder.get(booking.id) ?? []) : undefined}
             />
           ))}
         </ul>

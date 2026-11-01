@@ -19,6 +19,11 @@ export type HelmetCoverTier = "regular" | "premium";
 
 export type ReviewStatus = "pending" | "published" | "hidden";
 
+/** card = Stripe at checkout; in_person_card = rental in person + card on file; in_person = rental + cash deposit in person */
+export type PaymentMethod = "card" | "in_person_card" | "in_person";
+
+export type CardChargeStatus = "succeeded" | "processing" | "failed";
+
 export type Database = {
   public: {
     Tables: {
@@ -225,6 +230,21 @@ export type Database = {
           cart_item: boolean;
           /** Orders submitted while signed in are linked to this account */
           user_id: string | null;
+          /** Card on file (main order only), saved through Stripe instead of a cash deposit; null until the customer saves one */
+          stripe_customer_id: string | null;
+          stripe_payment_method_id: string | null;
+          card_brand: string | null;
+          card_last4: string | null;
+          card_saved_at: string | null;
+          /** 'card' = Stripe at checkout, 'in_person' = at pickup; null = manual flow (admin confirms, Zelle / Venmo) */
+          payment_method: PaymentMethod | null;
+          /** Cash deposit taken at pickup for 'in_person' orders (0 otherwise) */
+          cash_deposit_cents: number;
+          /** Card payment at checkout (Stripe): latest payment page, the payment; amount paid and when (also set when an in-person payment is marked received) */
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          paid_cents: number | null;
+          paid_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -234,6 +254,17 @@ export type Database = {
           admin_note?: string;
           /** Written only by the server (service_role) */
           user_id?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_payment_method_id?: string | null;
+          card_brand?: string | null;
+          card_last4?: string | null;
+          card_saved_at?: string | null;
+          payment_method?: PaymentMethod | null;
+          cash_deposit_cents?: number;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          paid_cents?: number | null;
+          paid_at?: string | null;
         };
         Relationships: [
           {
@@ -251,6 +282,32 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      card_charges: {
+        Row: {
+          id: string;
+          booking_id: string;
+          amount_cents: number;
+          reason: string;
+          status: CardChargeStatus;
+          stripe_payment_intent_id: string | null;
+          failure_message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          booking_id: string;
+          amount_cents: number;
+          reason: string;
+          status: CardChargeStatus;
+          stripe_payment_intent_id?: string | null;
+          failure_message?: string | null;
+        };
+        /** Only the webhook updates a charge, when a processing charge finishes */
+        Update: {
+          status?: CardChargeStatus;
+          failure_message?: string | null;
+        };
+        Relationships: [];
       };
       reviews: {
         Row: {
@@ -450,3 +507,4 @@ export type InventoryBlockRow = Database["public"]["Tables"]["inventory_blocks"]
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type SettingsRow = Database["public"]["Tables"]["settings"]["Row"];
 export type ReviewRow = Database["public"]["Tables"]["reviews"]["Row"];
+export type CardChargeRow = Database["public"]["Tables"]["card_charges"]["Row"];

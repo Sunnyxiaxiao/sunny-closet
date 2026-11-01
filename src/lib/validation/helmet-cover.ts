@@ -42,7 +42,6 @@ export const helmetCoverFormSchema = z.object({
   fourToSevenDays: dollars("4–7 天价格"),
   addOn: dollars("搭配加购价"),
   replacementValue: optionalDollars("重置价值"),
-  deposit: dollars("押金"),
   sortOrder: z.coerce.number("排序请填整数").int("排序请填整数").default(0),
   quantity: z.coerce.number().int().min(1, "数量至少 1 件").max(20, "数量最多 20 件").default(1),
   /** 新增时每件的采购价（美元，选填） */

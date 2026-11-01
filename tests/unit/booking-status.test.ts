@@ -21,6 +21,16 @@ describe("订单状态流转", () => {
     expect(canTransition("picked_up", "returned")).toBe(true);
   });
 
+  it("网上付款 / 留卡的单由 Stripe 自动确认，后台不能手动确认，但能拒绝 / 取消", () => {
+    for (const method of ["card", "in_person_card"] as const) {
+      expect(nextStatuses("pending", method)).toEqual(["rejected", "cancelled"]);
+      expect(canTransition("pending", "confirmed", method)).toBe(false);
+      expect(canTransition("confirmed", "picked_up", method)).toBe(true);
+    }
+    expect(canTransition("pending", "confirmed", "in_person")).toBe(true);
+    expect(canTransition("pending", "confirmed", null)).toBe(true);
+  });
+
   it("不能跳步", () => {
     expect(canTransition("pending", "picked_up")).toBe(false);
     expect(canTransition("pending", "returned")).toBe(false);

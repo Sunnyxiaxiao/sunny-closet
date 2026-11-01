@@ -37,6 +37,20 @@ export const shop = {
   payment: {
     zelle: "zelle@example.com",
     venmo: "@your-venmo",
+    /** 到店自取、选“当面付租金 + 押金”时，每单当面收的押金（分），归还后当面退 */
+    inPersonDepositCents: 20000,
+  },
+  /**
+   * 逾期归还，每件每晚一天收的钱（分）。固定收费而不是按日租金补收，免得顾客下单时少选天数、晚还也只补一点租金，占掉后面的预约。
+   * 租赁条款（/terms）直接用这里的数；“租赁须知”损坏与遗失那段文字里也写了 $25 / $20 / $10，改的话一起改。
+   */
+  lateFees: {
+    /** 一整套：套装、连体服 */
+    setCents: 2500,
+    /** 单件上衣或裤子 */
+    pieceCents: 2000,
+    /** 配件：手套、头盔套 */
+    accessoryCents: 1000,
   },
 } as const;
 

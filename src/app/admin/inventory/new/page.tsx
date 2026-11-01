@@ -34,7 +34,6 @@ async function NewStyleForm({ searchParams }: Pick<PageProps<"/admin/inventory/n
             category: gloves ? "gloves" : "suit",
             name: "",
             nameEn: "",
-            deposit: "",
             prices: gloves ? GLOVES_DEFAULT_PRICE_TEXT : "",
             replacementValue: "",
             sortOrder: "500",

@@ -29,17 +29,17 @@ function keys(value: unknown, path = ""): string[] {
 }
 
 describe("网址里的语言前缀", () => {
-  it("中文不带前缀，英文加 /en", () => {
-    expect(localePath("zh", "/styles")).toBe("/styles");
-    expect(localePath("en", "/styles?size=M")).toBe("/en/styles?size=M");
-    expect(localePath("en", "/")).toBe("/en");
+  it("英文不带前缀，中文加 /zh", () => {
+    expect(localePath("en", "/styles")).toBe("/styles");
+    expect(localePath("zh", "/styles?size=M")).toBe("/zh/styles?size=M");
+    expect(localePath("zh", "/")).toBe("/zh");
   });
 
   it("从地址栏路径拆出语言", () => {
-    expect(splitLocalePath("/en/styles/a")).toEqual({ locale: "en", path: "/styles/a" });
-    expect(splitLocalePath("/en")).toEqual({ locale: "en", path: "/" });
-    expect(splitLocalePath("/styles")).toEqual({ locale: "zh", path: "/styles" });
-    expect(splitLocalePath("/english")).toEqual({ locale: "zh", path: "/english" });
+    expect(splitLocalePath("/zh/styles/a")).toEqual({ locale: "zh", path: "/styles/a" });
+    expect(splitLocalePath("/zh")).toEqual({ locale: "zh", path: "/" });
+    expect(splitLocalePath("/styles")).toEqual({ locale: "en", path: "/styles" });
+    expect(splitLocalePath("/zhong")).toEqual({ locale: "en", path: "/zhong" });
   });
 });
 

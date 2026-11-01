@@ -82,7 +82,6 @@ function PriceTable({ settings, locale }: { settings: ShopSettings; locale: Loca
       </table>
       <p className="mt-2 text-xs text-neutral-500">{t.tableNote}</p>
       <p className="mt-1 text-xs text-neutral-500">{t.specialNote}</p>
-      <p className="mt-1 text-xs text-neutral-500">{t.depositNote}</p>
     </section>
   );
 }

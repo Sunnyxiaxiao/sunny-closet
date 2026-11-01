@@ -4,8 +4,8 @@ import { DEFAULT_LOCALE, LOCALES } from "@/i18n/config";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
 
 /**
- * 1. Locale: storefront pages live under app/[lang]. Chinese URLs have no prefix (/styles) and are rewritten here to the internal /zh/styles;
- *    English URLs already carry /en and pass through; direct visits to /zh/... redirect to the unprefixed URL so a page never has two URLs.
+ * 1. Locale: storefront pages live under app/[lang]. English URLs have no prefix (/styles) and are rewritten here to the internal /en/styles;
+ *    Chinese URLs already carry /zh and pass through; direct visits to /en/... redirect to the unprefixed URL so a page never has two URLs.
  * 2. Session: Supabase auth tokens expire periodically and must be refreshed on incoming requests and written back to cookies,
  *    or customers and the admin get signed out unexpectedly. Only done when the browser has an auth cookie, so signed-out visitors cost no extra request.
  *    No authorization happens here. Admin access is checked in every admin page and action (see src/lib/admin/auth.ts).

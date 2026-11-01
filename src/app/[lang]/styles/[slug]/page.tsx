@@ -26,7 +26,6 @@ import {
 import { parseDescription, type DescriptionBlock } from "@/lib/description";
 import type { AddOnOption } from "@/lib/helmet-covers";
 import { formatDate } from "@/lib/dates";
-import { formatMoney } from "@/lib/money";
 import { priceTiers } from "@/lib/pricing";
 import { shippingPolicyArgs } from "@/lib/shipping";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
@@ -210,10 +209,6 @@ async function StyleDetail({
           </p>
           <p className="mt-1 text-xs leading-relaxed text-neutral-500">
             {t.shippingPolicy(...shippingPolicyArgs(settings.shippingMinDays))}
-          </p>
-          <p className="mt-1 text-sm text-neutral-500">
-            {t.deposit} {formatMoney(style.deposit_cents, { whole: true })}
-            {t.depositReturned}
           </p>
 
           <div className="mt-6 border-t border-neutral-200 pt-6">

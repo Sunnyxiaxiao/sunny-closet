@@ -11,6 +11,8 @@ export interface BookingFormValues {
   shippingState: string;
   shippingZip: string;
   note: string;
+  /** 配置了 Stripe 时的付款方式：card（刷卡）或 in_person（到店自取时当面付） */
+  payment: string;
 }
 
 export interface BookingFormState {

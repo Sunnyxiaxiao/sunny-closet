@@ -57,7 +57,6 @@ async function EditHelmetCover({ params, searchParams }: PageProps<"/admin/helme
     fourToSevenDays: dollars(prices.fourToSevenDays),
     addOn: dollars(cover.addon_price_cents ?? 0),
     replacementValue: cover.replacement_value_cents === null ? "" : dollars(cover.replacement_value_cents),
-    deposit: dollars(cover.deposit_cents),
     sortOrder: String(cover.sort_order),
     isActive: cover.is_active,
     imageUrls: cover.image_urls,

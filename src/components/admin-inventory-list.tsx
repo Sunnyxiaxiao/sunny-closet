@@ -32,7 +32,7 @@ export async function InventoryList({ only }: { only?: StyleKind }) {
   const [stylesResult, settingsResult] = await Promise.all([
     supabase
       .from("styles")
-      .select("id, slug, name, brand, category, tier, is_active, image_urls, deposit_cents, rental_prices_cents, tags, bundle_style_ids")
+      .select("id, slug, name, brand, category, tier, is_active, image_urls, rental_prices_cents, tags, bundle_style_ids")
       .order("sort_order")
       .order("name"),
     supabase.from("settings").select(SETTINGS_COLUMNS).single(),
@@ -141,8 +141,7 @@ export async function InventoryList({ only }: { only?: StyleKind }) {
                         </p>
                         <p className="text-xs text-neutral-500">
                           {[style.brand, messages.categories[style.category]].filter(Boolean).join(" · ")} · 起租{" "}
-                          {formatMoney(stylePriceTable(style, tables)[0], { whole: true })} · 押金{" "}
-                          {formatMoney(style.deposit_cents, { whole: true })}
+                          {formatMoney(stylePriceTable(style, tables)[0], { whole: true })}
                           {style.rental_prices_cents && style.category !== "helmet_cover" && style.category !== "gloves"
                             ? " · 单独定价"
                             : ""}

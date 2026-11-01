@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SnowBackground } from "@/components/snow-background";
@@ -45,6 +46,8 @@ export default async function SiteLayout({ children }: LayoutProps<"/[lang]">) {
         <main className="flex-1">{children}</main>
         <SiteFooter locale={locale} />
       </body>
+      {/* 访问统计只在顾客页面加载；没配 NEXT_PUBLIC_GA_ID（比如本地开发）就不加载 */}
+      {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
     </html>
   );
 }

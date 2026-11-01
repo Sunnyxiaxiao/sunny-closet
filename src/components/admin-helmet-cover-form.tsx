@@ -28,7 +28,6 @@ export interface HelmetCoverFormValues {
   fourToSevenDays: string;
   addOn: string;
   replacementValue: string;
-  deposit: string;
   sortOrder: string;
   isActive: boolean;
   imageUrls: string[];
@@ -50,7 +49,6 @@ export const emptyHelmetCoverValues: HelmetCoverFormValues = {
   fourToSevenDays: dollars(HELMET_COVER_DEFAULTS.standalone.fourToSevenDays),
   addOn: dollars(HELMET_COVER_DEFAULTS.addOnCents.regular),
   replacementValue: "",
-  deposit: "0",
   sortOrder: "0",
   isActive: true,
   imageUrls: [],
@@ -186,9 +184,6 @@ export function AdminHelmetCoverForm({ initial }: { initial: HelmetCoverFormValu
           </Field>
           <Field label="重置价值" hint="选填" error={errors.replacementValue}>
             <input name="replacementValue" inputMode="decimal" defaultValue={v("replacementValue")} className={inputClass} />
-          </Field>
-          <Field label="押金" error={errors.deposit}>
-            <input name="deposit" inputMode="decimal" defaultValue={v("deposit")} className={inputClass} />
           </Field>
         </div>
       </section>

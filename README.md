@@ -20,7 +20,7 @@ A bilingual (English / Chinese) rental shop for snowboard outfits, gloves and he
 
 | Path | Purpose |
 |---|---|
-| `src/app/[lang]/` | Storefront pages (Chinese at `/styles`, English at `/en/styles`, same components) |
+| `src/app/[lang]/` | Storefront pages (English at `/styles`, Chinese at `/zh/styles`, same components) |
 | `src/components/` | Shared UI components |
 | `src/config/shop.ts` | Shop name, currency, time zone, contact info, payment handles |
 | `src/messages/zh-CN.ts`, `en.ts` | UI strings, one file per language with an identical shape (type-checked) |
@@ -28,7 +28,7 @@ A bilingual (English / Chinese) rental shop for snowboard outfits, gloves and he
 | `src/lib/supabase/` | Database clients and generated types |
 | `src/app/[lang]/booking/` | Order detail page `/booking/<order no.>` and its server actions |
 | `src/app/admin/` | Admin dashboard (login, orders, inventory, pricing, reviews) |
-| `src/proxy.ts` | Routes unprefixed URLs to the Chinese site; refreshes the admin session under `/admin` |
+| `src/proxy.ts` | Routes unprefixed URLs to the English site; refreshes the admin session under `/admin` |
 | `supabase/migrations/` | Database migrations (applied in filename order) |
 | `catalog/` | Product catalog to import (`npm run import:catalog`) |
 | `tests/` | Automated tests |
@@ -57,6 +57,7 @@ The admin dashboard never uses the secret key: every admin query goes through RL
 | `inventory_blocks` | Admin only | Admin only | Internal scheduling (photo shoots, repairs, cleaning) |
 | `bookings` | Admin only | Admin can change status / notes only; **nobody can insert or delete directly** | Holds customer names, phone numbers and addresses. Orders go through the server-side `create_order()`, which writes the whole cart in one transaction; an exclusion constraint (`exclude using gist`) guarantees at the database level that an item's occupied dates never overlap |
 | `reviews` | Visitors and signed-in users: published reviews, **display columns only** (no `booking_id` or `status`); admin: everything via `admin_list_reviews()` | Admin (`status`, `published_at` only); customers submit through the server | The server verifies the order number and that the order was returned before writing; one review per order |
+| `card_charges` | Admin only | Server only, after checking the admin | Charges made later against the card a customer paid with (damage, loss, late return), failed attempts included |
 | `profiles` | Owner | Owner | `user_id = auth.uid()` |
 | `admin_users` | Own row only | Nobody through the site (added with `npm run admin:add`) | Only answers "am I an admin?"; other admins are not visible |
 | `rate_limits` | Nobody | Nobody | RLS on with no policies — only `service_role` can use it |
@@ -66,7 +67,7 @@ The admin dashboard never uses the secret key: every admin query goes through RL
 
 - **Row and column privileges together.** RLS controls which rows; sensitive columns are additionally restricted with column-level `grant` (e.g. `reviews` and `settings` only allow updating specific columns).
 - **Column grants are per role**, so the admin cannot be given extra columns on its own. Admin-only full reads go through `security definer` functions that check `is_admin()` first and pin `search_path = ''` to prevent object-shadowing attacks.
-- **Order numbers are access tokens.** `/booking/SC-XXXXXXXX` opens without signing in, so the number is 8 characters from a 32-symbol alphabet (~40 random bits from `gen_random_uuid()`) and cannot be enumerated. The page selects display fields only — never phone, email or address.
+- **Order pages need the customer, not just the number.** `/booking/SC-XXXXXXXX` opens only for the browser that placed the order (a signed, httpOnly cookie, HMAC keyed from the server secret), the account that placed it or whose confirmed email matches the order, or the admin (`src/lib/booking/order-access.ts`). A forwarded link alone shows a sign-in prompt; guests sign up or sign in with their order email. Paying, saving a card and reviewing check the same rule. The page never shows phone, email or address.
 - **Prices are recomputed on the server.** Prices sent by the browser are not trusted; the cart is re-priced from the database when the order is placed, and the database re-validates prices and minimum rental days.
 - **Abuse protection.** Rate limits per IP and per email, plus a honeypot field (see [Abuse protection](#abuse-protection)).
 - **Tests back every rule.** `tests/db/` runs all migrations in in-memory Postgres (PGlite) and checks, as `anon` / `authenticated` / `service_role`, that allowed actions succeed and everything else is rejected — e.g. visitors cannot read `booking_id`, and regular customers cannot call `admin_list_reviews()`.
@@ -148,18 +149,36 @@ Open http://localhost:3000. Press `Ctrl + C` to stop.
 
 1. On an outfit / gloves / helmet cover page, pick a size and dates, and click "Add to cart" once it shows as available. Up to 10 items; the cart icon shows the count.
    The cart lives in the customer's browser (`src/lib/cart.ts`), so no account is required.
-2. The cart page (`/cart`) shows each item's rental fee, deposit and the order total. The customer enters name, phone, email (WeChat optional) and pickup or shipping (with an address), then submits. **No payment at this point.**
+2. The cart page (`/cart`) shows each item's rental fee and the order total. The customer enters name, phone, email (WeChat optional) and pickup or shipping (with an address), then submits. With Stripe configured they go straight to card payment (see below); otherwise **no payment at this point.**
    Opening the cart re-checks prices and availability (`/api/cart`); unavailable items or items that can't ship are flagged and must be resolved before submitting.
 3. The whole cart becomes one order with one order number, in "pending" status, and the items are reserved immediately (the database prevents overbooking; if any item is unavailable, the whole order fails).
    The first item is the main order and every other item is a child order (`SC-XXXXXXXX-1`, …, `cart_item = true`). The admin sees them on one order card and their status follows the main order.
-   The customer is redirected to `/booking/SC-XXXXXXXX` to track progress; that page never shows phone, email or address.
-4. After the admin clicks "Confirm" (确认预订), the customer's order page shows the payment methods (Zelle / Venmo) and the amount due.
+   The customer is redirected to `/booking/SC-XXXXXXXX` to track progress. Only that browser, the customer's account (or one with the order's email) and the admin can open it; it never shows phone, email or address.
+4. With Stripe, a successful payment confirms the order automatically. Without it, the admin clicks "Confirm" (确认预订) and the customer's order page shows the payment methods (Zelle / Venmo) and the amount due.
 
 ### Set your own payment details
 
-In `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your own handles. Customers only see them after you confirm the order.
+Only used without Stripe: in `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your own handles. Customers only see them after you confirm the order.
 
 > After receiving a Zelle / Venmo payment, confirm it in your bank or Venmo app before releasing the items. Zelle transfers can't be reversed and have no purchase protection.
+
+### Card payments with Stripe (no deposit)
+
+With `STRIPE_SECRET_KEY` set, customers pay by card when they order and there is no deposit:
+
+- **Checkout**: submitting the cart creates the order (dates reserved, status "pending") and sends the customer to a Stripe-hosted Checkout page for rental + add-ons + shipping. The card number never touches this site.
+- **Confirmation**: when Stripe reports the payment (the return URL `/api/stripe/checkout-return` and the webhook both call `completeCheckout`, which is safe to run twice), the order moves to "confirmed" and the owner and customer get their emails. The amount, card brand and last 4 digits are stored on the order.
+- **Unpaid orders** hold their dates for 30 minutes (the Checkout session's expiry). When the session expires, the webhook cancels the order and releases the dates; the order page does the same check when opened, so this also works without the webhook. Customers who left the payment page can click "Pay now" on the order page for a fresh session.
+- **Damage, loss, late returns**: the card is saved with `setup_future_usage: off_session`. On each order card the admin can enter an amount and reason and click "从卡里扣款"; the server charges the card off-session with an idempotency key and records every attempt in `card_charges`, failed ones included. The customer agrees to this on the Stripe page. What can be charged is set out in the rental terms (`/terms`, text in `src/messages/*.ts` → `terms`; late fees and other amounts from `src/config/shop.ts`): late returns (per day: $25 per set or one-piece, $20 per single jacket or pants, $10 per accessory), extra cleaning, repairs, and retail price for items lost or beyond repair.
+- **Pay in person** (local pickup only; shipped orders always pay by card), two options chosen at checkout:
+  - **Card on file, no deposit** (`in_person_card`): the customer saves a card on a Stripe Checkout page in setup mode (nothing charged); the order is confirmed once the card is saved, and the rental is paid at pickup.
+  - **Cash deposit** (`in_person`): rental plus a $200 deposit (`shop.payment.inPersonDepositCents`, stored per order in `cash_deposit_cents`) paid at pickup, the deposit returned in person. Confirmed as soon as it's submitted.
+
+  Either way the order card shows the amount due and the admin clicks "标记已收款" once the rental is paid.
+- **Refunds** (cancellations) are made in the Stripe Dashboard → Payments.
+- **Setup**: set `STRIPE_SECRET_KEY`. In production, add a webhook at Stripe → Developers → Webhooks for `https://your-domain/api/stripe/webhook` with `checkout.session.completed`, `checkout.session.expired`, `payment_intent.succeeded` and `payment_intent.payment_failed`, and set its signing secret as `STRIPE_WEBHOOK_SECRET`.
+- Without `STRIPE_SECRET_KEY` the site falls back to the manual flow: the admin confirms each order and the customer pays by Zelle / Venmo.
+- Code: `src/lib/stripe.ts`, `src/app/api/stripe/`, `src/components/admin-order-payment.tsx`.
 
 ### Create the admin account (one time)
 
@@ -175,10 +194,10 @@ In `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your o
 ### What the admin dashboard does
 
 - Orders are grouped as pending / confirmed / picked up / returned / closed, with counts.
-- Status moves forward only: pending → confirmed → picked up → returned. Pending orders can be rejected; pending and confirmed orders can be cancelled. Rejecting or cancelling frees the inventory immediately.
+- Status moves forward only: pending → confirmed → picked up → returned. Pending orders can be rejected; pending and confirmed orders can be cancelled. Orders waiting on Stripe (pay by card, or card on file) have no manual "Confirm": they confirm themselves once paid or the card is saved, and expire otherwise. Rejecting or cancelling frees the inventory immediately.
 - Every order has private internal notes.
 - The order list shows the latest 500 orders.
-- **Inventory** (`/admin/inventory`): every style (outfits / helmet covers / gloves) with each item's current status and next booking. Edit a style's Chinese and English names, deposit, custom pricing, sort order and visibility; add an item; mark an item unavailable; block dates manually (photo shoots, repairs, cleaning).
+- **Inventory** (`/admin/inventory`): every style (outfits / helmet covers / gloves) with each item's current status and next booking. Edit a style's Chinese and English names, custom pricing, sort order and visibility; add an item; mark an item unavailable; block dates manually (photo shoots, repairs, cleaning).
 - **Pricing** (`/admin/pricing`): edit the three shop-wide price tables (full set / jacket only / pants only) and the minimum shipping days. Changes apply immediately; existing orders keep their prices.
 - **Helmet covers**: add helmet covers and edit their tier and add-on price.
 - Only accounts in `admin_users` can enter the dashboard; customer accounts are rejected.
@@ -203,7 +222,7 @@ In `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your o
 ### Order emails
 
 - **New order** → email to the owner with every item, dates, pickup / shipping address, customer contact info and a dashboard link; replying goes straight to the customer.
-- **Admin clicks "Confirm"** → email to the customer with the amount due, payment methods (Zelle / Venmo from `src/config/shop.ts`) and the order link.
+- **Order confirmed** → email to the customer. Paid by card: the amount paid and the card. Manual flow (admin clicks "Confirm"): the amount due, payment methods (Zelle / Venmo from `src/config/shop.ts`) and the order link.
 - Emails are in English and sent from the shop Gmail (same account and app password as above). Set these in `.env.local` (and in the Netlify environment variables in production):
   `SMTP_USER` (shop Gmail), `SMTP_PASS` (16-character app password); set `ADMIN_NOTIFY_EMAIL` to send new-order alerts somewhere else.
 - If they're not set, ordering and status changes work as usual and no email is sent (the server log says the send was skipped). A failed send never affects the order.
@@ -215,7 +234,7 @@ In `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your o
    Netlify detects Next.js and fills in the build settings. Every push to `main` redeploys automatically.
 2. **Environment variables** (Project configuration → Environment variables): add
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SMTP_USER` and `SMTP_PASS` from `.env.local`
-   (`SUPABASE_DB_URL` is only for running migrations locally), plus `NEXT_PUBLIC_SITE_URL` = your production URL. Redeploy once for the changes to take effect.
+   (`SUPABASE_DB_URL` is only for running migrations locally), plus `NEXT_PUBLIC_SITE_URL` = your production URL and, optionally, `NEXT_PUBLIC_GA_ID` (a Google Analytics 4 measurement ID; storefront pages load analytics only when it is set). Redeploy once for the changes to take effect.
 3. **Domain**: Netlify project → Domain management → add the domain, then at your registrar point the apex `A` record to Netlify's load balancer
    and `www` (`CNAME`) to `<project>.netlify.app`. Netlify sets up HTTPS automatically once DNS resolves.
 4. **Supabase**: under Authentication → URL Configuration, change Site URL to the production URL and add `https://your-domain/**` to Redirect URLs.
@@ -263,7 +282,6 @@ At most 6 submissions per network per 10 minutes and 3 per email per hour. The f
      "name": "粉色蝴蝶结滑雪套装",
      "nameEn": "Pink Bow Ski Suit",
      "dailyPrice": 49,
-     "deposit": 200,
      "sortOrder": 200,
      "items": [{ "code": "SC020", "size": "M" }],
      "description": "一句话介绍颜色和款式。\n\n## 设计细节\n- ……",
@@ -299,7 +317,7 @@ The import appends the template's "Fabric & technology" and "Design details" sec
 
 ### Chinese and English
 
-The site has a Chinese version (`/styles`) and an English version (`/en/styles`), switched with "EN / 中文" in the header. Add content in both languages:
+The site has an English version (`/styles`, the default) and a Chinese version (`/zh/styles`), switched with "EN / 中文" in the header. Add content in both languages:
 
 - **Products**: `name` / `description` are Chinese and `nameEn` / `descriptionEn` are English; both are required (tests catch missing English and Chinese text leaking into English). For text-only changes run `npm run import:catalog -- --text`, which skips re-uploading images.
 - **Helmet covers added in the dashboard**: the form has English name and description fields.
@@ -325,7 +343,7 @@ The site has a Chinese version (`/styles`) and an English version (`/en/styles`)
 
 ## Business rules at a glance
 
-- **Tiered pricing** by category, plus a deposit:
+- **Tiered pricing** by category, with **no deposit** (serious damage or loss is charged at retail price to the saved card):
 
   | Days | Jacket only | Pants only | Full set (set / one-piece) | Crystal set |
   |---|---|---|---|---|
@@ -342,12 +360,11 @@ The site has a Chinese version (`/styles`) and an English version (`/en/styles`)
   They can be edited in the dashboard or with SQL, e.g.
   `update public.settings set pants_prices_cents = array[2500,3500,4500,5500,6500,7000,7500] where id;`.
   Jackets and pants also appear on the **Mix & Match** page (`/mix-and-match`). Helmet covers and gloves have their own price tables.
-- **Deposit**: $200 for a full set, $150 for a jacket, $100 for pants (defaults when `deposit` is omitted in the catalog).
 - **Maximum rental** 10 days (`settings.max_rental_days`). **Minimum rental**: 1 day for local pickup, 2 days for shipping (`settings.shipping_min_days`).
   The database re-validates prices and minimum days when the order is placed.
 - **Shipping**:
   - Contiguous 48 states + Washington, DC only (no Alaska, Hawaii or territories).
-  - **Free shipping** when the order has a full set (suit / one-piece) rented for 2+ days, or rental + add-ons reach $99 (deposit excluded). Otherwise one fee per order: $15, or $25 for far states (the list lives in `shop.shipping.farStates`). The rule is one pure function (`shippingFeeCents` in `src/lib/shipping.ts`) shared by the cart page and the server action; the fee is stored once on the main order (`bookings.shipping_cents`), and order total = rental + deposit + shipping.
+  - **Free shipping** when the order has a full set (suit / one-piece) rented for 2+ days, or rental + add-ons reach $99. Otherwise one fee per order: $15, or $25 for far states (the list lives in `shop.shipping.farStates`). The rule is one pure function (`shippingFeeCents` in `src/lib/shipping.ts`) shared by the cart page and the server action; the fee is stored once on the main order (`bookings.shipping_cents`), and order total = rental + shipping (the `deposit_cents` columns remain and are always 0).
   - Shipped items have a 2-day minimum (editable under Pricing); local pickup in Ithaca starts at 1 day. Shipped orders need about 7 days' notice (`shop.shipping.orderAheadDays` in `src/config/shop.ts`).
   - Shipped items go out together, so every item in the cart must have the same ski dates (pickup orders can differ).
   - The shipping address is split into street, city, state (dropdown, 48 states + DC only) and ZIP, with state and ZIP validated; it is stored as one line in the order's `shipping_address`.

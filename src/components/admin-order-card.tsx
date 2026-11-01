@@ -1,10 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { saveAdminNote, updateBookingStatus } from "@/app/admin/actions";
+import { AdminOrderPayment } from "@/components/admin-order-payment";
 import { shop } from "@/config/shop";
 import { nextStatuses } from "@/lib/booking/status";
+import { cardLabel } from "@/lib/booking/card-payment";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDateZh, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import type { BookingRow, BookingStatus } from "@/lib/supabase/database.types";
+import type { BookingRow, BookingStatus, CardChargeRow } from "@/lib/supabase/database.types";
 import { messages } from "@/messages/zh-CN";
 
 const t = messages.admin;
@@ -37,6 +40,7 @@ export function AdminOrderCard({
   styleName,
   itemCode,
   addOns = [],
+  cardCharges,
 }: {
   booking: BookingRow;
   styleName: string;
@@ -46,8 +50,10 @@ export function AdminOrderCard({
    * 加购的头盔套、组合套装里的其他单品（bundlePart，0 元）
    */
   addOns?: { name: string; itemCode: string; cents: number; bundlePart?: boolean; cartItem?: BookingRow }[];
+  /** 这单之后从卡里扣过的钱；undefined = 没配置 Stripe，不显示刷卡付款 */
+  cardCharges?: CardChargeRow[];
 }) {
-  const actions = nextStatuses(booking.status);
+  const actions = nextStatuses(booking.status, booking.payment_method);
   const orderTotal = booking.total_cents + addOns.reduce((sum, a) => sum + a.cents, 0);
   const cartItems = addOns.filter((a) => a.cartItem);
   const rentalTotal = booking.rental_cents + addOns.reduce((sum, a) => sum + (a.cartItem?.rental_cents ?? (a.bundlePart ? 0 : a.cents)), 0);
@@ -115,10 +121,14 @@ export function AdminOrderCard({
           {booking.fulfillment_method === "shipping" && (
             <Line label="运费" value={booking.shipping_cents > 0 ? formatMoney(booking.shipping_cents) : "包邮"} />
           )}
-          <Line
-            label={`${t.rental} / ${t.deposit} / ${t.total}`}
-            value={`${formatMoney(rentalTotal)} / ${formatMoney(depositTotal)} / ${formatMoney(orderTotal)}`}
-          />
+          {depositTotal > 0 ? (
+            <Line
+              label={`${t.rental} / ${t.deposit} / ${t.total}`}
+              value={`${formatMoney(rentalTotal)} / ${formatMoney(depositTotal)} / ${formatMoney(orderTotal)}`}
+            />
+          ) : (
+            <Line label={`${t.rental} / ${t.total}`} value={`${formatMoney(rentalTotal)} / ${formatMoney(orderTotal)}`} />
+          )}
         </dl>
 
         <dl className="space-y-1.5">
@@ -164,6 +174,19 @@ export function AdminOrderCard({
             </form>
           ))}
         </div>
+      )}
+
+      {cardCharges && (
+        <AdminOrderPayment
+          bookingId={booking.id}
+          paymentMethod={booking.payment_method}
+          orderTotalCents={orderTotal}
+          cashDepositCents={booking.cash_deposit_cents}
+          paidCents={booking.paid_cents}
+          cardLabel={booking.card_brand && booking.card_last4 ? cardLabel(booking.card_brand, booking.card_last4) : null}
+          charges={cardCharges}
+          initialNonce={randomUUID()}
+        />
       )}
 
       <form action={saveAdminNote} className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-start">

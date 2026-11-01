@@ -1,8 +1,13 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { localePath } from "@/i18n/config";
+import { orderAccess } from "@/lib/booking/order-access";
+import { createOrderCheckout, stripeEnabled } from "@/lib/stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getMessages } from "@/messages";
 
@@ -23,7 +28,7 @@ const schema = z.object({
 });
 
 /**
- * Customers write reviews on the order page. The order number is the credential (it is also what opens the order page).
+ * Customers write reviews on the order page; only visitors who may open the order can (see order-access.ts).
  * Only returned orders are accepted; each item in an order can get its own review (helmet-cover add-ons are not reviewed separately).
  * New reviews are pending and appear on that product's page only after the admin publishes them.
  */
@@ -51,6 +56,15 @@ export async function submitReview(_previous: ReviewFormState, formData: FormDat
     .select("id, style_id, status, parent_booking_id, cart_item")
     .eq("booking_no", input.lineNo)
     .maybeSingle();
+  // Only visitors who may open the order (checked on its main order) can review it
+  const mainNo = input.lineNo.split("-").slice(0, 2).join("-");
+  const { data: main } = await service
+    .from("bookings")
+    .select("id, user_id, customer_email")
+    .eq("booking_no", mainNo)
+    .is("parent_booking_id", null)
+    .maybeSingle();
+  if (!main || (await orderAccess(main)) !== "allowed") return { message: t.errorGeneric, values };
   if (error) {
     console.error("[submitReview] 读取订单失败", error);
     return { message: t.errorGeneric, values };
@@ -75,8 +89,49 @@ export async function submitReview(_previous: ReviewFormState, formData: FormDat
     return { message: t.errorGeneric, values };
   }
 
-  const orderNo = input.lineNo.split("-").slice(0, 2).join("-");
-  revalidatePath(localePath(input.locale, `/booking/${orderNo}`));
+  revalidatePath(localePath(input.locale, `/booking/${mainNo}`));
   revalidatePath("/admin/reviews");
   return { done: true };
+}
+
+const paymentSchema = z.object({
+  locale: z.enum(["zh", "en"]),
+  bookingNo: z.string().regex(/^SC-[A-HJ-NP-Z2-9]{8}$/),
+});
+
+/**
+ * "Pay now" on the order page, for an unpaid order (the customer left the payment page, or it timed out while the order is still open):
+ * opens a fresh Stripe page. Only for visitors who may open the order (see order-access.ts).
+ */
+export async function startPayment(formData: FormData) {
+  const parsed = paymentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success || !stripeEnabled()) return;
+  const { locale, bookingNo } = parsed.data;
+  const orderPath = localePath(locale, `/booking/${bookingNo}`);
+
+  const requestHeaders = await headers();
+  const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip")?.trim() || "unknown";
+  const { data: allowed, error: limitError } = await createSupabaseServiceClient().rpc("hit_rate_limit", {
+    p_bucket: "payment_ip",
+    p_key_hash: createHash("sha256").update(ip).digest("hex"),
+    p_limit: 10,
+    p_window_seconds: 600,
+  });
+  if (limitError || !allowed) redirect(`${orderPath}?pay=error`);
+
+  const { data: order } = await createSupabaseServiceClient()
+    .from("bookings")
+    .select("id, user_id, customer_email, parent_booking_id")
+    .eq("booking_no", bookingNo)
+    .maybeSingle();
+  if (!order || order.parent_booking_id || (await orderAccess(order)) !== "allowed") redirect(orderPath);
+
+  let url: string | null;
+  try {
+    url = await createOrderCheckout(bookingNo, locale);
+  } catch (error) {
+    console.error("[startPayment] 创建付款页面失败", error);
+    url = null;
+  }
+  redirect(url ?? `${orderPath}?pay=error`);
 }

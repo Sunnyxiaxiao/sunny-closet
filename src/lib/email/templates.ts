@@ -11,6 +11,7 @@ import { localePath } from "@/i18n/config";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDate, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import type { PaymentMethod } from "@/lib/supabase/database.types";
 import { sizeLabel } from "@/messages";
 
 export interface EmailMessage {
@@ -51,6 +52,11 @@ export interface OrderEmailData {
   /** 运费（已含在 totalCents 里），0 = 包邮或自取 */
   shippingCents: number;
   totalCents: number;
+  /**
+   * 付款方式（null = 手动流程：后台确认、Zelle / Venmo）、已付金额（null = 还没付）、
+   * 留存的卡（例如 "Visa •••• 4242"）、当面收的押金（in_person 才有）
+   */
+  payment: { method: PaymentMethod | null; paidCents: number | null; card: string | null; cashDepositCents: number };
 }
 
 function escapeHtml(value: string): string {
@@ -127,7 +133,10 @@ const depositOf = (order: OrderEmailData) => order.lines.reduce((sum, l) => sum 
 export function newOrderEmail(order: OrderEmailData, { to, origin }: { to: string; origin: string }): EmailMessage {
   const count = order.lines.length;
   const { text, html } = render([
-    { kind: "p", text: `New booking request from ${order.customerName}. It's pending until you confirm it in the admin.` },
+    {
+      kind: "p",
+      text: ownerIntro(order),
+    },
     { kind: "rows", rows: [["Booking no.", order.bookingNo], ...itemRows(order, "zh")] },
     { kind: "rows", rows: handoverRows(order) },
     {
@@ -139,8 +148,16 @@ export function newOrderEmail(order: OrderEmailData, { to, origin }: { to: strin
         ...(order.customerNote ? ([["Note", order.customerNote]] as [string, string][]) : []),
       ],
     },
-    { kind: "rows", rows: [["Total", `${formatMoney(order.totalCents)} (incl. ${formatMoney(depositOf(order))} deposit)`]] },
-    { kind: "link", label: "Open admin", url: `${origin}/admin?status=pending` },
+    {
+      kind: "rows",
+      rows: [
+        [
+          "Total",
+          `${formatMoney(order.totalCents)}${depositOf(order) > 0 ? ` (incl. ${formatMoney(depositOf(order))} deposit)` : ""}${order.payment.method === "card" && order.payment.paidCents !== null ? " · paid by card" : ""}`,
+        ],
+      ],
+    },
+    { kind: "link", label: "Open admin", url: `${origin}/admin?status=${order.payment.method ? "confirmed" : "pending"}` },
   ]);
   return {
     to,
@@ -151,13 +168,54 @@ export function newOrderEmail(order: OrderEmailData, { to, origin }: { to: strin
   };
 }
 
-/** 店主确认订单：发给顾客，告诉她付多少、怎么付 */
-export function orderConfirmedEmail(order: OrderEmailData, { origin }: { origin: string }): EmailMessage {
+/** 新订单通知（给店主）的第一句：按付款方式说明这单确认了没有、钱怎么收 */
+function ownerIntro(order: OrderEmailData): string {
+  const { method, cashDepositCents, card } = order.payment;
+  const due = formatMoney(order.totalCents);
+  if (method === "card") return `New booking from ${order.customerName}, paid by card and confirmed automatically.`;
+  if (method === "in_person_card") {
+    return `New booking from ${order.customerName}, confirmed automatically. Card on file instead of a deposit${card ? ` (${card})` : ""}; they'll pay ${due} in person at pickup.`;
+  }
+  if (method === "in_person") {
+    return `New booking from ${order.customerName}, confirmed automatically. They'll pay ${due} plus a ${formatMoney(cashDepositCents)} deposit in person at pickup.`;
+  }
+  return `New booking request from ${order.customerName}. It's pending until you confirm it in the admin.`;
+}
+
+/** 确认邮件里的付款部分：刷卡已付 / 取件时当面付（留卡或押金）/ 手动流程的应付金额和 Zelle、Venmo */
+function paymentBlocks(order: OrderEmailData): Block[] {
+  const { method, paidCents, card, cashDepositCents } = order.payment;
+  if (method === "card" && paidCents !== null) {
+    return [
+      { kind: "rows", rows: [["Paid", `${formatMoney(paidCents)}${card ? ` · ${card}` : ""}`]] },
+      {
+        kind: "p",
+        text: "No deposit needed. Your card is kept on file and only charged for late returns, extra cleaning, repairs or loss, as set out in our Rental Terms.",
+      },
+    ];
+  }
+  if (method === "in_person_card") {
+    return [
+      { kind: "rows", rows: [["Due at pickup", `${formatMoney(order.totalCents)} (cash, Zelle or Venmo)`]] },
+      {
+        kind: "p",
+        text: `No deposit needed. Your card${card ? ` (${card})` : ""} is kept on file and only charged for late returns, extra cleaning, repairs or loss, as set out in our Rental Terms.`,
+      },
+    ];
+  }
+  if (method === "in_person") {
+    return [
+      {
+        kind: "rows",
+        rows: [
+          ["Due at pickup", `${formatMoney(order.totalCents)} (cash, Zelle or Venmo)`],
+          ["Deposit", `${formatMoney(cashDepositCents)}, paid at pickup and returned in person after the return is checked`],
+        ],
+      },
+    ];
+  }
   const deposit = depositOf(order);
-  const { text, html } = render([
-    { kind: "p", text: `Hi ${order.customerName},\n\nGood news — your booking ${order.bookingNo} is confirmed and the dates are held for you.` },
-    { kind: "rows", rows: itemRows(order, "en") },
-    { kind: "rows", rows: handoverRows(order) },
+  return [
     {
       kind: "rows",
       rows: [
@@ -168,7 +226,24 @@ export function orderConfirmedEmail(order: OrderEmailData, { origin }: { origin:
       ],
     },
     { kind: "p", text: `Please include your booking number ${order.bookingNo} in the payment note.` },
+  ];
+}
+
+/**
+ * 订单确认：发给顾客。
+ * 付款部分见 paymentBlocks：刷卡已付、取件时当面付（留卡或押金），或手动确认的订单（没配置 Stripe）的应付金额和 Zelle / Venmo
+ */
+export function orderConfirmedEmail(order: OrderEmailData, { origin }: { origin: string }): EmailMessage {
+  const { text, html } = render([
+    { kind: "p", text: `Hi ${order.customerName},\n\nGood news — your booking ${order.bookingNo} is confirmed and the dates are held for you.` },
+    { kind: "rows", rows: itemRows(order, "en") },
+    { kind: "rows", rows: handoverRows(order) },
+    ...paymentBlocks(order),
     { kind: "link", label: "View your booking", url: `${origin}${localePath("en", `/booking/${order.bookingNo}`)}` },
+    {
+      kind: "p",
+      text: `To keep it private, the booking page opens on the device you booked from, or after you sign in with ${order.customerEmail} (no account yet? sign up with this email).`,
+    },
     {
       kind: "p",
       text: `Questions? Just reply to this email, or text us at ${shop.contact.phone}.\n\n— ${shop.name}`,

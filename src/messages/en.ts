@@ -1,3 +1,4 @@
+import type { TermsArgs, TermsSection } from "@/lib/terms";
 import type { Messages } from "./zh-CN";
 
 /**
@@ -129,6 +130,7 @@ export const messages: Messages = {
       dragon: "Dragon",
       elephant: "Elephant",
       mouse: "Mouse",
+      seal: "Seal",
       christmas: "Christmas",
       devil: "Devil",
       fluffy: "Fluffy",
@@ -215,7 +217,6 @@ export const messages: Messages = {
     suit: "Full set",
     tableNote: "Each price is the total for the whole rental, not per day.",
     specialNote: "Bib pants are priced like jackets; hoodies are priced like pants.",
-    depositNote: "Deposit: $150 for a jacket or bib pants, $100 for pants or a hoodie — fully refunded once returned undamaged.",
     jacketsTitle: "Jackets",
     pantsTitle: "Pants",
     jacketsEmpty: "Jackets for solo rental are coming soon.",
@@ -281,7 +282,7 @@ export const messages: Messages = {
     rentalNotesBody: [
       "Pay only for ski days: ski Saturday and Sunday, pick up Friday evening, return by Monday noon — 2 days.",
       "Shipped orders go out early so they arrive before your first ski day. Drop the package off by the day after your last ski day. Transit days are free.",
-      "Your deposit is refunded in full once the item is returned undamaged.",
+      "No deposit. Damage, loss and late returns are handled as set out in our Rental Terms.",
       "Every item is professionally cleaned and sanitized between rentals.",
     ],
     questions: "Questions?",
@@ -289,7 +290,6 @@ export const messages: Messages = {
     related: "You may also like",
     sourceCredit: "Photos and specs: ",
     officialSite: "official site",
-    depositReturned: " (refunded after return)",
     notRentable: "This outfit isn't available right now.",
     fullRentalInfo: "Read the full rental policy",
     perDayFrom: (price: string) => `as low as ${price}/day`,
@@ -367,8 +367,23 @@ export const messages: Messages = {
     notePlaceholder: "e.g. your height and weight, which resort you're heading to",
     submit: "Request Booking",
     submitting: "Sending…",
+    subtitlePay: "Next you'll pay by card on Stripe's secure page; your booking is confirmed as soon as payment goes through. No deposit.",
+    subtitleInPersonCard:
+      "Next you'll save a card on Stripe's secure page (nothing is charged); your booking is confirmed once it's saved. Pay the rental in person at pickup.",
+    subtitleInPerson: (deposit: string) =>
+      `Your booking is confirmed as soon as you submit. Pay the rental and a ${deposit} deposit in person at pickup; the deposit is returned in person after the return is checked.`,
+    submitPay: "Continue to payment",
+    paymentLabel: "Payment",
+    submitSaveCard: "Continue to save card",
+    payCard: "Pay online by card",
+    payCardHint: "Pay the rental now, no deposit",
+    payInPersonCard: "Pay in person · card on file, no deposit",
+    payInPersonCardHint: "Save a card on Stripe next; nothing is charged",
+    payInPerson: (deposit: string) => `Pay in person + ${deposit} deposit`,
+    payInPersonHint: "Cash, Zelle or Venmo; deposit returned after return; confirmed right away",
+    inPersonPickupOnly: "Paying in person is only for in-store pickup. For shipping, please pay by card.",
     agreePrefix: "By submitting you agree to our ",
-    agreeLink: "rental policy",
+    agreeLink: "rental terms",
     honeypot: "Website",
     shippingTooShort: (days: number) =>
       `Shipping requires at least ${days} ski days. Add more days or choose in-store pickup.`,
@@ -508,8 +523,8 @@ export const messages: Messages = {
       confirmed: "Your dates are reserved. Please pay using the details below and we'll arrange pickup with you.",
       rejected: "Sorry, we can't take this booking. Try different dates or another item, or get in touch.",
       picked_up:
-        "For in-store pickup, return by noon the day after your last ski day. For shipping, drop the package off by the day after. Your deposit is refunded once we've checked the item.",
-      returned: "We've received your outfit. Your deposit will be refunded once we've checked it.",
+        "For in-store pickup, return by noon the day after your last ski day. For shipping, drop the package off by the day after.",
+      returned: "We've received your outfit. Thanks for taking good care of it!",
       cancelled: "If you didn't mean to cancel, please contact us.",
     },
     number: "Booking number",
@@ -536,6 +551,46 @@ export const messages: Messages = {
     bookingNoLabel: "Booking number: ",
     days: (n: number) => ` (${n} ${n === 1 ? "day" : "days"})`,
     addOnRow: (name: string) => `Helmet cover: ${name}`,
+    awaitingPaymentTitle: "One more step: complete your payment",
+    awaitingPaymentBody: (minutes: number) =>
+      `Your dates are held for ${minutes} minutes. Once you pay, your booking is confirmed automatically and we'll email you the confirmation.`,
+    payButton: "Pay now",
+    paidTitle: "Payment received, booking confirmed",
+    paidBody: "Your dates are reserved and a confirmation is on its way to your inbox. Pickup or shipping follows the schedule above.",
+    paidRow: "Paid",
+    paidNotice: "Payment received. Thank you!",
+    cardSavedNotice: "Card saved, your booking is confirmed!",
+    accessTitle: "Sign in to view this booking",
+    accessBody:
+      "To keep your booking private, please sign in with the email you used to book. No account yet? Just sign up with that email.",
+    accessOtherAccount:
+      "This booking isn't linked to the account you're signed in with. Sign out in My Account, then sign in with the email you used to book.",
+    accessLogin: "Sign in",
+    accessSignup: "Sign up with that email",
+    accessAccount: "My Account",
+    payError: "We couldn't open the payment page right now. Please try again in a moment or contact us.",
+    noDepositNote:
+      "No deposit needed. The card you paid with stays on file with Stripe and is only charged for late returns, extra cleaning, repairs or loss as set out in our Rental Terms; we'll send you photos and an itemized list before any charge.",
+    paymentSecure: "Payment happens on Stripe's secure page; we never see your full card number.",
+    inPersonTitle: "You're booked!",
+    inPersonBody: "Your dates are reserved and a confirmation is on its way to your inbox. Just pay in person when you pick up.",
+    inPersonDue: "Due at pickup",
+    inPersonMethods: "Cash, Zelle or Venmo.",
+    inPersonDepositLine: (deposit: string) => `Plus a ${deposit} deposit, paid in person at pickup and returned in person after the return is checked.`,
+    cardOnFileLine: (card: string) =>
+      `${card} on file, no deposit. It's only charged for late returns, extra cleaning, repairs or loss, as set out in our Rental Terms.`,
+    awaitingCardTitle: "One more step: save a card",
+    awaitingCardBody: (minutes: number) =>
+      `Your dates are held for ${minutes} minutes. Saving a card charges nothing; once it's saved your booking is confirmed, and you pay the rental in person at pickup.`,
+    saveCardButton: "Save a card",
+    inPersonPaid: "Paid in person",
+  },
+  /** Text on the Stripe payment page */
+  payment: {
+    addOnItem: (name: string) => `Helmet cover add-on: ${name}`,
+    shippingItem: "Shipping",
+    authorization:
+      "I authorize Sunny Closet to charge this card later only for late returns, extra cleaning, repairs, or the retail price of an item that is lost or can't be repaired, as set out in the Rental Terms. You'll send me photos and an itemized list before any charge.",
   },
   rentalInfo: {
     title: "How It Works",
@@ -548,7 +603,7 @@ export const messages: Messages = {
       },
       {
         title: "Shipping",
-        body: "We ship early so your outfit arrives before your first ski day — transit and early-arrival days aren't charged. When you're done, drop the package off with the designated carrier by the day after your last ski day (keep the tracking number). Return transit isn't charged either.",
+        body: "We ship early so your outfit arrives before your first ski day — transit and early-arrival days aren't charged. When you're done, drop the package off at USPS with the prepaid return label by the end of the day after your last ski day. Return transit isn't charged either.",
       },
     ],
     exampleTitle: "Example: skiing Saturday and Sunday?",
@@ -559,6 +614,7 @@ export const messages: Messages = {
       ["Monday by noon", "Return"],
     ],
     exampleResult: "You pay for 2 days.",
+    termsLink: "Read the full rental terms",
     shippingTitle: "Shipping & pickup",
     shippingRules: (minDays: number, ahead: number, setDays: number, free: number, fee: number, far: number) => [
       "We ship to the 48 contiguous US states (plus Washington, DC) only. No shipping to Alaska, Hawaii or overseas.",
@@ -571,24 +627,194 @@ export const messages: Messages = {
     ],
     sections: [
       {
-        title: "Deposit",
-        body: "(Placeholder) The deposit is collected at pickup and refunded in full once the outfit is returned undamaged.",
+        title: "Payment & deposit",
+        body: "Pay online by card and there's no deposit: the card is kept securely with our payment provider Stripe (we never see the full number) and only charged if something is seriously damaged, lost or returned late. For in-store pickup you can also pay the rental in person: either save a card online (nothing charged) for no deposit, or pay a $200 deposit in person that's returned after the return is checked.",
       },
       {
         title: "Pickup & return",
-        body: "(Placeholder) Choose in-store pickup or shipping. Please come during business hours for pickup.",
+        body: "Local pickup is in Ithaca, NY: pick up from the evening before your first ski day and return by noon the day after your last. Shipped orders: drop the package at USPS with the prepaid return label by the end of the day after your last ski day.",
       },
       {
         title: "Cleaning & hygiene",
-        body: "(Placeholder) Every outfit is professionally cleaned and sanitized after each return, so the next customer always gets a fresh one.",
+        body: "Every item is professionally cleaned and sanitized after each return, so the next customer always gets a fresh one. Please don't wash it yourself.",
       },
       {
         title: "Cancellations & changes",
-        body: "(Placeholder) Need to cancel or change dates? Let us know as early as possible. Details are confirmed by our team.",
+        body: "Cancel 7 or more days before your first ski day for a full refund; 2–6 days before for a 50% refund or full credit for another booking this season. Within 48 hours, or once the order has shipped, the rental isn't refunded. Need more days? Contact us before your return date.",
       },
       {
         title: "Damage & loss",
-        body: "(Placeholder) Normal wear is fine. Serious damage or loss is deducted from the deposit.",
+        body: "Normal wear is free. Extra cleaning is $20–$40, repairable damage is the repair cost (up to $100), and items that are lost or can't be repaired are charged at retail price. Late returns are $25 per set or one-piece, $20 per single jacket or pants and $10 per accessory for each day late. We send photos and an itemized list before charging your card on file or deducting from your deposit.",
+      },
+    ],
+  },
+  terms: {
+    title: "Rental Terms",
+    updated: "Last updated: November 1, 2026",
+    intro:
+      "These terms apply to every rental from Sunny Closet (sssunnycloset.com). \"We\" and \"us\" mean Sunny Closet; \"you\" means the person who places the booking. By placing a booking, you agree to these terms.",
+    sections: (a: TermsArgs): TermsSection[] => [
+      {
+        title: "Who can rent",
+        blocks: ["You must be at least 18 years old to book. The person who books is responsible for the rental, even if someone else wears it."],
+      },
+      {
+        title: "Booking and payment",
+        blocks: [
+          "Choose your items and dates on our website and place your booking. Your dates are held for 30 minutes while you pay or save a card; if you don't finish, they're released. Choose how to pay:",
+          {
+            list: [
+              "Pay online by card (required for shipped orders): pay the rental and any shipping fee through Stripe when you book. Your booking is confirmed once payment goes through, and your card is saved with Stripe.",
+              "Local pickup, card on file: save a card with Stripe (nothing is charged when you save it) and pay the rental in person at pickup by cash, Zelle or Venmo. Your booking is confirmed once the card is saved. No deposit.",
+              `Local pickup, $${a.deposit} deposit: pay the rental and a $${a.deposit} refundable deposit in person at pickup by cash, Zelle or Venmo. Your booking is confirmed right away.`,
+            ],
+          },
+          "When your card is saved (including when you pay online), you authorize us to charge it later only for late returns, extra cleaning, repairs or replacement as described in sections 8 and 9. Cards are stored by Stripe; we never see your full card number.",
+        ],
+      },
+      {
+        title: "Pricing and rental period",
+        blocks: [
+          {
+            list: [
+              "Rental days are the days you plan to wear the items. You pay only for rental days, at the prices shown on our website.",
+              `Local pickup has a 1-day minimum; shipped orders have a ${a.shippingMinDays}-day minimum. The longest rental is the longest you can choose on our website.`,
+              "Local pickup: pick up from the evening before your first rental day and return by noon the day after your last. These extra hours are free.",
+              "Shipped orders arrive at least 1 day before your first rental day, and shipping days are free.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Shipping and local pickup",
+        blocks: [
+          {
+            list: [
+              "Shipping: we ship with USPS to the 48 contiguous United States and Washington, D.C., and include a prepaid return label.",
+              `Shipping is free both ways when your order includes a full set (suit or one-piece) rented for ${a.freeSetMinDays} days or more, or when rentals and add-ons reach $${a.freeSubtotal}. Otherwise there is one shipping fee per order, $${a.fee} or $${a.farFee} depending on the state, shown at checkout.`,
+              "Local pickup: available in Ithaca, NY. You are welcome to try items on at pickup.",
+              "Carrier delays: if we ship on time and the carrier delivers after your first rental day, we will refund the rental days you missed.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "When your order arrives",
+        blocks: [
+          `Please check your order within 24 hours of delivery and before wearing it. If anything is missing, damaged or does not fit, email us photos at ${a.email}. We will swap the size if one is available. If no size works, return the unworn items and we will refund the rental fee minus $15 for shipping.`,
+        ],
+      },
+      {
+        title: "During your rental",
+        blocks: [
+          {
+            list: [
+              "Wear the items for skiing, snowboarding and other snow activities.",
+              "Do not wash, dry clean, iron, alter or remove labels. We professionally clean every item between rentals.",
+              "Please do not smoke in the items, and keep pets off them.",
+              "You are responsible for the items from the time you receive them until they are returned to us or scanned by USPS.",
+              "Please do not slide on the snow without skis or a snowboard, for example on your seat or knees. It wears through the fabric quickly.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Returns",
+        blocks: [
+          {
+            list: [
+              "Shipped orders: pack the items in the mailer, attach the prepaid return label and drop it at USPS by the end of the day after your last rental day. The USPS acceptance scan counts as your return time.",
+              "Local pickup: return the items by noon the day after your last rental day, at the place we agreed.",
+              "Empty all pockets before returning. We will hold any personal items we find for 14 days.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Late returns",
+        blocks: [
+          {
+            list: [
+              `Late fees, for each day late: $${a.lateSet} per set or one-piece, $${a.latePiece} per single jacket or pants, and $${a.lateAccessory} per accessory (gloves, helmet cover), charged to your card on file or deducted from your deposit.`,
+              "Need more time? Contact us before your return date. We will extend your rental at our regular prices if the item is not booked by someone else.",
+              "If an item is not returned within 7 days of the return date and you have not contacted us, we will treat it as lost (see section 9).",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Damage, stains and loss",
+        blocks: [
+          "We check the knees and seat closely when an item comes back. Fabric worn thin or worn through in these areas is charged as repairable or non-repairable damage below.",
+          {
+            table: {
+              head: ["Condition", "Charge"],
+              rows: [
+                ["Normal wear: light pilling, small marks that come out in a normal wash, snow and water marks", "Free"],
+                ["Extra cleaning: heavy mud, makeup, food, wine, smoke odor, pet hair", "$20–$40"],
+                ["Repairable damage: broken zipper or snap, small tear", "Actual repair cost, up to $100"],
+                ["Not repairable, lost or stolen", "The item's retail price"],
+              ],
+            },
+          },
+          {
+            list: [
+              "Before charging anything, we will send you photos and an itemized list.",
+              "If you saved a card, we charge it after sending you the itemized list. If you paid a deposit, charges come out of the deposit first, and any amount above it is due within 7 days.",
+              "If you pay an item's full retail price, the item is yours to keep.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "After your return",
+        blocks: [
+          "If you saved a card and the items come back on time and in good condition, we will not charge it. If you paid a deposit, we refund it within 3 business days after we receive and inspect the items, minus any charges in sections 8 and 9, by the same method you paid.",
+        ],
+      },
+      {
+        title: "Cancellations",
+        blocks: [
+          {
+            table: {
+              head: ["When you cancel", "Rental fee", "Deposit (if paid)"],
+              rows: [
+                ["7 or more days before your first rental day", "Full refund", "Full refund"],
+                ["2–6 days before", "50% refund, or full credit for another booking this season", "Full refund"],
+                ["Less than 48 hours before, or after the order has shipped", "No refund", "Full refund once the items are returned"],
+              ],
+            },
+          },
+          "If we must cancel because an item is unavailable or damaged, you will receive a full refund. Rental refunds go back to the card you paid with, or the way you paid in person.",
+        ],
+      },
+      {
+        title: "Assumption of risk",
+        blocks: [
+          "Skiing and snowboarding involve a risk of injury. Our rentals are clothing, not protective equipment. You participate at your own risk. To the fullest extent permitted by law, Sunny Closet is not liable for injuries or losses during your rental, and our total liability is limited to the amount you paid for that rental.",
+        ],
+      },
+      {
+        title: "Photos and social media",
+        blocks: [
+          "We love seeing you on the slopes. Tag us at @sssunnycloset. We may ask to repost your photos, and we will never use them in paid ads without your permission.",
+        ],
+      },
+      {
+        title: "Privacy",
+        blocks: [
+          "We use your name, contact details and address only to process your booking, ship your order and talk with you. Card details are handled by Stripe. We do not sell your information.",
+        ],
+      },
+      {
+        title: "Questions and disputes",
+        blocks: [
+          `Please email us first at ${a.email}; we will try to resolve any problem quickly. These terms are governed by the laws of the State of New York. Any dispute that cannot be resolved by email may be brought in small claims court in Tompkins County, New York.`,
+        ],
+      },
+      {
+        title: "Changes",
+        blocks: ["We may update these terms. The version posted on our website when you book applies to your rental."],
       },
     ],
   },

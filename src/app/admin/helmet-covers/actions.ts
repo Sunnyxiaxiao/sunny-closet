@@ -63,7 +63,8 @@ export async function saveHelmetCover(
     rental_prices_cents: prices,
     addon_price_cents: input.addOn,
     replacement_value_cents: input.replacementValue,
-    deposit_cents: input.deposit,
+    // 不收押金
+    deposit_cents: 0,
     sort_order: input.sortOrder,
     is_active: input.isActive,
     image_urls: input.imageUrls,

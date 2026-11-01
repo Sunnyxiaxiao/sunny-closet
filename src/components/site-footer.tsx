@@ -66,6 +66,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                   </Link>
                 </li>
               ))}
+            <li>
+              <Link href={href("/terms")} className="hover:text-white">
+                {messages.terms.title}
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

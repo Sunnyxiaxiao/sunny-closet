@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { submitOrder } from "@/app/[lang]/cart/actions";
+import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { initialBookingFormState } from "@/lib/booking/form-state";
 import { clearCart, type CartLine } from "@/lib/cart";
 import { formatMoney } from "@/lib/money";
 import { SHIPPING_STATES, shippingPolicyArgs } from "@/lib/shipping";
 import { getMessages } from "@/messages";
+
+/** 配置了 Stripe 时的付款方式（到店自取三选一，邮寄只能 card） */
+const PAYMENT_CHOICES = ["card", "in_person_card", "in_person"] as const;
+type PaymentChoice = (typeof PAYMENT_CHOICES)[number];
 
 const inputClass =
   "h-12 w-full border border-neutral-300 bg-white px-3 text-base focus:border-neutral-900 focus:outline-none";
@@ -47,6 +52,7 @@ export function CheckoutForm({
   shippingCents,
   blocked,
   defaults,
+  payByCard,
   locale,
 }: {
   lines: CartLine[];
@@ -63,6 +69,8 @@ export function CheckoutForm({
   blocked: string | null;
   /** 登录的顾客：预先填好的联系方式 */
   defaults?: { name: string; email: string; phone: string; wechat: string };
+  /** 配置了 Stripe：提交后跳到 Stripe 付款页（按钮和说明文字跟着变） */
+  payByCard: boolean;
   locale: Locale;
 }) {
   const messages = getMessages(locale);
@@ -70,6 +78,17 @@ export function CheckoutForm({
   const router = useRouter();
   const [state, formAction, pending] = useActionState(submitOrder, initialBookingFormState);
   const errors = state.fieldErrors ?? {};
+  // 到店自取可以选当面付（在线留卡免押金，或当面付押金）；邮寄只能在线刷卡
+  const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>(
+    PAYMENT_CHOICES.find((c) => c === state.values?.payment) ?? "card",
+  );
+  const payment = payByCard && fulfillment === "pickup" ? paymentChoice : "card";
+  const deposit = formatMoney(shop.payment.inPersonDepositCents, { whole: true });
+  const paymentText: Record<PaymentChoice, { label: string; hint: string; subtitle: string; submit: string }> = {
+    card: { label: t.payCard, hint: t.payCardHint, subtitle: t.subtitlePay, submit: t.submitPay },
+    in_person_card: { label: t.payInPersonCard, hint: t.payInPersonCardHint, subtitle: t.subtitleInPersonCard, submit: t.submitSaveCard },
+    in_person: { label: t.payInPerson(deposit), hint: t.payInPersonHint, subtitle: t.subtitleInPerson(deposit), submit: t.submit },
+  };
   const shippingPolicy = messages.product.shippingPolicy(...shippingPolicyArgs(shippingMinDays));
 
   // 提交失败回填表单时，把州也带回购物车页
@@ -81,14 +100,16 @@ export function CheckoutForm({
   useEffect(() => {
     if (!state.redirectTo) return;
     clearCart();
-    router.push(state.redirectTo);
+    // Stripe 的付款页在别的网站，要整页跳转
+    if (/^https?:\/\//.test(state.redirectTo)) window.location.assign(state.redirectTo);
+    else router.push(state.redirectTo);
   }, [state.redirectTo, router]);
 
   return (
     <form action={formAction} className="space-y-4">
       <div>
         <h2 className="text-base font-bold">{t.title}</h2>
-        <p className="mt-1 text-sm text-neutral-600">{t.subtitle}</p>
+        <p className="mt-1 text-sm text-neutral-600">{payByCard ? paymentText[payment].subtitle : t.subtitle}</p>
       </div>
 
       <input type="hidden" name="locale" value={locale} />
@@ -192,6 +213,40 @@ export function CheckoutForm({
         )}
       </fieldset>
 
+      {payByCard && fulfillment === "pickup" ? (
+        <fieldset>
+          <legend className="text-sm text-neutral-600">{t.paymentLabel}</legend>
+          <div className="mt-2 grid gap-2">
+            {PAYMENT_CHOICES.map((method) => (
+              <label
+                key={method}
+                className={[
+                  "flex cursor-pointer flex-col justify-center border px-3 py-2.5 text-sm transition",
+                  payment === method
+                    ? "border-neutral-900 bg-neutral-900 text-white"
+                    : "border-neutral-300 bg-white hover:border-neutral-900",
+                ].join(" ")}
+              >
+                <input
+                  type="radio"
+                  name="payment"
+                  value={method}
+                  checked={payment === method}
+                  onChange={() => setPaymentChoice(method)}
+                  className="sr-only"
+                />
+                <span className="font-semibold">{paymentText[method].label}</span>
+                <span className={`mt-0.5 text-xs ${payment === method ? "text-neutral-300" : "text-neutral-500"}`}>
+                  {paymentText[method].hint}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : (
+        <input type="hidden" name="payment" value="card" />
+      )}
+
       {fulfillment === "shipping" && (
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold text-neutral-900">{t.address}</legend>
@@ -279,12 +334,12 @@ export function CheckoutForm({
         disabled={pending || blocked !== null || Boolean(state.redirectTo)}
         className="inline-flex h-12 w-full items-center justify-center rounded-full bg-neutral-900 text-sm font-bold tracking-wider text-white hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending || state.redirectTo ? t.submitting : t.submit}
+        {pending || state.redirectTo ? t.submitting : payByCard ? paymentText[payment].submit : t.submit}
       </button>
 
       <p className="text-center text-xs text-neutral-500">
         {t.agreePrefix}
-        <Link href={localePath(locale, "/rental-info")} className="underline underline-offset-2">
+        <Link href={localePath(locale, "/terms")} className="underline underline-offset-2">
           {t.agreeLink}
         </Link>
       </p>

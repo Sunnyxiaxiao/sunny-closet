@@ -5,6 +5,7 @@ import type { Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { checkoutDefaults, getCustomer } from "@/lib/account/customer";
 import { getSettings } from "@/lib/catalog";
+import { stripeEnabled } from "@/lib/stripe";
 import { getMessages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,5 +31,12 @@ export default async function CartPage() {
 
 async function Cart({ locale }: { locale: Locale }) {
   const [settings, customer] = await Promise.all([getSettings(), getCustomer()]);
-  return <CartView locale={locale} shippingMinDays={settings.shippingMinDays} defaults={checkoutDefaults(customer)} />;
+  return (
+    <CartView
+      locale={locale}
+      shippingMinDays={settings.shippingMinDays}
+      defaults={checkoutDefaults(customer)}
+      payByCard={stripeEnabled()}
+    />
+  );
 }

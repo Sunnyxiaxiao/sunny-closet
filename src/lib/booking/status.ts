@@ -7,9 +7,12 @@
  * returned, rejected and cancelled are final and can't change.
  *
  * Moving from a status that released inventory back to one that occupies it is not allowed, since it could clash with dates someone else has booked since.
+ *
+ * Orders waiting on Stripe (payment_method 'card' / 'in_person_card') confirm themselves once the customer pays or saves a card,
+ * so the admin can't confirm them by hand (that would hold the dates and email a confirmation for an unpaid order); they can still be rejected or cancelled.
  */
 
-import type { BookingStatus } from "@/lib/supabase/database.types";
+import type { BookingStatus, PaymentMethod } from "@/lib/supabase/database.types";
 
 export const BOOKING_STATUSES = [
   "pending",
@@ -29,12 +32,15 @@ const TRANSITIONS: Record<BookingStatus, readonly BookingStatus[]> = {
   cancelled: [],
 };
 
-export function nextStatuses(from: BookingStatus): readonly BookingStatus[] {
-  return TRANSITIONS[from];
+const CONFIRMED_BY_STRIPE: readonly PaymentMethod[] = ["card", "in_person_card"];
+
+export function nextStatuses(from: BookingStatus, paymentMethod: PaymentMethod | null = null): readonly BookingStatus[] {
+  const waitsOnStripe = paymentMethod !== null && CONFIRMED_BY_STRIPE.includes(paymentMethod);
+  return waitsOnStripe ? TRANSITIONS[from].filter((to) => to !== "confirmed") : TRANSITIONS[from];
 }
 
-export function canTransition(from: BookingStatus, to: BookingStatus): boolean {
-  return TRANSITIONS[from].includes(to);
+export function canTransition(from: BookingStatus, to: BookingStatus, paymentMethod: PaymentMethod | null = null): boolean {
+  return nextStatuses(from, paymentMethod).includes(to);
 }
 
 export function isBookingStatus(value: unknown): value is BookingStatus {

@@ -3,16 +3,20 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { after } from "next/server";
+import { shop } from "@/config/shop";
 import { DEFAULT_LOCALE, isLocale, localePath } from "@/i18n/config";
 import { hasAuthCookie } from "@/lib/account/customer";
 import { bookingErrorCode, mapBookingError } from "@/lib/booking/errors";
 import type { BookingFormState, BookingFormValues } from "@/lib/booking/form-state";
+import { rememberOrderInBrowser } from "@/lib/booking/order-access";
 import { earliestShippingStart } from "@/lib/booking/rules";
 import { priceCart } from "@/lib/cart-quote";
 import { formatShortDate } from "@/lib/dates";
-import { notifyNewOrder } from "@/lib/email/order-notifications";
+import { notifyNewOrder, notifyOrderConfirmed } from "@/lib/email/order-notifications";
 import { formatShippingAddress, shippingFeeCents } from "@/lib/shipping";
 import { publicOrigin } from "@/lib/site-url";
+import { createOrderCheckout, stripeEnabled } from "@/lib/stripe";
+import type { PaymentMethod } from "@/lib/supabase/database.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
@@ -40,6 +44,7 @@ function readValues(raw: Record<string, FormDataEntryValue>): BookingFormValues 
     shippingState: text(raw, "shippingState"),
     shippingZip: text(raw, "shippingZip"),
     note: text(raw, "note"),
+    payment: text(raw, "payment") || "card",
   };
 }
 
@@ -87,6 +92,14 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   const linesParsed = cartLinesSchema.safeParse(parseJson(text(raw, "lines")));
   if (!linesParsed.success) return fail(t.invalidCart);
   const shipping = input.fulfillment === "shipping";
+  // With Stripe: pay by card at checkout, or (local pickup only) pay the rental in person,
+  // either with a card saved online instead of a deposit (in_person_card) or with a cash deposit (in_person)
+  const paymentMethod: PaymentMethod | null = !stripeEnabled()
+    ? null
+    : values.payment === "in_person" || values.payment === "in_person_card"
+      ? values.payment
+      : "card";
+  if (shipping && paymentMethod !== null && paymentMethod !== "card") return fail(messages.checkout.inPersonPickupOnly);
 
   // Re-read prices and shop settings (trust only the database, never the page)
   let cart: Awaited<ReturnType<typeof priceCart>>;
@@ -197,6 +210,9 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     return fail(line && lines.length > 1 ? t.lineError(Number(line), message) : message);
   }
 
+  // This browser may open the order page from now on (others need to sign in with the order's email)
+  await rememberOrderInBrowser(order.booking_id);
+
   // Orders placed while signed in are linked to the account (child orders included) and show up in "My account"
   const user = (await hasAuthCookie())
     ? (await (await createSupabaseServerClient()).auth.getUser()).data.user
@@ -209,10 +225,47 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     if (linkError) console.error("[submitOrder] 关联账号失败", linkError);
   }
 
-  // Email the owner about the new order (after the response is sent, so the customer doesn't wait)
+  const orderPath = localePath(locale, `/booking/${order.booking_no}`);
   const origin = await publicOrigin();
+
+  // Rental and deposit in person: the order is confirmed right away (child orders follow the main order), and both emails go out
+  if (paymentMethod === "in_person") {
+    const { error: confirmError } = await service
+      .from("bookings")
+      .update({ status: "confirmed", payment_method: "in_person", cash_deposit_cents: shop.payment.inPersonDepositCents })
+      .eq("id", order.booking_id);
+    if (confirmError) {
+      console.error("[submitOrder] 确认当面付款订单失败", confirmError);
+      return fail(defaultError);
+    }
+    after(async () => {
+      await notifyNewOrder(order.booking_id, origin);
+      await notifyOrderConfirmed(order.booking_id, origin);
+    });
+    return { redirectTo: orderPath };
+  }
+
+  // Card payments, or saving a card instead of a deposit: straight to Stripe. The order holds its dates meanwhile
+  // and is confirmed (and the owner emailed) once Stripe reports back. If the page can't be opened, the order page offers it again.
+  if (paymentMethod) {
+    try {
+      if (paymentMethod === "in_person_card") {
+        const { error: methodError } = await service
+          .from("bookings")
+          .update({ payment_method: "in_person_card" })
+          .eq("id", order.booking_id);
+        if (methodError) throw new Error(methodError.message);
+      }
+      return { redirectTo: await createOrderCheckout(order.booking_no, locale) };
+    } catch (checkoutError) {
+      console.error("[submitOrder] 创建付款页面失败", checkoutError);
+      return { redirectTo: `${orderPath}?pay=error` };
+    }
+  }
+
+  // Manual flow: email the owner about the new order (after the response is sent, so the customer doesn't wait)
   after(() => notifyNewOrder(order.booking_id, origin));
 
   // The page clears the cart before navigating (a direct redirect wouldn't give it time to clear)
-  return { redirectTo: localePath(locale, `/booking/${order.booking_no}`) };
+  return { redirectTo: orderPath };
 }

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
+import { localePath } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getSettings } from "@/lib/catalog";
 import { shippingPolicyArgs } from "@/lib/shipping";
@@ -10,7 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RentalInfoPage() {
-  const t = getMessages(await getLocale()).rentalInfo;
+  const locale = await getLocale();
+  const t = getMessages(locale).rentalInfo;
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
       <h1 className="text-3xl font-black">{t.title}</h1>
@@ -50,6 +53,11 @@ export default async function RentalInfoPage() {
           </section>
         ))}
       </div>
+      <p className="mt-6 text-sm">
+        <Link href={localePath(locale, "/terms")} className="underline underline-offset-2">
+          {t.termsLink}
+        </Link>
+      </p>
     </div>
   );
 }

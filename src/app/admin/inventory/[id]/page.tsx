@@ -80,7 +80,6 @@ async function StyleEditor({ params, searchParams }: PageProps<"/admin/inventory
             category: style.category,
             name: style.name,
             nameEn: style.name_en,
-            deposit: centsToDollars(style.deposit_cents),
             prices: style.rental_prices_cents?.map(centsToDollars).join(", ") ?? "",
             replacementValue:
               style.replacement_value_cents === null ? "" : centsToDollars(style.replacement_value_cents),

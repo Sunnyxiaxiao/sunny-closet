@@ -39,6 +39,7 @@ const order: OrderEmailData = {
   addOns: [{ name: "黑猫头盔套", nameEn: "Black Cat Helmet Cover", cents: 800 }],
   shippingCents: 0,
   totalCents: 7900 + 20000 + 2200 + 800,
+  payment: { method: null, paidCents: null, card: null, cashDepositCents: 0 },
 };
 
 describe("新订单通知（发给店主）", () => {
@@ -87,11 +88,45 @@ describe("订单确认邮件（发给顾客）", () => {
       `Zelle: ${shop.payment.zelle}`,
       `Venmo: ${shop.payment.venmo}`,
       "include your booking number SC-ABCD2345",
-      "https://sunny.example/en/booking/SC-ABCD2345",
+      "https://sunny.example/booking/SC-ABCD2345",
+      "sign in with amy@example.com",
     ]) {
       expect(email.text).toContain(text);
     }
     expect(email.text).not.toContain("暗夜紫");
+  });
+
+  const noDeposit = { ...order, lines: order.lines.map((l) => ({ ...l, depositCents: 0 })), totalCents: 10900 };
+
+  it("刷卡付过款：写已付金额和卡，不写 Zelle", () => {
+    const paid = orderConfirmedEmail(
+      { ...noDeposit, payment: { method: "card", paidCents: 10900, card: "Visa •••• 4242", cashDepositCents: 0 } },
+      { origin: "https://sunny.example" },
+    );
+    expect(paid.text).toContain("Paid: $109.00 · Visa •••• 4242");
+    expect(paid.text).toContain("No deposit needed");
+    expect(paid.text).not.toContain("Zelle:");
+    expect(paid.text).not.toContain("deposit, refunded");
+  });
+
+  it("当面付租金 + 在线留卡：写取件时付款和留卡，不收押金", () => {
+    const email = orderConfirmedEmail(
+      { ...noDeposit, payment: { method: "in_person_card", paidCents: null, card: "Visa •••• 4242", cashDepositCents: 0 } },
+      { origin: "https://sunny.example" },
+    );
+    expect(email.text).toContain("Due at pickup: $109.00");
+    expect(email.text).toContain("Your card (Visa •••• 4242) is kept on file");
+    expect(email.text).not.toContain("Deposit:");
+  });
+
+  it("当面付租金 + 押金：写取件时付款和押金", () => {
+    const email = orderConfirmedEmail(
+      { ...noDeposit, payment: { method: "in_person", paidCents: null, card: null, cashDepositCents: 20000 } },
+      { origin: "https://sunny.example" },
+    );
+    expect(email.text).toContain("Due at pickup: $109.00");
+    expect(email.text).toContain("Deposit: $200.00, paid at pickup and returned in person");
+    expect(email.text).not.toContain(`Zelle: ${shop.payment.zelle}`);
   });
 
   it("每件日期不同时分别写取件 / 归还时间", () => {

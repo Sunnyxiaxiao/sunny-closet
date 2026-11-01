@@ -1,6 +1,7 @@
 import "server-only";
 import type { IsoDate } from "@/lib/dates";
 import { adminNotifyEmail, sendEmail } from "@/lib/email/send";
+import { cardLabel } from "@/lib/booking/card-payment";
 import { newOrderEmail, orderConfirmedEmail, type OrderEmailData } from "@/lib/email/templates";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
@@ -9,11 +10,16 @@ async function loadOrder(bookingId: string): Promise<OrderEmailData | null> {
   const service = createSupabaseServiceClient();
   const columns =
     "id, booking_no, style_id, size, start_date, end_date, rental_days, rental_cents, deposit_cents, shipping_cents, total_cents, lead_days, tail_days, fulfillment_method, shipping_address, customer_name, customer_email, customer_phone, customer_note, cart_item, bundle_part, parent_booking_id";
-  const [{ data: main, error }, { data: children, error: childError }] = await Promise.all([
+  const [{ data: main, error }, { data: children, error: childError }, { data: payment, error: paymentError }] = await Promise.all([
     service.from("bookings").select(columns).eq("id", bookingId).maybeSingle(),
     service.from("bookings").select(columns).eq("parent_booking_id", bookingId).eq("bundle_part", false).order("booking_no"),
+    service
+      .from("bookings")
+      .select("payment_method, cash_deposit_cents, paid_cents, card_brand, card_last4")
+      .eq("id", bookingId)
+      .maybeSingle(),
   ]);
-  if (error || childError) throw new Error(`读取订单失败：${(error ?? childError)!.message}`);
+  if (error || childError || paymentError) throw new Error(`读取订单失败：${(error ?? childError ?? paymentError)!.message}`);
   if (!main || main.parent_booking_id) return null;
 
   const all = [main, ...(children ?? [])];
@@ -50,6 +56,12 @@ async function loadOrder(bookingId: string): Promise<OrderEmailData | null> {
     addOns: (children ?? []).filter((c) => !c.cart_item).map((a) => ({ ...names(a.style_id), cents: a.rental_cents })),
     shippingCents: main.shipping_cents,
     totalCents: all.reduce((sum, b) => sum + b.total_cents, 0),
+    payment: {
+      method: payment?.payment_method ?? null,
+      paidCents: payment?.paid_cents ?? null,
+      card: payment?.card_brand && payment.card_last4 ? cardLabel(payment.card_brand, payment.card_last4) : null,
+      cashDepositCents: payment?.cash_deposit_cents ?? 0,
+    },
   };
 }
 
@@ -63,7 +75,7 @@ export async function notifyNewOrder(bookingId: string, origin: string) {
   }
 }
 
-/** 店主确认订单：告诉顾客付款方式 */
+/** 订单确认（店主手动确认，或顾客刷卡付款后自动确认）：告诉顾客付款情况 */
 export async function notifyOrderConfirmed(bookingId: string, origin: string) {
   try {
     const order = await loadOrder(bookingId);

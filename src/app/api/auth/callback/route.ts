@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { localePath, splitLocalePath } from "@/i18n/config";
 import { safeNextPath } from "@/lib/site-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     console.error("[auth/callback] 换取登录状态失败", error);
   }
 
-  // next 以 /en 开头时回英文登录页
-  const login = next.startsWith("/en/") || next === "/en" ? "/en/login" : "/login";
+  // 回到 next 对应语言的登录页
+  const login = localePath(splitLocalePath(next).locale, "/login");
   return NextResponse.redirect(new URL(`${login}?error=link`, origin));
 }
