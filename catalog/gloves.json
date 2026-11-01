@@ -14,7 +14,6 @@
       22,
       28
     ],
-    "deposit": 0,
     "replacementValue": 40,
     "sortOrder": 10,
     "sourceUrl": "https://iseemigga.com/products/iseemigga-cross-rhinestone-gloves",
@@ -93,7 +92,6 @@
     "category": "gloves",
     "name": "3D Logo 滑雪手套",
     "nameEn": "3D Logo Gloves",
-    "deposit": 0,
     "replacementValue": 50,
     "sortOrder": 20,
     "sourceUrl": "https://iseemigga.com/products/3d-logo-gloves",
@@ -126,7 +124,6 @@
     "category": "gloves",
     "name": "小熊毛绒护腕滑雪手套",
     "nameEn": "Bear Plush Mittens with Wrist Guards",
-    "deposit": 0,
     "sortOrder": 30,
     "items": [
       {
@@ -147,7 +144,6 @@
     "category": "gloves",
     "name": "独角兽毛绒护腕滑雪手套",
     "nameEn": "Unicorn Plush Mittens with Wrist Guards",
-    "deposit": 0,
     "sortOrder": 31,
     "items": [
       {
@@ -188,7 +184,6 @@
     "category": "gloves",
     "name": "粗花呢连指滑雪手套（深灰）",
     "nameEn": "Tweed Ski Mittens (Dark Grey)",
-    "deposit": 0,
     "sortOrder": 40,
     "items": [
       {

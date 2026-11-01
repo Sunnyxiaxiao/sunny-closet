@@ -6,7 +6,6 @@
     "name": "小黄鸡 3L 带内衬滑雪套装",
     "nameEn": "Little Chick 3L Insulated Snow Suit",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 330,
     "items": [
       {
@@ -34,7 +33,6 @@
     "name": "黑色杜宾 3L 滑雪套装",
     "nameEn": "Black Doberman 3L Ski Suit",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 335,
     "items": [
       {
@@ -90,7 +88,6 @@
     "name": "小帝企鹅上衣 + 黑色滑雪裤",
     "nameEn": "Little Emperor Penguin Jacket + Black Snow Pants",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 337,
     "bundle": [
       "yeyepop-little-emperor-penguin-3l-jacket"

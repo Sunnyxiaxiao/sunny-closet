@@ -6,7 +6,6 @@
     "name": "黑粉束腰滑雪连体衣",
     "nameEn": "Black & Pink Corset One-Piece Ski Suit",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 200,
     "items": [
       {
@@ -31,7 +30,6 @@
     "name": "复古水手服滑雪套装",
     "nameEn": "Vintage Sailor Ski Suit",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 210,
     "items": [
       {
@@ -49,7 +47,6 @@
     "name": "玫粉冲锋衣 + 黑色爱心背带裤套装",
     "nameEn": "Rose Pink Anorak + Black Heart Bib Set",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 220,
     "items": [
       {
@@ -84,7 +81,6 @@
     "name": "黑粉二合一冲锋衣 + 渐变胸衣背带裤套装",
     "nameEn": "Black & Pink 2-in-1 Jacket + Gradient Corset Bib Set",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 230,
     "items": [
       {
@@ -120,7 +116,6 @@
     "name": "芭比联名白色印花滑雪套装（配粉色马甲）",
     "nameEn": "Barbie Collab White Print Ski Set with Pink Vest",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 240,
     "items": [
       {
@@ -175,7 +170,6 @@
     "name": "芭比联名黑粉西装 + 黑色滑雪裤",
     "nameEn": "Barbie Collab Black & Pink Blazer + Black Snow Pants",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 251,
     "bundle": [
       "bcg-barbie-black-pink-blazer-jacket"
@@ -205,7 +199,6 @@
     "name": "粉色荷叶边飘带滑雪连体裤",
     "nameEn": "Pink Ruffle Ribbon Ski Jumpsuit",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 260,
     "items": [
       {
@@ -233,7 +226,6 @@
     "name": "棕粉撞色滑雪服 + 小猫印花雪裤套装",
     "nameEn": "Brown & Pink Ski Jacket + Kitty Print Pants Set",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 270,
     "items": [
       {

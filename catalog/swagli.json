@@ -6,7 +6,6 @@
     "name": "波点蕾丝丝带滑雪套装（咖色）",
     "nameEn": "Lace Ribbon Polka-Dot Snow Suit (Brown)",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 240,
     "items": [
       {
@@ -29,7 +28,6 @@
     "name": "浅蓝格子雪裤",
     "nameEn": "Light Blue Gingham Snow Pants",
     "dailyPrice": 25,
-    "deposit": 100,
     "sortOrder": 310,
     "items": [
       {
@@ -51,7 +49,6 @@
     "name": "巧克力冰淇淋滑雪套装（咖色）",
     "nameEn": "Frosty Ice-Cream Snow Suit (Chocolate)",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 250,
     "items": [
       {
@@ -74,7 +71,6 @@
     "name": "米白蛋糕裙修身滑雪套装",
     "nameEn": "Cream Ruffle-Skirt Slim Ski Suit",
     "dailyPrice": 49,
-    "deposit": 200,
     "sortOrder": 260,
     "items": [
       {
@@ -99,7 +95,6 @@
     "name": "猫狗大战雪裤",
     "nameEn": "Cat vs Dog Snow Pants",
     "dailyPrice": 25,
-    "deposit": 100,
     "sortOrder": 320,
     "items": [
       {
