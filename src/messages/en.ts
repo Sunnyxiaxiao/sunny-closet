@@ -89,7 +89,7 @@ export const messages: Messages = {
     notice:
       "Helmet covers are decorative only and add no impact protection. Always wear a certified, properly fitted ski or snowboard helmet.",
     replacementValue: "Lost or badly damaged items are charged at replacement value: ",
-    filters: { tier: "Type", color: "Color", style: "Style", all: "All" },
+    filters: { color: "Color", style: "Style", all: "All" },
     dateFilter: "Check availability by date",
     empty: "No helmet covers match your filters.",
     unavailable: "Booked for these dates",

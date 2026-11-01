@@ -9,7 +9,7 @@ import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { availableCounts, getAvailability, getSettings, getToday, listStyles } from "@/lib/catalog";
 import { formatDateRange } from "@/lib/dates";
-import { HELMET_COVER_DEFAULTS, HELMET_COVER_TIERS, HELMET_TAG_GROUPS, isHelmetCoverTier } from "@/lib/helmet-covers";
+import { HELMET_COVER_DEFAULTS, HELMET_TAG_GROUPS } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { parseRentalSearch } from "@/lib/validation/rental-query";
 import { getMessages } from "@/messages";
@@ -51,8 +51,6 @@ async function HelmetCovers({
       ? availableCounts(await getAvailability({ start: search.start, end: search.end }))
       : null;
 
-  const rawTier = first(raw.tier);
-  const tier = isHelmetCoverTier(rawTier) ? rawTier : undefined;
   const presentTags = new Set(covers.flatMap((c) => c.tags));
   const colors = HELMET_TAG_GROUPS.color.filter((tag) => presentTags.has(tag));
   const styleTags = HELMET_TAG_GROUPS.style.filter((tag) => presentTags.has(tag));
@@ -60,12 +58,11 @@ async function HelmetCovers({
   const style = styleTags.find((s) => s === first(raw.style));
 
   const visible = covers
-    .filter((c) => !tier || c.tier === tier)
     .filter((c) => !color || c.tags.includes(color))
     .filter((c) => !style || c.tags.includes(style))
     .filter((c) => !ranged || (ranged.get(c.id) ?? 0) > 0);
 
-  const current = { tier, color, style } as Record<string, string | undefined>;
+  const current = { color, style } as Record<string, string | undefined>;
   const dateQuery = new URLSearchParams();
   if (search.kind === "valid") {
     dateQuery.set("start", search.start);
@@ -73,7 +70,7 @@ async function HelmetCovers({
   }
   const detailSuffix = dateQuery.size ? `?${dateQuery}` : "";
 
-  function href(key: "tier" | "color" | "style", value?: string) {
+  function href(key: "color" | "style", value?: string) {
     const q = new URLSearchParams(dateQuery);
     for (const [k, v] of Object.entries({ ...current, [key]: value })) if (v) q.set(k, v);
     return localePath(locale, q.size ? `/helmet-covers?${q}` : "/helmet-covers");
@@ -90,7 +87,7 @@ async function HelmetCovers({
           <div className="px-2 sm:px-0">
             <FilterPanel
               title={messages.filterForm.title}
-              activeCount={[tier, color, style, search.kind === "valid" ? "dates" : undefined].filter(Boolean).length}
+              activeCount={[color, style, search.kind === "valid" ? "dates" : undefined].filter(Boolean).length}
               closeLabel={messages.filterForm.close}
               header={
                 <>
@@ -106,13 +103,6 @@ async function HelmetCovers({
                 </>
               }
             >
-              <FilterChips
-                label={t.filters.tier}
-                allLabel={t.filters.all}
-                options={HELMET_COVER_TIERS.map((value) => ({ value, label: t.tiers[value] }))}
-                active={tier}
-                href={(value) => href("tier", value)}
-              />
               {colors.length > 0 && (
                 <FilterChips
                   label={t.filters.color}
@@ -120,6 +110,7 @@ async function HelmetCovers({
                   options={colors.map((value) => ({ value, label: tagLabel(value) }))}
                   active={color}
                   href={(value) => href("color", value)}
+                  collapsible
                 />
               )}
               {styleTags.length > 0 && (
@@ -129,6 +120,7 @@ async function HelmetCovers({
                   options={styleTags.map((value) => ({ value, label: tagLabel(value) }))}
                   active={style}
                   href={(value) => href("style", value)}
+                  collapsible
                 />
               )}
               <FilterSection title={messages.filterForm.dates}>

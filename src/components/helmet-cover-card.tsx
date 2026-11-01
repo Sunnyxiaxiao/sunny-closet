@@ -52,7 +52,7 @@ export function HelmetCoverCard({
         <div className={`transition duration-500 group-hover:scale-[1.03] ${unavailable ? "opacity-50" : ""}`}>
           <StyleImage src={cover.image_urls[0]} alt={cover.name} sizes={sizes} aspect="helmet" thumb />
         </div>
-        {cover.tier && <TierBadge tier={cover.tier} locale={locale} className="absolute left-2 top-2" />}
+        {cover.tier === "premium" && <TierBadge tier={cover.tier} locale={locale} className="absolute left-2 top-2" />}
         {unavailable && (
           <span className="absolute inset-x-2 bottom-2 bg-white/90 py-1 text-center text-xs font-semibold">
             {t.unavailable}

@@ -86,7 +86,7 @@ export const messages = {
     notice:
       "头盔套仅为装饰配件，不提供任何额外的防撞保护。滑雪时请务必佩戴合格认证、尺寸合适的滑雪或单板头盔。",
     replacementValue: "丢失或严重损坏按重置价赔偿：",
-    filters: { tier: "款式", color: "颜色", style: "风格", all: "全部" },
+    filters: { color: "颜色", style: "风格", all: "全部" },
     dateFilter: "按日期看可租",
     empty: "暂时没有符合条件的头盔套。",
     unavailable: "这段时间已被预订",
