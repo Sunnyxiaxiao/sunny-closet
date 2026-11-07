@@ -1,6 +1,6 @@
 /**
  * Cart: stored in the customer's own browser (localStorage), so no account is needed.
- * It stores only which style, size, dates and helmet-cover add-ons; names, prices and availability are re-fetched from the server every time the cart opens,
+ * It stores only which style, size, dates and add-ons (helmet cover, gloves); names, prices and availability are re-fetched from the server every time the cart opens,
  * and the server and database validate everything again when the order is submitted.
  */
 
@@ -17,8 +17,10 @@ export interface CartLine {
   size: string;
   start: IsoDate;
   end: IsoDate;
-  /** Style ids of helmet-cover add-ons (outfits only) */
+  /** Style ids of add-ons (outfits only): a helmet cover and / or a pair of gloves */
   addOnIds: string[];
+  /** Each add-on's size, matched by position: the gloves' color / size, null for a helmet cover (carts saved before gloves had none) */
+  addOnSizes?: (string | null)[];
 }
 
 const STORAGE_KEY = "sunny-closet-cart-v1";
@@ -36,7 +38,9 @@ function isLine(value: unknown): value is CartLine {
     typeof v.start === "string" &&
     typeof v.end === "string" &&
     Array.isArray(v.addOnIds) &&
-    v.addOnIds.every((id) => typeof id === "string")
+    v.addOnIds.every((id) => typeof id === "string") &&
+    (v.addOnSizes === undefined ||
+      (Array.isArray(v.addOnSizes) && v.addOnSizes.every((size) => size === null || typeof size === "string")))
   );
 }
 

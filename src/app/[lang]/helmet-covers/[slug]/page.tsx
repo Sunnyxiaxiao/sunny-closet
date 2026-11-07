@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BookingPanel } from "@/components/booking-panel";
+import { ConditionNotes } from "@/components/condition-notes";
 import { HelmetCoverCard, TierBadge } from "@/components/helmet-cover-card";
 import { HelmetCoverStage } from "@/components/helmet-cover-stage";
 import { PriceTierStrip } from "@/components/price-tier-strip";
@@ -17,6 +18,7 @@ import {
   listStyles,
   stylePriceTable,
 } from "@/lib/catalog";
+import { styleConditionNotes } from "@/lib/condition";
 import { parseDescription } from "@/lib/description";
 import { HELMET_COVER_INFO_IMAGE, helmetColorTags } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
@@ -57,11 +59,12 @@ async function HelmetCoverDetail({
   const cover = await getStyleBySlug(slug, { kind: "helmet_cover", locale });
   if (!cover) notFound();
 
-  const [settings, today, availability, allCovers] = await Promise.all([
+  const [settings, today, availability, allCovers, conditionNotes] = await Promise.all([
     getSettings(),
     getToday(),
     getAvailability({ styleId: cover.id }),
     listStyles({ kind: "helmet_cover", locale }),
+    styleConditionNotes(cover, locale),
   ]);
   const sizes = availability.get(cover.id) ?? [];
   const prices = stylePriceTable(cover, settings);
@@ -139,7 +142,7 @@ async function HelmetCoverDetail({
     </>
   );
 
-  const description = sections.some((s) => s.blocks.length > 0) ? (
+  const descriptionText = sections.some((s) => s.blocks.length > 0) ? (
     <div className="mt-8 space-y-3 border-t border-neutral-200 pt-6 text-sm leading-relaxed text-neutral-700">
       {sections.map((section, index) => (
         <div key={index}>
@@ -161,6 +164,12 @@ async function HelmetCoverDetail({
       ))}
     </div>
   ) : null;
+  const description = (
+    <>
+      {descriptionText}
+      <ConditionNotes notes={conditionNotes} locale={locale} className="mt-6 border-t" />
+    </>
+  );
 
   const booking =
     sizes.length === 0 ? (

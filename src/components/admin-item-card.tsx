@@ -1,4 +1,5 @@
 import { addInventoryBlock, deleteInventoryBlock, setItemCost, setItemStatus } from "@/app/admin/inventory/actions";
+import { AdminItemCondition } from "@/components/admin-item-condition";
 import { ItemStateBadge } from "@/components/admin-item-state";
 import type { ItemOverview } from "@/lib/admin/inventory";
 import { centsToDollars } from "@/lib/admin/price-form";
@@ -7,16 +8,19 @@ import { messages } from "@/messages/zh-CN";
 
 const dateInputClass = "h-10 border border-neutral-300 bg-white px-2 text-sm focus:border-neutral-900 focus:outline-none";
 
-/** 后台一件库存：现在的状态、可租 / 不可租、采购价、即将到来的预订、手动锁定日期 */
+/** 后台一件库存：现在的状态、可租 / 不可租、采购价、即将到来的预订、手动锁定日期、给顾客看的状态说明 */
 export function AdminItemCard({
   overview,
   today,
   returnTo,
+  imageFolder,
 }: {
   overview: ItemOverview;
   today: IsoDate;
   /** 操作完成后回到哪个后台页面 */
   returnTo: string;
+  /** 状态说明照片放在存储桶的哪个文件夹（款式网址名） */
+  imageFolder: string;
 }) {
   const { item, state, upcoming, blocks } = overview;
   const active = item.status === "available";
@@ -122,6 +126,13 @@ export function AdminItemCard({
           锁定
         </button>
       </form>
+
+      <AdminItemCondition
+        itemId={item.id}
+        returnTo={returnTo}
+        folder={`${imageFolder}/condition`}
+        initial={{ note: item.condition_note, noteEn: item.condition_note_en, imageUrls: item.condition_image_urls }}
+      />
     </li>
   );
 }

@@ -17,7 +17,7 @@ async function Pricing() {
   const { supabase } = await requireAdmin();
   const { data: s, error } = await supabase
     .from("settings")
-    .select("max_rental_days, rental_prices_cents, jacket_prices_cents, pants_prices_cents, shipping_min_days")
+    .select("max_rental_days, rental_prices_cents, jacket_prices_cents, pants_prices_cents, shipping_min_days, overdue_hold_days")
     .single();
   if (error) throw new Error(`读取设置失败：${error.message}`);
 
@@ -33,6 +33,7 @@ async function Pricing() {
           days={s.max_rental_days}
           tables={{ suit: s.rental_prices_cents, jacket: s.jacket_prices_cents, pants: s.pants_prices_cents }}
           shippingMinDays={s.shipping_min_days}
+          overdueHoldDays={s.overdue_hold_days}
         />
       </div>
     </>

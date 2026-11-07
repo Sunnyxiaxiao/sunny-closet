@@ -10,17 +10,25 @@ export const shop = {
   fulfillmentMethods: ["pickup", "shipping"] as const,
   /**
    * 邮寄：只寄美国本土 48 州 + DC。
-   * 包邮条件（满足其一）：订单里有一套套装/连体服租满 2 天，或租金 + 加购满 $99（不含押金）。
-   * 不满足就按收件州收一次运费：远区 $25，其余（东北部、中西部等）$15。
+   * 包邮条件（满足其一）：租金 + 加购满 $99（不含押金），或订单里有一整套 full look：上衣、裤子、头盔套、手套各一件
+   * （官方套装、连体服或自己混搭都算；配件单租或加购都算，见 src/lib/add-ons.ts）。远区包邮也补一点运费。
+   * 不包邮就按收件州收一次运费：远区 $30，其余（东北部、中西部等）$15。
    * 邮寄最短租期在后台“价格”里改（settings.shipping_min_days）；到店自取 1 天起。
    */
   shipping: {
     /** 文案里写的“邮寄需提前约几天下单” */
     orderAheadDays: 7,
-    freeSetMinDays: 2,
     freeSubtotalCents: 9900,
     feeCents: 1500,
-    farFeeCents: 2500,
+    farFeeCents: 3000,
+    /** 远区的包邮订单补的运费 */
+    farFreeFeeCents: 1500,
+    /**
+     * 首个滑雪日不到 orderAheadDays 天的邮寄单（急单），顾客二选一：
+     * 加急（USPS Priority Mail，加收这笔，包邮订单也收），或者不加急、先付款等店主确认（24 小时内没处理自动拒单）
+     */
+    rushFeeCents: 1500,
+    rushFarFeeCents: 2500,
     /** 收远区运费的州，以后可以按真实运费调整 */
     farStates: ["FL", "TX", "LA", "OK", "KS", "NE", "SD", "ND", "CO", "UT", "WY", "MT", "ID", "NV", "AZ", "NM", "CA", "OR", "WA"],
   },

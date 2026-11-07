@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { shop } from "@/config/shop";
-import { newOrderEmail, orderConfirmedEmail, type OrderEmailData } from "@/lib/email/templates";
+import {
+  awaitingAcceptanceEmail,
+  newOrderEmail,
+  orderConfirmedEmail,
+  orderDeclinedEmail,
+  type OrderEmailData,
+} from "@/lib/email/templates";
 
 const order: OrderEmailData = {
   bookingNo: "SC-ABCD2345",
@@ -38,6 +44,8 @@ const order: OrderEmailData = {
   ],
   addOns: [{ name: "黑猫头盔套", nameEn: "Black Cat Helmet Cover", cents: 800 }],
   shippingCents: 0,
+  rushFeeCents: 0,
+  acceptance: null,
   totalCents: 7900 + 20000 + 2200 + 800,
   payment: { method: null, paidCents: null, card: null, cashDepositCents: 0 },
 };
@@ -143,5 +151,36 @@ describe("订单确认邮件（发给顾客）", () => {
     expect(pickup.text).toMatch(/Item 1: .*Jan/);
     expect(pickup.text).toMatch(/Item 2: .*Feb/);
     expect(pickup.text).not.toContain("Ship to");
+  });
+});
+
+describe("邮寄急单", () => {
+  const paid = { ...order, payment: { method: "card" as const, paidCents: 10900, card: "Visa •••• 4242", cashDepositCents: 0 } };
+
+  it("加急：邮寄方式写明加急和加急费", () => {
+    const email = orderConfirmedEmail({ ...paid, shippingCents: 1500, rushFeeCents: 1500 }, { origin: "https://x.test" });
+    expect(email.text).toContain("Rush shipping, USPS Priority Mail ($15.00, incl. $15.00 rush fee)");
+  });
+
+  it("等店主确认：店主收到的新订单写明还没确认，标题提示接单或拒单", () => {
+    const email = newOrderEmail({ ...paid, acceptance: "awaiting" }, { to: "owner@x.test", origin: "https://x.test" });
+    expect(email.subject).toMatch(/^Accept or decline: New booking SC-ABCD2345/);
+    expect(email.text).toContain("NOT confirmed yet");
+    expect(email.text).toContain("https://x.test/admin?status=pending");
+  });
+
+  it("等店主确认：顾客收到“已付款，正在确认”，写明 24 小时和全额退款", () => {
+    const email = awaitingAcceptanceEmail({ ...paid, acceptance: "awaiting" }, { origin: "https://x.test" });
+    expect(email.to).toBe("amy@example.com");
+    expect(email.text).toContain("within 24 hours");
+    expect(email.text).toContain("refund you in full");
+    expect(email.text).toContain("$109.00");
+    expect(email.text).not.toContain("is confirmed");
+  });
+
+  it("拒单：顾客收到取消和全额退款金额", () => {
+    const email = orderDeclinedEmail(paid, { origin: "https://x.test", refundCents: 10900 });
+    expect(email.subject).toBe("Booking SC-ABCD2345 cancelled: full refund");
+    expect(email.text).toContain("full refund of $109.00");
   });
 });

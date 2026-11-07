@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { confirmedEmail } from "@/lib/account/confirmed-email";
 import { hasAuthCookie } from "@/lib/account/customer";
 import { getSecretKey } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -57,12 +58,17 @@ export async function orderAccess(order: { id: string; user_id: string | null; c
   if (!(await hasAuthCookie())) return "signed_out";
 
   const supabase = await createSupabaseServerClient();
+  // Verified locally (no request to the Auth server)
+  const { data: auth } = await supabase.auth.getClaims();
+  const claims = auth?.claims;
+  if (!claims) return "signed_out";
+  if (order.user_id === claims.sub) return "allowed";
+  // Matching by email needs the email to be confirmed, which only the Auth server's user record says
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return "signed_out";
-  if (order.user_id === user.id) return "allowed";
-  if (user.email_confirmed_at && user.email?.toLowerCase() === order.customer_email.toLowerCase()) return "allowed";
+  const email = user?.id === claims.sub ? confirmedEmail(user) : null;
+  if (email && email === order.customer_email.toLowerCase()) return "allowed";
   const { data: isAdmin } = await supabase.rpc("is_admin");
   return isAdmin ? "allowed" : "other_account";
 }

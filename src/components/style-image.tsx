@@ -26,8 +26,18 @@ export function StyleImage({
 }) {
   if (thumb) src = thumbUrl(src);
   if (aspect === "helmet") {
+    // 头盔套封面是正方形：width/height 先按正方形留出位置（加载后按图片自己的比例显示），不在首屏的图等滚动到附近再加载
     return src ? (
-      <img src={src} alt={alt} className="block h-auto w-full" />
+      <img
+        src={src}
+        alt={alt}
+        width={1000}
+        height={1000}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        decoding="async"
+        className="block h-auto w-full"
+      />
     ) : (
       <div className="flex aspect-square w-full items-center justify-center bg-neutral-100 text-4xl text-neutral-300">
         🐰

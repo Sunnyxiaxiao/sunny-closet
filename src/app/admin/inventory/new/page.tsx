@@ -36,6 +36,7 @@ async function NewStyleForm({ searchParams }: Pick<PageProps<"/admin/inventory/n
             nameEn: "",
             prices: gloves ? GLOVES_DEFAULT_PRICE_TEXT : "",
             replacementValue: "",
+            addonPrice: "10",
             sortOrder: "500",
             description: "",
             descriptionEn: "",

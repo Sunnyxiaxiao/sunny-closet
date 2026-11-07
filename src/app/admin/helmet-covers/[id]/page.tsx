@@ -111,6 +111,7 @@ async function EditHelmetCover({ params, searchParams }: PageProps<"/admin/helme
               overview={overview}
               today={today}
               returnTo={`/admin/helmet-covers/${cover.id}`}
+              imageFolder={cover.slug}
             />
           ))}
         </ul>

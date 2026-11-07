@@ -99,4 +99,12 @@ describe("upcomingBookings 即将到来的预订", () => {
     );
     expect(list.map((b) => b.start)).toEqual(["2026-01-09", "2026-01-14", "2026-01-20"]);
   });
+
+  it("已取件、过了归还日还没还：不管逾期多久都列出来", () => {
+    const list = upcomingBookings(
+      [booking("2025-11-01", "2025-11-03", "picked_up"), booking("2025-11-01", "2025-11-03", "returned")],
+      today,
+    );
+    expect(list.map((b) => b.status)).toEqual(["picked_up"]);
+  });
 });

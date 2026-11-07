@@ -8,7 +8,7 @@ import { localePath, type Locale } from "@/i18n/config";
 import { addToCart, MAX_CART_LINES } from "@/lib/cart";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDateRange, formatShortDate, type IsoDate } from "@/lib/dates";
-import type { AddOnOption } from "@/lib/helmet-covers";
+import type { AddOnOption, GlovesAddOnOption } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { calculateQuote } from "@/lib/pricing";
 import { getMessages, sizeLabel } from "@/messages";
@@ -28,8 +28,16 @@ type AvailabilityState =
   | { status: "ok"; sizes: SizeAvailability[] }
   | { status: "error"; message: string };
 
-/** 加购头盔套在这段时间的可租件数（款式 id → 件数），分到店自取和邮寄；查询失败时为 null，交给提交时的服务端校验 */
-type AddOnCounts = { pickup: Record<string, number>; shipping: Record<string, number> } | null;
+/**
+ * 加购配件在这段时间的可租件数，分到店自取和邮寄：头盔套按款式（款式 id → 件数），手套按颜色 · 尺码（款式 id → 尺码 → 件数）。
+ * 查询失败时为 null，交给提交时的服务端校验
+ */
+type AddOnCounts = {
+  pickup: Record<string, number>;
+  shipping: Record<string, number>;
+  pickupSizes: Record<string, Record<string, number>>;
+  shippingSizes: Record<string, Record<string, number>>;
+} | null;
 
 export function BookingPanel({
   styleId: jacketStyleId,
@@ -46,6 +54,8 @@ export function BookingPanel({
   choiceLabel,
   onSizeChange,
   addOnOptions = [],
+  glovesOptions = [],
+  separate = false,
   initialAddOnSlug,
   locale,
 }: {
@@ -72,7 +82,11 @@ export function BookingPanel({
   onSizeChange?: (size: string) => void;
   /** 可加购的头盔套；为空时不显示“Complete the Look” */
   addOnOptions?: AddOnOption[];
-  /** 从头盔套页点“搭配雪服一起租”过来时预先选中的头盔套 */
+  /** 可加购的手套（有库存的颜色 · 尺码）；为空时不显示 */
+  glovesOptions?: GlovesAddOnOption[];
+  /** 单件上衣或裤子：要上下装都租才能用加购价，选了加购时提醒一句 */
+  separate?: boolean;
+  /** 从头盔套 / 手套页点“搭配雪服一起租”过来时预先选中的那一款 */
   initialAddOnSlug?: string;
   locale: Locale;
 }) {
@@ -94,6 +108,10 @@ export function BookingPanel({
   const [addOnId, setAddOnId] = useState<string | null>(
     addOnOptions.find((o) => o.slug === initialAddOnSlug)?.id ?? null,
   );
+  const [gloves, setGloves] = useState<{ id: string; size: string | null } | null>(() => {
+    const option = glovesOptions.find((o) => o.slug === initialAddOnSlug);
+    return option ? { id: option.id, size: option.sizes.length === 1 ? option.sizes[0] : null } : null;
+  });
   const [addOnResult, setAddOnResult] = useState<{ query: string; counts: AddOnCounts } | null>(null);
   // 刚加入购物车的是哪一个选择（款式、尺码、日期、加购都没变时显示“已加入”）
   const [addedKey, setAddedKey] = useState<string | null>(null);
@@ -110,7 +128,7 @@ export function BookingPanel({
       : { status: "loading" };
 
   const dateQuery = rangeValid ? new URLSearchParams({ start, end }).toString() : null;
-  const wantsAddOnCounts = addOnOptions.length > 0 && dateQuery !== null;
+  const wantsAddOnCounts = addOnOptions.length + glovesOptions.length > 0 && dateQuery !== null;
   // 还没选日期 / 正在查询：null（卡片都可点）；查到后按件数标记已订满
   const addOnCounts: AddOnCounts =
     wantsAddOnCounts && addOnResult?.query === dateQuery ? addOnResult.counts : null;
@@ -119,9 +137,21 @@ export function BookingPanel({
   // 选中的头盔套这段时间被订满时不计入价格，也不提交
   const selectedAddOnUnavailable =
     selectedAddOn !== undefined && addOnCounts !== null && (addOnCounts.pickup[selectedAddOn.id] ?? 0) === 0;
-  const addOns = selectedAddOn && !selectedAddOnUnavailable ? [selectedAddOn] : [];
+  // 手套：选了款式还要选颜色 · 尺码；这段时间那个尺码被订满时同样不计价、不提交
+  const selectedGloves = glovesOptions.find((o) => o.id === gloves?.id);
+  const glovesSize = selectedGloves ? (gloves?.size ?? null) : null;
+  const selectedGlovesUnavailable =
+    selectedGloves !== undefined &&
+    glovesSize !== null &&
+    addOnCounts !== null &&
+    (addOnCounts.pickupSizes[selectedGloves.id]?.[glovesSize] ?? 0) === 0;
+  const addOns: { id: string; name: string; addOnCents: number; size: string | null }[] = [
+    ...(selectedAddOn && !selectedAddOnUnavailable ? [{ ...selectedAddOn, size: null }] : []),
+    ...(selectedGloves && glovesSize && !selectedGlovesUnavailable ? [{ ...selectedGloves, size: glovesSize }] : []),
+  ];
+  const glovesSizeMissing = selectedGloves !== undefined && glovesSize === null;
 
-  const selectionKey = JSON.stringify([styleId, size, start, end, addOns.map((a) => a.id)]);
+  const selectionKey = JSON.stringify([styleId, size, start, end, addOns.map((a) => [a.id, a.size])]);
 
   const quote = rangeValid
     ? calculateQuote({
@@ -162,7 +192,15 @@ export function BookingPanel({
       .then(async (res) => {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error);
-        setAddOnResult({ query: dateQuery, counts: { pickup: body.counts, shipping: body.shippingCounts } });
+        setAddOnResult({
+          query: dateQuery,
+          counts: {
+            pickup: body.counts,
+            shipping: body.shippingCounts,
+            pickupSizes: body.sizeCounts,
+            shippingSizes: body.shippingSizeCounts,
+          },
+        });
       })
       .catch(() => {
         if (!controller.signal.aborted) setAddOnResult({ query: dateQuery, counts: null });
@@ -196,7 +234,9 @@ export function BookingPanel({
     availability.status === "ok"
       ? (availability.sizes.find((x) => x.size === size)?.shippingAvailable ?? 0) > 0
       : true;
-  const shippingAddOnsFree = addOns.every((a) => (addOnCounts?.shipping[a.id] ?? 1) > 0);
+  const shippingAddOnsFree = addOns.every((a) =>
+    a.size === null ? (addOnCounts?.shipping[a.id] ?? 1) > 0 : (addOnCounts?.shippingSizes[a.id]?.[a.size] ?? 1) > 0,
+  );
 
   function onStartChange(value: string) {
     setStart(value);
@@ -342,6 +382,52 @@ export function BookingPanel({
         />
       )}
 
+      {glovesOptions.length > 0 && (
+        <CompleteTheLook
+          kind="gloves"
+          options={glovesOptions}
+          selectedId={gloves?.id ?? null}
+          onSelect={(id) => {
+            const option = glovesOptions.find((o) => o.id === id);
+            setGloves(option ? { id: option.id, size: option.sizes.length === 1 ? option.sizes[0] : null } : null);
+          }}
+          availableCounts={addOnCounts?.pickup ?? null}
+          locale={locale}
+        >
+          {selectedGloves && selectedGloves.sizes.length > 1 && (
+            <fieldset className="mt-3">
+              <legend className="text-xs text-neutral-500">{messages.gloves.pickSize}</legend>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {selectedGloves.sizes.map((s) => {
+                  const soldOut = addOnCounts !== null && (addOnCounts.pickupSizes[selectedGloves.id]?.[s] ?? 0) === 0;
+                  const chosen = glovesSize === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={soldOut}
+                      aria-pressed={chosen}
+                      onClick={() => setGloves({ id: selectedGloves.id, size: s })}
+                      className={[
+                        "border px-3 py-1.5 text-xs font-semibold transition",
+                        chosen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 bg-white hover:border-neutral-900",
+                        soldOut ? "cursor-not-allowed border-dashed text-neutral-400 line-through" : "",
+                      ].join(" ")}
+                    >
+                      {sizeLabel(s, locale)}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+        </CompleteTheLook>
+      )}
+
+      {separate && !withPants && (selectedAddOn || selectedGloves) && (
+        <p className="text-xs text-neutral-500">{t.addOnNeedsOutfit}</p>
+      )}
+
       <div className="bg-neutral-50 p-4" aria-live="polite">
         {quote ? (
           <dl className="space-y-1.5 text-sm">
@@ -353,7 +439,9 @@ export function BookingPanel({
             </div>
             {addOns.map((addOn) => (
               <div key={addOn.id} className="flex justify-between gap-3">
-                <dt className="text-neutral-600">{t.addOnLine(addOn.name)}</dt>
+                <dt className="text-neutral-600">
+                  {t.addOnLine(addOn.size ? `${addOn.name} · ${sizeLabel(addOn.size, locale)}` : addOn.name)}
+                </dt>
                 <dd className="font-medium">{formatMoney(addOn.addOnCents)}</dd>
               </div>
             ))}
@@ -375,6 +463,10 @@ export function BookingPanel({
         {selectedAddOnUnavailable && (
           <p className="mt-3 text-sm text-amber-700">{messages.helmet.selectedUnavailable}</p>
         )}
+        {selectedGlovesUnavailable && (
+          <p className="mt-3 text-sm text-amber-700">{messages.gloves.selectedUnavailable}</p>
+        )}
+        {glovesSizeMissing && <p className="mt-3 text-sm text-amber-700">{messages.gloves.chooseSize}</p>}
 
         <div className="mt-3 text-sm">
           {!rangeValid || !size ? (
@@ -420,9 +512,16 @@ export function BookingPanel({
           ) : (
             <button
               type="button"
-              disabled={addOnLoading && addOnId !== null}
+              disabled={(addOnLoading && (addOnId !== null || gloves !== null)) || glovesSizeMissing}
               onClick={() => {
-                const ok = addToCart({ styleId, size, start, end, addOnIds: addOns.map((a) => a.id) });
+                const ok = addToCart({
+                  styleId,
+                  size,
+                  start,
+                  end,
+                  addOnIds: addOns.map((a) => a.id),
+                  addOnSizes: addOns.map((a) => a.size),
+                });
                 setCartFull(!ok);
                 if (ok) setAddedKey(selectionKey);
               }}

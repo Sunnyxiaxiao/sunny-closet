@@ -7,6 +7,7 @@ import {
   SHIPPING_STATES,
   shippingFeeCents,
   shippingPolicyArgs,
+  showFullLookTip,
   ZIP_RE,
 } from "@/lib/shipping";
 import { getMessages } from "@/messages";
@@ -37,29 +38,54 @@ describe("formatShippingAddress", () => {
   });
 });
 
-describe("运费：一套租满 2 天或满 $99 包邮，否则按州收", () => {
-  const set = (days: number, rental: number) => ({ category: "suit", rentalDays: days, rentalCents: rental, addOnCents: 0 });
-  const gloves = (rental: number) => ({ category: "gloves", rentalDays: 2, rentalCents: rental, addOnCents: 0 });
-
-  it("一套套装或连体服租满 2 天就包邮", () => {
-    expect(qualifiesForFreeShipping([set(2, 8900)])).toBe(true);
-    expect(qualifiesForFreeShipping([{ ...set(2, 8900), category: "one_piece" }])).toBe(true);
-    expect(shippingFeeCents([set(2, 8900)], "CA")).toBe(0);
+describe("运费：满 $99 或 full look 包邮，否则按州收", () => {
+  const line = (category: string, rentalCents: number, addOnCategories: string[] = [], addOnCents = 0) => ({
+    category,
+    rentalCents,
+    addOnCents,
+    addOnCategories,
   });
 
-  it("没有整套时：租金 + 加购满 $99 包邮，押金不算", () => {
-    const jacket = { category: "jacket", rentalDays: 2, rentalCents: 5000, addOnCents: 0 };
-    const pants = { category: "pants", rentalDays: 2, rentalCents: 3500, addOnCents: 0 };
-    expect(qualifiesForFreeShipping([jacket, pants])).toBe(false);
-    expect(qualifiesForFreeShipping([jacket, pants, { ...gloves(1400) }])).toBe(true);
-    expect(qualifiesForFreeShipping([{ ...jacket, addOnCents: 4900 }])).toBe(true);
+  it("租金 + 加购满 $99 包邮，什么都算，押金不算", () => {
+    expect(qualifiesForFreeShipping([line("suit", 9900)])).toBe(true);
+    expect(qualifiesForFreeShipping([line("jacket", 5000), line("pants", 3500)])).toBe(false);
+    expect(qualifiesForFreeShipping([line("jacket", 5000), line("pants", 3500), line("gloves", 1800)])).toBe(true);
+    expect(qualifiesForFreeShipping([line("jacket", 5000, ["helmet_cover"], 4900)])).toBe(true);
   });
 
-  it("不包邮时：东北部等 $15，远区（如 WA、CA）$25", () => {
-    expect(shippingFeeCents([gloves(2200)], "NY")).toBe(1500);
-    expect(shippingFeeCents([gloves(2200)], "DC")).toBe(1500);
-    expect(shippingFeeCents([gloves(2200)], "WA")).toBe(2500);
-    expect(shippingFeeCents([gloves(2200)], "CA")).toBe(2500);
+  it("一整套 full look（上衣、裤子、头盔套、手套）不满 $99 也包邮：套装、连体服、混搭，加购或单租都算", () => {
+    expect(qualifiesForFreeShipping([line("suit", 7900, ["helmet_cover", "gloves"], 1800)])).toBe(true);
+    expect(qualifiesForFreeShipping([line("one_piece", 4900, ["helmet_cover", "gloves"], 1800)])).toBe(true);
+    expect(
+      qualifiesForFreeShipping([line("jacket", 3500), line("pants", 2500, ["gloves"], 1000), line("helmet_cover", 1500)]),
+    ).toBe(true);
+    // 差一样都不算
+    expect(qualifiesForFreeShipping([line("suit", 7900, ["helmet_cover"], 800)])).toBe(false);
+    expect(qualifiesForFreeShipping([line("jacket", 5000, ["helmet_cover", "gloves"], 1800)])).toBe(false);
+  });
+
+  it("包邮：近区 0，远区补 $15", () => {
+    const free = [line("suit", 7900, ["helmet_cover", "gloves"], 1800)];
+    expect(shippingFeeCents(free, "NY")).toBe(0);
+    expect(shippingFeeCents(free, "CA")).toBe(1500);
+  });
+
+  it("不包邮：东北部等 $15，远区（如 WA、CA）$30；还没选州按近区", () => {
+    const gloves = [line("gloves", 2200)];
+    expect(shippingFeeCents(gloves, "NY")).toBe(1500);
+    expect(shippingFeeCents(gloves, "DC")).toBe(1500);
+    expect(shippingFeeCents(gloves, "")).toBe(1500);
+    expect(shippingFeeCents(gloves, "WA")).toBe(3000);
+    expect(shippingFeeCents(gloves, "CA")).toBe(3000);
+  });
+
+  it("full look 小提示：衣服齐了、只差头盔套或手套其中一样，且还没包邮时才显示", () => {
+    expect(showFullLookTip([line("suit", 7900, ["helmet_cover"], 800)])).toBe(true);
+    expect(showFullLookTip([line("suit", 7900, ["gloves"], 1000)])).toBe(true);
+    expect(showFullLookTip([line("suit", 7900)])).toBe(false);
+    expect(showFullLookTip([line("jacket", 5000, ["helmet_cover"], 800)])).toBe(false);
+    expect(showFullLookTip([line("suit", 9900, ["helmet_cover"], 800)])).toBe(false);
+    expect(showFullLookTip([line("suit", 7900, ["helmet_cover", "gloves"], 1800)])).toBe(false);
   });
 
   it("远区州都在可邮寄地区里", () => {
@@ -75,7 +101,8 @@ describe("邮寄文案", () => {
       const all = texts.join("\n");
       expect(all).toMatch(/\$99/);
       expect(all).toMatch(/\$15/);
-      expect(all).toMatch(/\$25/);
+      expect(all).toMatch(/\$30/);
+      expect(all).toMatch(/full look/i);
       expect(all).toMatch(locale === "zh" ? /2 天起租/ : /2-day minimum|2 days/);
       expect(all).toMatch(/Ithaca/);
       expect(all).not.toMatch(/全美包邮|free shipping nationwide/i);

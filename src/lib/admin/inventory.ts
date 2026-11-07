@@ -44,8 +44,8 @@ export async function loadInventory(
       )
       .in("inventory_item_id", itemIds.length ? itemIds : ["00000000-0000-0000-0000-000000000000"])
       .in("status", ["pending", "confirmed", "picked_up", "returned"])
-      // 只看最近的：已归还超过一个月的不影响现在的状态
-      .gte("end_date", addDays(today, -30)),
+      // 只看最近的：已归还超过一个月的不影响现在的状态；已取件没还的不管多久都要显示
+      .or(`end_date.gte.${addDays(today, -30)},status.eq.picked_up`),
     supabase
       .from("inventory_blocks")
       .select("*")

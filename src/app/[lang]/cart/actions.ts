@@ -1,7 +1,5 @@
 "use server";
 
-import { createHash } from "node:crypto";
-import { headers } from "next/headers";
 import { after } from "next/server";
 import { shop } from "@/config/shop";
 import { DEFAULT_LOCALE, isLocale, localePath } from "@/i18n/config";
@@ -9,11 +7,13 @@ import { hasAuthCookie } from "@/lib/account/customer";
 import { bookingErrorCode, mapBookingError } from "@/lib/booking/errors";
 import type { BookingFormState, BookingFormValues } from "@/lib/booking/form-state";
 import { rememberOrderInBrowser } from "@/lib/booking/order-access";
-import { earliestShippingStart } from "@/lib/booking/rules";
+import { earliestShippingStart, shippingNotice } from "@/lib/booking/rules";
 import { priceCart } from "@/lib/cart-quote";
+import { cartConditionNotes, conditionDigest } from "@/lib/condition";
 import { formatShortDate } from "@/lib/dates";
 import { notifyNewOrder, notifyOrderConfirmed } from "@/lib/email/order-notifications";
-import { formatShippingAddress, shippingFeeCents } from "@/lib/shipping";
+import { formatShippingAddress, rushFeeCents, shippingFeeCents, shippingLines } from "@/lib/shipping";
+import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 import { publicOrigin } from "@/lib/site-url";
 import { createOrderCheckout, stripeEnabled } from "@/lib/stripe";
 import type { PaymentMethod } from "@/lib/supabase/database.types";
@@ -45,11 +45,8 @@ function readValues(raw: Record<string, FormDataEntryValue>): BookingFormValues 
     shippingZip: text(raw, "shippingZip"),
     note: text(raw, "note"),
     payment: text(raw, "payment") || "card",
+    rush: text(raw, "rush"),
   };
-}
-
-function sha256(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
 }
 
 function parseJson(value: string): unknown {
@@ -101,18 +98,30 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
       : "card";
   if (shipping && paymentMethod !== null && paymentMethod !== "card") return fail(messages.checkout.inPersonPickupOnly);
 
-  // Re-read prices and shop settings (trust only the database, never the page)
+  // Re-read prices and shop settings (trust only the database, never the page), and which items have condition notes
   let cart: Awaited<ReturnType<typeof priceCart>>;
+  let conditionNotes: Awaited<ReturnType<typeof cartConditionNotes>>;
   try {
-    cart = await priceCart(linesParsed.data, locale);
+    [cart, conditionNotes] = await Promise.all([
+      priceCart(linesParsed.data, locale),
+      cartConditionNotes(linesParsed.data, locale),
+    ]);
   } catch (error) {
     console.error("[submitOrder] 读取价格失败", error);
     return fail(defaultError);
   }
   const { settings, today, lines } = cart;
 
+  // Items with disclosed flaws: the customer ticked "I've seen the condition notes" for each. The box carries a fingerprint
+  // of the notes they saw ("<line id>:<digest>"), which must match the notes as they are now
+  const acknowledged = new Set(formData.getAll("conditionAck").filter((v): v is string => typeof v === "string"));
+  const confirmedNotes = (lineId: string) => {
+    const digest = conditionDigest(conditionNotes.get(lineId) ?? []);
+    return digest === null || acknowledged.has(`${lineId}:${digest}`);
+  };
   for (const [index, line] of lines.entries()) {
     if (line.problem) return fail(t.lineError(index + 1, t.problems[line.problem]));
+    if (!confirmedNotes(line.input.id)) return fail(t.lineError(index + 1, t.conditionNotConfirmed));
     if (shipping && line.rentalDays < settings.shippingMinDays) {
       return fail(t.lineError(index + 1, messages.submitErrors.shippingTooShort(settings.shippingMinDays)));
     }
@@ -130,50 +139,29 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     }
   }
 
-  // Rate limits: at most 6 per network per 10 minutes and 3 per email per hour
-  const requestHeaders = await headers();
-  const ip =
-    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    requestHeaders.get("x-real-ip")?.trim() ||
-    "unknown";
+  // Shipping on short notice (less than about a week): the customer picks rush shipping (extra fee, also on free shipping)
+  // or no rush, which the owner has to accept first (paying doesn't confirm it). Without Stripe the owner confirms every order anyway
+  const shortNotice =
+    shipping && shippingNotice(lines[0].input.start, today, settings.paddings, shop.shipping.orderAheadDays) === "short";
+  if (shortNotice && values.rush !== "rush" && values.rush !== "wait") return fail(messages.checkout.chooseRush);
+  const rushCents = shortNotice && values.rush === "rush" ? rushFeeCents(input.shippingState) : 0;
+  const needsAcceptance = shortNotice && values.rush === "wait" && paymentMethod === "card";
 
-  const service = createSupabaseServiceClient();
-  const [ipCheck, emailCheck] = await Promise.all([
-    service.rpc("hit_rate_limit", {
-      p_bucket: "booking_ip",
-      p_key_hash: sha256(ip),
-      p_limit: 6,
-      p_window_seconds: 600,
-    }),
-    service.rpc("hit_rate_limit", {
-      p_bucket: "booking_email",
-      p_key_hash: sha256(input.email),
-      p_limit: 3,
-      p_window_seconds: 3600,
-    }),
+  // Rate limits: at most 6 per network per 10 minutes and 3 per email per hour
+  const [ipOk, emailOk] = await Promise.all([
+    clientIp().then((ip) => hitRateLimit("booking_ip", ip, 6, 600)),
+    hitRateLimit("booking_email", input.email, 3, 3600),
   ]);
-  if (ipCheck.error || emailCheck.error) {
-    console.error("[submitOrder] 频率检查失败", ipCheck.error ?? emailCheck.error);
-    return fail(defaultError);
-  }
-  if (!ipCheck.data || !emailCheck.data) {
+  if (ipOk === null || emailOk === null) return fail(defaultError);
+  if (!ipOk || !emailOk) {
     return fail(messages.submitErrors.tooFrequent);
   }
 
-  // Shipping fee from the recomputed prices (free with a 2-day set or $99+ rental and add-ons)
-  const shippingCents = shipping
-    ? shippingFeeCents(
-        lines.map((l) => ({
-          category: l.style?.category ?? "",
-          rentalDays: l.rentalDays,
-          rentalCents: l.rentalCents,
-          addOnCents: l.addOns.reduce((sum, a) => sum + a.cents, 0),
-        })),
-        input.shippingState,
-      )
-    : 0;
+  const service = createSupabaseServiceClient();
+  // Shipping fee from the recomputed prices (free with $99+ in rentals and add-ons, or a full look)
+  const shippingCents = shipping ? shippingFeeCents(shippingLines(lines), input.shippingState) : 0;
 
-  const { data, error } = await service.rpc("create_order", {
+  const { data, error } = await service.rpc("place_order", {
     p_lines: lines.map((l) => ({
       style_id: l.input.styleId,
       size: l.input.size,
@@ -184,6 +172,9 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
       deposit_cents: l.depositCents,
       addon_style_ids: l.addOns.map((a) => a.id),
       addon_cents: l.addOns.map((a) => a.cents),
+      addon_sizes: l.addOns.map((a) => a.size),
+      // The database refuses the order if this item gets a piece with a condition note and this is false
+      condition_ack: conditionNotes.has(l.input.id),
     })),
     p_customer_name: input.name,
     p_customer_email: input.email,
@@ -198,7 +189,9 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
         })
       : null,
     p_customer_note: buildCustomerNote(input),
-    p_shipping_cents: shippingCents,
+    p_shipping_cents: shippingCents + rushCents,
+    p_rush_fee_cents: rushCents,
+    p_needs_acceptance: needsAcceptance,
   });
 
   const order = data?.[0];
@@ -214,13 +207,13 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   await rememberOrderInBrowser(order.booking_id);
 
   // Orders placed while signed in are linked to the account (child orders included) and show up in "My account"
-  const user = (await hasAuthCookie())
-    ? (await (await createSupabaseServerClient()).auth.getUser()).data.user
+  const claims = (await hasAuthCookie())
+    ? (await (await createSupabaseServerClient()).auth.getClaims()).data?.claims
     : null;
-  if (user) {
+  if (claims) {
     const { error: linkError } = await service
       .from("bookings")
-      .update({ user_id: user.id })
+      .update({ user_id: claims.sub })
       .or(`booking_no.eq.${order.booking_no},booking_no.like.${order.booking_no}-%`);
     if (linkError) console.error("[submitOrder] 关联账号失败", linkError);
   }
@@ -246,16 +239,17 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   }
 
   // Card payments, or saving a card instead of a deposit: straight to Stripe. The order holds its dates meanwhile
-  // and is confirmed (and the owner emailed) once Stripe reports back. If the page can't be opened, the order page offers it again.
+  // and is confirmed (and the owner emailed) once Stripe reports back. If the page can't be opened, the order page offers it again;
+  // an order whose page never opens is cancelled by the payment sweep (src/lib/payments/checkout.ts), not here:
+  // a failed request may still have created the page at Stripe.
   if (paymentMethod) {
     try {
-      if (paymentMethod === "in_person_card") {
-        const { error: methodError } = await service
-          .from("bookings")
-          .update({ payment_method: "in_person_card" })
-          .eq("id", order.booking_id);
-        if (methodError) throw new Error(methodError.message);
-      }
+      // Recorded first, so the order counts as waiting on Stripe even if opening the page fails
+      const { error: methodError } = await service
+        .from("bookings")
+        .update({ payment_method: paymentMethod })
+        .eq("id", order.booking_id);
+      if (methodError) throw new Error(methodError.message);
       return { redirectTo: await createOrderCheckout(order.booking_no, locale) };
     } catch (checkoutError) {
       console.error("[submitOrder] 创建付款页面失败", checkoutError);

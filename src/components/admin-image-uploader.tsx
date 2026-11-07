@@ -38,6 +38,7 @@ export function AdminImageUploader({
   folder,
   error,
   onBusyChange,
+  markCover = true,
 }: {
   name: string;
   initial: string[];
@@ -46,6 +47,8 @@ export function AdminImageUploader({
   error?: string;
   /** 开始 / 结束上传时通知表单，上传完成前不让保存 */
   onBusyChange?: (busy: boolean) => void;
+  /** 第一张标“封面”（商品图用；状态说明照片不需要） */
+  markCover?: boolean;
 }) {
   const [urls, setUrls] = useState(initial);
   const [uploading, setUploading] = useState(0);
@@ -136,7 +139,7 @@ export function AdminImageUploader({
           >
             <div className="relative aspect-square overflow-hidden bg-neutral-100">
               <Image src={thumbUrl(url)} alt="" fill sizes="160px" unoptimized draggable={false} className="pointer-events-none object-cover" />
-              {index === 0 && (
+              {markCover && index === 0 && (
                 <span className="absolute left-1 top-1 bg-neutral-900 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   封面
                 </span>

@@ -7,6 +7,7 @@ import { ProfileForm } from "@/components/account-forms";
 import { AuthSkeleton } from "@/components/auth-shell";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
+import { confirmedEmail } from "@/lib/account/confirmed-email";
 import { getCustomer, type Customer } from "@/lib/account/customer";
 import { formatDateRange, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
@@ -111,7 +112,11 @@ async function MyBookings({ customer, locale }: { customer: Customer; locale: Lo
   const messages = getMessages(locale);
   const t = messages.account;
   const service = createSupabaseServiceClient();
-  const email = customer.user.email_confirmed_at ? customer.user.email?.toLowerCase() : undefined;
+  // Orders placed as a guest with this account's email belong to it, once the email is confirmed (asked of the Auth server)
+  const {
+    data: { user },
+  } = await (await createSupabaseServerClient()).auth.getUser();
+  const email = (user?.id === customer.user.id ? confirmedEmail(user) : null) ?? undefined;
   const filter = [`user_id.eq.${customer.user.id}`, email ? `customer_email.eq."${email}"` : null]
     .filter(Boolean)
     .join(",");

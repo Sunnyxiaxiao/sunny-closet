@@ -13,6 +13,8 @@ export interface BookingFormValues {
   note: string;
   /** 配置了 Stripe 时的付款方式：card（刷卡）或 in_person（到店自取时当面付） */
   payment: string;
+  /** 邮寄急单（不到一周）：rush（加急）或 wait（不加急，等店主确认）；其他订单为空 */
+  rush: string;
 }
 
 export interface BookingFormState {

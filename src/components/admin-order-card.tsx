@@ -1,13 +1,22 @@
 import { randomUUID } from "node:crypto";
-import { saveAdminNote, updateBookingStatus } from "@/app/admin/actions";
+import {
+  acceptShortNotice,
+  declineShortNotice,
+  markRefunded,
+  saveAdminNote,
+  updateBookingStatus,
+} from "@/app/admin/actions";
 import { AdminOrderPayment } from "@/components/admin-order-payment";
+import { AdminOverdue } from "@/components/admin-overdue";
 import { shop } from "@/config/shop";
 import { nextStatuses } from "@/lib/booking/status";
+import { ACCEPT_WINDOW_HOURS } from "@/lib/booking/acceptance";
 import { cardLabel } from "@/lib/booking/card-payment";
+import { overdueInfo } from "@/lib/booking/overdue";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDateZh, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import type { BookingRow, BookingStatus, CardChargeRow } from "@/lib/supabase/database.types";
+import type { BookingRow, BookingStatus, CardChargeRow, ConditionSnapshot } from "@/lib/supabase/database.types";
 import { messages } from "@/messages/zh-CN";
 
 const t = messages.admin;
@@ -41,10 +50,14 @@ export function AdminOrderCard({
   itemCode,
   addOns = [],
   cardCharges,
+  conditions = [],
+  overdue,
 }: {
   booking: BookingRow;
   styleName: string;
   itemCode: string;
+  /** 这单（含子订单）拿到的、有状态说明的那几件：下单时的说明和照片，以及顾客勾选确认的时间 */
+  conditions?: { name: string; snapshot: ConditionSnapshot; acknowledgedAt: string | null }[];
   /**
    * 子订单，状态跟着这单走：购物车里的其他件（cartItem，有自己的尺码、日期、租金、押金）、
    * 加购的头盔套、组合套装里的其他单品（bundlePart，0 元）
@@ -52,8 +65,12 @@ export function AdminOrderCard({
   addOns?: { name: string; itemCode: string; cents: number; bundlePart?: boolean; cartItem?: BookingRow }[];
   /** 这单之后从卡里扣过的钱；undefined = 没配置 Stripe，不显示刷卡付款 */
   cardCharges?: CardChargeRow[];
+  /** 已取件的单：今天、逾期占用天数，以及它占着的件撞上的已有订单 */
+  overdue?: { today: IsoDate; holdDays: number; conflicts: { bookingNo: string; startDate: string; itemCode: string }[] };
 }) {
-  const actions = nextStatuses(booking.status, booking.payment_method);
+  const awaitingAcceptance = booking.acceptance_status === "awaiting" && booking.status === "pending";
+  // Awaiting orders are accepted or declined below (a decline owes a refund), not moved with the status buttons
+  const actions = awaitingAcceptance ? [] : nextStatuses(booking.status, booking.payment_method);
   const orderTotal = booking.total_cents + addOns.reduce((sum, a) => sum + a.cents, 0);
   const cartItems = addOns.filter((a) => a.cartItem);
   const rentalTotal = booking.rental_cents + addOns.reduce((sum, a) => sum + (a.cartItem?.rental_cents ?? (a.bundlePart ? 0 : a.cents)), 0);
@@ -71,6 +88,9 @@ export function AdminOrderCard({
           >
             {messages.bookingStatus[booking.status]}
           </span>
+          {overdue && (overdueInfo(booking, overdue.today, overdue.holdDays)?.lateDays ?? 0) > 0 && (
+            <span className="bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">逾期未还</span>
+          )}
         </div>
         <p className="text-xs text-neutral-500">
           {t.placedAt} {formatPlacedAt(booking.created_at)}
@@ -119,7 +139,16 @@ export function AdminOrderCard({
             )}
           />
           {booking.fulfillment_method === "shipping" && (
-            <Line label="运费" value={booking.shipping_cents > 0 ? formatMoney(booking.shipping_cents) : "包邮"} />
+            <Line
+              label="运费"
+              value={
+                booking.rush_fee_cents > 0
+                  ? `${formatMoney(booking.shipping_cents)}（含加急 ${formatMoney(booking.rush_fee_cents)}，用 Priority Mail 寄）`
+                  : booking.shipping_cents > 0
+                    ? formatMoney(booking.shipping_cents)
+                    : "包邮"
+              }
+            />
           )}
           {depositTotal > 0 ? (
             <Line
@@ -153,6 +182,100 @@ export function AdminOrderCard({
           {booking.customer_note && <Line label={t.note} value={booking.customer_note} />}
         </dl>
       </div>
+
+      {awaitingAcceptance && (
+        <div className="mt-4 bg-amber-50 p-3 text-sm text-amber-950">
+          <p className="font-semibold">急单待你确认：离第一个滑雪日不到一周，顾客选了“不加急，等店主确认”</p>
+          <p className="mt-1">
+            {booking.paid_at
+              ? `顾客已付款 ${formatMoney(booking.paid_cents ?? 0)}。能按时寄到就接单；接不了就拒单，订单取消并标为待退款，系统会发邮件告诉顾客全额退款。付款后 ${ACCEPT_WINDOW_HOURS} 小时（${formatPlacedAt(new Date(new Date(booking.paid_at).getTime() + ACCEPT_WINDOW_HOURS * 3_600_000).toISOString())}）还没处理会自动拒单。`
+              : "顾客还没付款，付款后才能接单。现在拒单会直接取消这单。"}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {booking.paid_at && (
+              <form action={acceptShortNotice}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <button type="submit" className="h-10 rounded-full bg-neutral-900 px-5 text-sm font-bold text-white hover:bg-neutral-700">
+                  接单（能按时寄到）
+                </button>
+              </form>
+            )}
+            <form action={declineShortNotice}>
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <button type="submit" className="h-10 rounded-full border border-red-300 px-5 text-sm font-bold text-red-700 hover:bg-red-50">
+                拒单{booking.paid_at ? "并全额退款" : ""}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      {booking.acceptance_status === "accepted" && <p className="mt-4 text-xs text-neutral-500">急单（不加急）：已接单</p>}
+      {booking.acceptance_status === "declined" && <p className="mt-4 text-xs text-neutral-500">急单（不加急）：已拒单</p>}
+
+      {overdue && booking.status === "picked_up" && (
+        <AdminOverdue
+          bookingId={booking.id}
+          info={overdueInfo(booking, overdue.today, overdue.holdDays)}
+          expectedReturn={booking.expected_return_date}
+          holdDays={overdue.holdDays}
+          conflicts={overdue.conflicts}
+          today={overdue.today}
+        />
+      )}
+
+      {booking.refund_status && booking.refund_cents !== null && (
+        <div
+          className={`mt-4 flex flex-wrap items-center gap-3 p-3 text-sm ${booking.refund_status === "due" ? "bg-red-50 text-red-900" : "bg-neutral-50 text-neutral-700"}`}
+        >
+          {booking.refund_status === "due" ? (
+            <>
+              <p>
+                <span className="font-semibold">待退款 {formatMoney(booking.refund_cents)}</span>
+                ：{booking.acceptance_status === "declined" ? "急单已拒单" : "顾客在订单取消后、或重复付了款"}
+                。请到 Stripe 后台的 Payments 里退款，退完再点右边的按钮（Stripe 回调配好后会自动标记）。
+              </p>
+              <form action={markRefunded}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <button type="submit" className="h-9 rounded-full bg-red-700 px-4 text-xs font-bold text-white hover:bg-red-800">
+                  已在 Stripe 退款
+                </button>
+              </form>
+            </>
+          ) : (
+            <p>
+              已退款 {formatMoney(booking.refund_cents)}
+              {booking.refunded_at && `（${formatPlacedAt(booking.refunded_at)}）`}
+            </p>
+          )}
+        </div>
+      )}
+
+      {conditions.length > 0 && (
+        <div className="mt-4 bg-amber-50 p-3 text-sm">
+          <p className="font-semibold text-amber-900">状态说明（顾客下单前已勾选确认）</p>
+          <ul className="mt-2 space-y-2">
+            {conditions.map(({ name, snapshot, acknowledgedAt }) => (
+              <li key={snapshot.code}>
+                <p>
+                  <span className="font-medium">{name}</span>{" "}
+                  <span className="font-mono text-xs">{snapshot.code}</span> · {snapshot.size}
+                  {acknowledgedAt && <span className="text-xs text-neutral-500"> · 确认于 {formatPlacedAt(acknowledgedAt)}</span>}
+                </p>
+                <p className="mt-0.5 whitespace-pre-line text-neutral-700">{snapshot.note}</p>
+                {snapshot.imageUrls.length > 0 && (
+                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs">
+                    {snapshot.imageUrls.map((url, i) => (
+                      <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                        照片 {i + 1}
+                      </a>
+                    ))}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {actions.length > 0 && (
         <div className="mt-5 flex flex-wrap gap-2">

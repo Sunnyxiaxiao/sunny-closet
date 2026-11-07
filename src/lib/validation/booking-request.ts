@@ -43,19 +43,24 @@ export const checkoutSchema = createCheckoutSchema(getMessages("zh").validation)
 
 export type CheckoutRequest = z.infer<typeof checkoutSchema>;
 
-/** 购物车里的一件：哪一款、哪个尺码、哪几天（滑雪日）、加购了哪些头盔套 */
-export const cartLineSchema = z.object({
-  id: z.string().min(1).max(64),
-  styleId: z.uuid(),
-  size: z.string().trim().min(1).max(20),
-  start: z.string().refine(isIsoDate),
-  end: z.string().refine(isIsoDate),
-  addOnIds: z
-    .array(z.uuid())
-    .max(MAX_ADD_ONS_PER_OUTFIT)
-    .refine((ids) => new Set(ids).size === ids.length)
-    .default([]),
-});
+/** 购物车里的一件：哪一款、哪个尺码、哪几天（滑雪日）、加购了什么（头盔套 / 手套，手套带颜色尺码） */
+export const cartLineSchema = z
+  .object({
+    id: z.string().min(1).max(64),
+    styleId: z.uuid(),
+    size: z.string().trim().min(1).max(20),
+    start: z.string().refine(isIsoDate),
+    end: z.string().refine(isIsoDate),
+    addOnIds: z
+      .array(z.uuid())
+      .max(MAX_ADD_ONS_PER_OUTFIT)
+      .refine((ids) => new Set(ids).size === ids.length)
+      .default([]),
+    addOnSizes: z.array(z.string().trim().min(1).max(20).nullable()).max(MAX_ADD_ONS_PER_OUTFIT).default([]),
+  })
+  // 尺码一个加购一个；旧购物车没有尺码（都是头盔套）
+  .refine((l) => l.addOnSizes.length === 0 || l.addOnSizes.length === l.addOnIds.length)
+  .transform((l) => ({ ...l, addOnSizes: l.addOnIds.map((_, i) => l.addOnSizes[i] ?? null) }));
 
 export type CartLineInput = Omit<z.infer<typeof cartLineSchema>, "start" | "end"> & { start: IsoDate; end: IsoDate };
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { BookingPanel } from "@/components/booking-panel";
+import { ConditionNotes } from "@/components/condition-notes";
 import { ProductCard } from "@/components/product-card";
 import { PriceTierStrip } from "@/components/price-tier-strip";
 import { ProductGallery } from "@/components/product-gallery";
@@ -23,8 +24,9 @@ import {
   stylePriceTable,
   WITH_PANTS_TAG,
 } from "@/lib/catalog";
+import { styleConditionNotes } from "@/lib/condition";
 import { parseDescription, type DescriptionBlock } from "@/lib/description";
-import type { AddOnOption } from "@/lib/helmet-covers";
+import type { AddOnOption, GlovesAddOnOption } from "@/lib/helmet-covers";
 import { formatDate } from "@/lib/dates";
 import { priceTiers } from "@/lib/pricing";
 import { shippingPolicyArgs } from "@/lib/shipping";
@@ -67,12 +69,14 @@ async function StyleDetail({
     notFound();
   }
 
-  const [settings, today, availability, allStyles, helmetCovers] = await Promise.all([
+  const [settings, today, availability, allStyles, helmetCovers, gloves, conditionNotes] = await Promise.all([
     getSettings(),
     getToday(),
     getAvailability(),
     listStyles({ locale, withPantsOptions: true }),
     listStyles({ kind: "helmet_cover", locale }),
+    listStyles({ kind: "gloves", locale }),
+    styleConditionNotes(style, locale),
   ]);
   const sizes = availability.get(style.id) ?? [];
   const initial = rentalSearchParamsSchema.parse(raw);
@@ -86,6 +90,13 @@ async function StyleDetail({
         : [],
     )
     .sort((a, b) => Number(b.slug === addonSlug) - Number(a.slug === addonSlug));
+  // 有加购价、有库存的手套（只列有货的颜色 · 尺码）
+  const glovesOptions: GlovesAddOnOption[] = gloves.flatMap((g) => {
+    const sizesInStock = (availability.get(g.id) ?? []).filter((s) => s.available > 0).map((s) => s.size);
+    return g.addon_price_cents !== null && sizesInStock.length > 0
+      ? [{ id: g.id, slug: g.slug, name: g.name, imageUrl: g.image_urls[0], addOnCents: g.addon_price_cents, sizes: sizesInStock }]
+      : [];
+  });
   const prices = stylePriceTable(style, settings);
   const regularPrices = crystalRegularTable(style, settings);
   const tiers = priceTiers(prices, settings.maxRentalDays, locale);
@@ -227,6 +238,8 @@ async function StyleDetail({
                 paddings={settings.paddings}
                 initial={initial}
                 addOnOptions={addOnOptions}
+                glovesOptions={glovesOptions}
+                separate={isSeparate(style)}
                 initialAddOnSlug={addonSlug}
                 locale={locale}
               />
@@ -239,6 +252,7 @@ async function StyleDetail({
                 <DescriptionBlocks blocks={section.blocks} />
               </Accordion>
             ))}
+            <ConditionNotes notes={conditionNotes} locale={locale} />
             <Accordion title={t.rentalNotes}>
               <ul className="list-disc space-y-1 pl-5">
                 {t.rentalNotesBody.map((line) => (

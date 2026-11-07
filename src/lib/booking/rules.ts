@@ -118,6 +118,20 @@ export function earliestShippingStart(today: IsoDate, paddings: FulfillmentPaddi
   return addDays(today, paddings.shipping.leadDays);
 }
 
+/**
+ * How much notice a shipping order gives: "too_soon" (inside the shipping lead days: can't be shipped in time),
+ * "short" (less than `aheadDays`: rush shipping, or wait for the owner to accept), else "normal"
+ */
+export function shippingNotice(
+  start: IsoDate,
+  today: IsoDate,
+  paddings: FulfillmentPaddings,
+  aheadDays: number,
+): "too_soon" | "short" | "normal" {
+  if (start < earliestShippingStart(today, paddings)) return "too_soon";
+  return start < addDays(today, aheadDays) ? "short" : "normal";
+}
+
 export type RangeError = "invalid_date" | "end_before_start" | "start_in_past" | "too_long";
 
 /** Validates the customer's rental period; returns null when valid */

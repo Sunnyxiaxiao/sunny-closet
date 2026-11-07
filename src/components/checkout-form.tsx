@@ -14,6 +14,8 @@ import { getMessages } from "@/messages";
 
 /** 配置了 Stripe 时的付款方式（到店自取三选一，邮寄只能 card） */
 const PAYMENT_CHOICES = ["card", "in_person_card", "in_person"] as const;
+/** Lets inputs outside the form (the cart's condition-note checkboxes) submit with it */
+export const CHECKOUT_FORM_ID = "checkout-form";
 type PaymentChoice = (typeof PAYMENT_CHOICES)[number];
 
 const inputClass =
@@ -50,6 +52,10 @@ export function CheckoutForm({
   shippingState,
   onShippingStateChange,
   shippingCents,
+  shortNotice,
+  rush,
+  onRushChange,
+  rushCents,
   blocked,
   defaults,
   payByCard,
@@ -65,6 +71,12 @@ export function CheckoutForm({
   onShippingStateChange: (state: string) => void;
   /** 邮寄这单的运费（分），0 = 包邮；还没算出来时为 null */
   shippingCents: number | null;
+  /** 邮寄、离第一个滑雪日不到一周：顾客选加急（rush）或等店主确认（wait），由购物车页管理（加急费算进订单金额） */
+  shortNotice: boolean;
+  rush: string;
+  onRushChange: (choice: string) => void;
+  /** 按所选州算出的加急费（分） */
+  rushCents: number;
   /** 有商品需要先处理（没货、不能邮寄等）：不能提交，显示这句提示 */
   blocked: string | null;
   /** 登录的顾客：预先填好的联系方式 */
@@ -91,11 +103,15 @@ export function CheckoutForm({
   };
   const shippingPolicy = messages.product.shippingPolicy(...shippingPolicyArgs(shippingMinDays));
 
-  // 提交失败回填表单时，把州也带回购物车页
+  // 提交失败回填表单时，把州和急单的选择也带回购物车页
   const returnedState = state.values?.shippingState;
   useEffect(() => {
     if (returnedState) onShippingStateChange(returnedState);
   }, [returnedState, onShippingStateChange]);
+  const returnedRush = state.values?.rush;
+  useEffect(() => {
+    if (returnedRush) onRushChange(returnedRush);
+  }, [returnedRush, onRushChange]);
 
   useEffect(() => {
     if (!state.redirectTo) return;
@@ -106,7 +122,7 @@ export function CheckoutForm({
   }, [state.redirectTo, router]);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form id={CHECKOUT_FORM_ID} action={formAction} className="space-y-4">
       <div>
         <h2 className="text-base font-bold">{t.title}</h2>
         <p className="mt-1 text-sm text-neutral-600">{payByCard ? paymentText[payment].subtitle : t.subtitle}</p>
@@ -212,6 +228,42 @@ export function CheckoutForm({
           </p>
         )}
       </fieldset>
+
+      {fulfillment === "shipping" && shortNotice && (
+        <fieldset>
+          <legend className="text-sm text-neutral-600">{t.rushTitle(shop.shipping.orderAheadDays)}</legend>
+          <div className="mt-2 grid gap-2">
+            {(["rush", "wait"] as const).map((choice) => (
+              <label
+                key={choice}
+                className={[
+                  "flex cursor-pointer flex-col justify-center border px-3 py-2.5 text-sm transition",
+                  rush === choice
+                    ? "border-neutral-900 bg-neutral-900 text-white"
+                    : "border-neutral-300 bg-white hover:border-neutral-900",
+                ].join(" ")}
+              >
+                <input
+                  type="radio"
+                  name="rush"
+                  value={choice}
+                  checked={rush === choice}
+                  onChange={() => onRushChange(choice)}
+                  className="sr-only"
+                />
+                <span className="font-semibold">
+                  {choice === "rush" ? t.rushOption(formatMoney(rushCents, { whole: true })) : t.waitOption}
+                </span>
+                <span className={`mt-0.5 text-xs ${rush === choice ? "text-neutral-300" : "text-neutral-500"}`}>
+                  {choice === "rush" ? t.rushOptionHint : payByCard ? t.waitOptionHint : t.waitOptionManualHint}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
+      {fulfillment === "pickup" && <p className="text-xs leading-relaxed text-neutral-500">{t.pickupAheadTip}</p>}
 
       {payByCard && fulfillment === "pickup" ? (
         <fieldset>

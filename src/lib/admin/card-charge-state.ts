@@ -2,6 +2,9 @@ export interface CardChargeState {
   /** Result shown under the form: success or why the charge didn't go through */
   message?: string;
   ok?: boolean;
-  /** A new key per attempt, so a double-clicked button doesn't charge the card twice */
+  /**
+   * Key of the charge this form submits (also its Stripe idempotency key, stored with the charge): a double submit
+   * finds the charge already recorded instead of starting another. A new one is handed out once a charge has a result
+   */
   nonce: string;
 }

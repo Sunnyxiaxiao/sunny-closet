@@ -12,10 +12,12 @@ export function AdminPricingForm({
   days,
   tables,
   shippingMinDays,
+  overdueHoldDays,
 }: {
   days: number;
   tables: Record<PriceTableKey, number[]>;
   shippingMinDays: number;
+  overdueHoldDays: number;
 }) {
   const [state, action, pending] = useActionState(savePrices, initialAccountFormState);
   const errors = state.fieldErrors ?? {};
@@ -77,6 +79,26 @@ export function AdminPricingForm({
         {errors.shippingMinDays && (
           <span role="alert" className="mt-1 block text-sm text-red-600">
             {errors.shippingMinDays}
+          </span>
+        )}
+      </label>
+
+      <label className="block max-w-xs text-sm text-neutral-600">
+        逾期未还继续占用几天
+        <input
+          name="overdueHoldDays"
+          type="number"
+          min={1}
+          max={60}
+          defaultValue={state.values?.overdueHoldDays ?? overdueHoldDays}
+          className="mt-1.5 h-11 w-full border border-neutral-300 bg-white px-3 text-base focus:border-neutral-900 focus:outline-none"
+        />
+        <span className="mt-1 block text-xs text-neutral-500">
+          已取件、过了归还日还没点“已归还”的那件，每天往后占到“今天 + 这么多天”，直到点“已归还”。单张订单可以在订单卡片上填预计归还日。
+        </span>
+        {errors.overdueHoldDays && (
+          <span role="alert" className="mt-1 block text-sm text-red-600">
+            {errors.overdueHoldDays}
           </span>
         )}
       </label>

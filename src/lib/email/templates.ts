@@ -8,10 +8,11 @@
 import { shop } from "@/config/shop";
 import type { FulfillmentMethod } from "@/config/shop";
 import { localePath } from "@/i18n/config";
+import { ACCEPT_WINDOW_HOURS } from "@/lib/booking/acceptance";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDate, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import type { PaymentMethod } from "@/lib/supabase/database.types";
+import type { AcceptanceStatus, PaymentMethod } from "@/lib/supabase/database.types";
 import { sizeLabel } from "@/messages";
 
 export interface EmailMessage {
@@ -49,8 +50,12 @@ export interface OrderEmailData {
   lines: OrderEmailLine[];
   /** 加购的头盔套 */
   addOns: { name: string; nameEn: string; cents: number }[];
-  /** 运费（已含在 totalCents 里），0 = 包邮或自取 */
+  /** 运费（已含在 totalCents 里，也含加急费），0 = 包邮或自取 */
   shippingCents: number;
+  /** 急单加急费（已含在 shippingCents 里），0 = 没加急 */
+  rushFeeCents: number;
+  /** 急单不加急：等店主接单（awaiting）、已接单、已拒单；其他订单为 null */
+  acceptance: AcceptanceStatus | null;
   totalCents: number;
   /**
    * 付款方式（null = 手动流程：后台确认、Zelle / Venmo）、已付金额（null = 还没付）、
@@ -113,9 +118,11 @@ function handoverRows(order: OrderEmailData): [string, string][] {
   const method =
     order.fulfillment === "pickup"
       ? "In-store pickup"
-      : order.shippingCents > 0
-        ? `Shipping (${formatMoney(order.shippingCents)})`
-        : "Shipping (free)";
+      : order.rushFeeCents > 0
+        ? `Rush shipping, USPS Priority Mail (${formatMoney(order.shippingCents)}, incl. ${formatMoney(order.rushFeeCents)} rush fee)`
+        : order.shippingCents > 0
+          ? `Shipping (${formatMoney(order.shippingCents)})`
+          : "Shipping (free)";
   const first = order.lines[0];
   const sameDates = order.lines.every((l) => l.start === first.start && l.end === first.end);
   const handover = (l: OrderEmailLine) =>
@@ -157,12 +164,16 @@ export function newOrderEmail(order: OrderEmailData, { to, origin }: { to: strin
         ],
       ],
     },
-    { kind: "link", label: "Open admin", url: `${origin}/admin?status=${order.payment.method ? "confirmed" : "pending"}` },
+    {
+      kind: "link",
+      label: "Open admin",
+      url: `${origin}/admin?status=${order.payment.method && order.acceptance !== "awaiting" ? "confirmed" : "pending"}`,
+    },
   ]);
   return {
     to,
     replyTo: order.customerEmail,
-    subject: `New booking ${order.bookingNo} · ${order.customerName} · ${count} ${count === 1 ? "item" : "items"}`,
+    subject: `${order.acceptance === "awaiting" ? "Accept or decline: " : ""}New booking ${order.bookingNo} · ${order.customerName} · ${count} ${count === 1 ? "item" : "items"}`,
     text,
     html,
   };
@@ -172,6 +183,9 @@ export function newOrderEmail(order: OrderEmailData, { to, origin }: { to: strin
 function ownerIntro(order: OrderEmailData): string {
   const { method, cashDepositCents, card } = order.payment;
   const due = formatMoney(order.totalCents);
+  if (order.acceptance === "awaiting") {
+    return `New short-notice shipping order from ${order.customerName} (no rush shipping), paid by card. It is NOT confirmed yet: accept it in the admin if it can arrive in time, or decline it (full refund). Unanswered for ${ACCEPT_WINDOW_HOURS} hours, it's declined automatically.`;
+  }
   if (method === "card") return `New booking from ${order.customerName}, paid by card and confirmed automatically.`;
   if (method === "in_person_card") {
     return `New booking from ${order.customerName}, confirmed automatically. Card on file instead of a deposit${card ? ` (${card})` : ""}; they'll pay ${due} in person at pickup.`;
@@ -256,4 +270,142 @@ export function orderConfirmedEmail(order: OrderEmailData, { origin }: { origin:
     text,
     html,
   };
+}
+
+/** To the owner: a payment came in that has to be refunded (it landed on a cancelled order, or the order was already paid) */
+export function refundDueEmail({
+  to,
+  origin,
+  bookingNo,
+  cents,
+  reason,
+}: {
+  to: string;
+  origin: string;
+  bookingNo: string;
+  cents: number;
+  reason: "cancelled" | "second_payment" | "declined";
+}): EmailMessage {
+  const why =
+    reason === "cancelled"
+      ? "The customer paid after the order had been cancelled (its dates were already released)."
+      : reason === "declined"
+        ? `This short-notice shipping order wasn't accepted within ${ACCEPT_WINDOW_HOURS} hours, so it was declined automatically and the customer was told they'll get a full refund.`
+        : "The customer paid a second time for an order that was already paid.";
+  const { text, html } = render([
+    { kind: "p", text: `${why} Please refund ${formatMoney(cents)} in Stripe (Payments), then mark it refunded in admin.` },
+    { kind: "rows", rows: [["Booking no.", bookingNo], ["To refund", formatMoney(cents)]] },
+    { kind: "link", label: "Open admin", url: `${origin}/admin?status=all` },
+  ]);
+  return { to, subject: `Refund needed: ${bookingNo} · ${formatMoney(cents)}`, text, html };
+}
+
+/** To the owner: a piece that's still out with an overdue order is booked by another order coming up */
+export function overdueConflictEmail({
+  to,
+  origin,
+  conflicts,
+}: {
+  to: string;
+  origin: string;
+  conflicts: { lateBookingNo: string; itemCode: string; holdUntil: IsoDate; bookingNo: string; startDate: IsoDate }[];
+}): EmailMessage {
+  const { text, html } = render([
+    {
+      kind: "p",
+      text: "A piece that hasn't come back yet is booked by an upcoming order. Nothing was changed: please contact the customer, swap in another piece, or cancel.",
+    },
+    ...conflicts.map((c) => ({
+      kind: "rows" as const,
+      rows: [
+        ["Not returned", `${c.lateBookingNo} · ${c.itemCode}`],
+        ["Held until", formatDate(c.holdUntil, "en")],
+        ["Affected order", `${c.bookingNo} · starts ${formatDate(c.startDate, "en")}`],
+      ] as [string, string][],
+    })),
+    { kind: "link", label: "Open admin", url: `${origin}/admin?status=picked_up` },
+  ]);
+  const first = conflicts[0];
+  return {
+    to,
+    subject:
+      conflicts.length === 1
+        ? `Overdue piece ${first.itemCode} affects ${first.bookingNo}`
+        : `${conflicts.length} upcoming orders affected by overdue pieces`,
+    text,
+    html,
+  };
+}
+
+/** To the customer: a short-notice shipping order (no rush) is paid, and the owner still has to accept it */
+export function awaitingAcceptanceEmail(order: OrderEmailData, { origin }: { origin: string }): EmailMessage {
+  const { text, html } = render([
+    {
+      kind: "p",
+      text: `Hi ${order.customerName},\n\nThanks, we received your payment for booking ${order.bookingNo}. Your first ski day is coming up soon, so we're checking that your order can reach you in time. We'll confirm within ${ACCEPT_WINDOW_HOURS} hours. If we can't ship it in time, we'll cancel the booking and refund you in full.`,
+    },
+    { kind: "rows", rows: itemRows(order, "en") },
+    { kind: "rows", rows: handoverRows(order) },
+    ...(order.payment.paidCents !== null
+      ? [{ kind: "rows" as const, rows: [["Paid", `${formatMoney(order.payment.paidCents)}${order.payment.card ? ` · ${order.payment.card}` : ""}`]] as [string, string][] }]
+      : []),
+    { kind: "link", label: "View your booking", url: `${origin}${localePath("en", `/booking/${order.bookingNo}`)}` },
+    { kind: "p", text: `Questions? Just reply to this email, or text us at ${shop.contact.phone}.\n\n— ${shop.name}` },
+  ]);
+  return {
+    to: order.customerEmail,
+    replyTo: shop.contact.email,
+    subject: `Payment received for ${order.bookingNo}: confirming your dates`,
+    text,
+    html,
+  };
+}
+
+/** To the customer: the owner couldn't take a short-notice shipping order (or didn't answer in time); a full refund follows */
+export function orderDeclinedEmail(
+  order: OrderEmailData,
+  { origin, refundCents }: { origin: string; refundCents: number },
+): EmailMessage {
+  const { text, html } = render([
+    {
+      kind: "p",
+      text: `Hi ${order.customerName},\n\nWe're sorry, we can't get booking ${order.bookingNo} to you in time for your first ski day, so we've cancelled it.${refundCents > 0 ? ` You'll get a full refund of ${formatMoney(refundCents)} to your card; it usually shows up within 5–10 business days.` : ""}`,
+    },
+    { kind: "rows", rows: itemRows(order, "en") },
+    {
+      kind: "p",
+      text: `If your plans allow, in-store pickup in Ithaca or a later date may still work. Questions? Just reply to this email, or text us at ${shop.contact.phone}.\n\n— ${shop.name}`,
+    },
+    { kind: "link", label: "Browse rentals", url: `${origin}${localePath("en", "/styles")}` },
+  ]);
+  return { to: order.customerEmail, replyTo: shop.contact.email, subject: `Booking ${order.bookingNo} cancelled: full refund`, text, html };
+}
+
+/** To the owner: a short-notice shipping order is still waiting to be accepted */
+export function acceptanceReminderEmail({
+  to,
+  origin,
+  bookingNo,
+  deadline,
+}: {
+  to: string;
+  origin: string;
+  bookingNo: string;
+  deadline: Date;
+}): EmailMessage {
+  const when = new Intl.DateTimeFormat("en-US", {
+    timeZone: shop.timeZone,
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(deadline);
+  const { text, html } = render([
+    {
+      kind: "p",
+      text: `Booking ${bookingNo} (short-notice shipping, paid) is still waiting for you to accept or decline. If it's not answered by ${when}, it will be declined automatically and you'll need to refund the customer in Stripe.`,
+    },
+    { kind: "link", label: "Open admin", url: `${origin}/admin?status=pending` },
+  ]);
+  return { to, subject: `Reminder: accept or decline ${bookingNo}`, text, html };
 }

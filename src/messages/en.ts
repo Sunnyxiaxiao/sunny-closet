@@ -243,6 +243,13 @@ export const messages: Messages = {
     notRentable: "These gloves aren't available right now.",
     upTo: (price: string) => `max ${price}`,
     colorCount: (n: number) => `${n} colors`,
+    addOnTitle: "Add gloves 🧤",
+    addOnBody: "One flat price for the whole rental with an outfit, one pair per outfit.",
+    pickDatesFirst: "Choose your dates to see which gloves are available",
+    pickSize: "Color · Size",
+    chooseSize: "Please choose a color · size for the gloves",
+    selectedUnavailable: "The gloves you picked are booked for these dates. Please choose another pair or color · size.",
+    addOnPricing: (price: string) => `With a ski outfit: ${price} for the whole rental`,
     capNote: (days: number, price: string, maxDays: number) =>
       `${days}–${maxDays} days is always ${price} — no extra charge. Rented with a ski outfit? Return them together. On their own, gloves can be rented for up to ${maxDays} days.`,
     availableCount: (range: string, n: number) => `${range}: ${n} available`,
@@ -271,8 +278,8 @@ export const messages: Messages = {
     pickupMin: "In-store pickup",
     shippingMin: "Shipping",
     minDaysUnit: "day minimum",
-    shippingPolicy: (minDays: number, ahead: number, setDays: number, free: number, fee: number, far: number) =>
-      `Shipping within the 48 contiguous US states (plus DC) only. Shipped rentals have a ${minDays}-day minimum. Shipping is free when you rent a full set for ${setDays}+ days or spend $${free}+ on rentals; otherwise it's $${fee} ($${far} to some western and southern states). Local pickup in Ithaca starts at 1 day. Please book about ${ahead} days ahead for shipping.`,
+    shippingPolicy: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number) =>
+      `Shipping within the 48 contiguous US states (plus DC) only. Shipped rentals have a ${minDays}-day minimum. Shipping is free when rentals and add-ons reach $${free}, or when your order makes a full look (top, pants, helmet cover and gloves); free-shipping orders to some western and southern states pay $${farFree}. Otherwise shipping is $${fee} ($${far} to those states). Local pickup in Ithaca starts at 1 day. Please book about ${ahead} days ahead for shipping.`,
     deposit: "Deposit",
     size: "Size",
     description: "Description",
@@ -289,6 +296,11 @@ export const messages: Messages = {
     questionsBody: "Not sure about sizing or want more photos? Just get in touch.",
     related: "You may also like",
     sourceCredit: "Photos and specs: ",
+    conditionTitle: "Condition notes",
+    conditionIntro:
+      "Every piece is guaranteed to work as it should. Any minor flaws are noted here before you book, with close-up photos (tap to enlarge). Flaws listed here aren't damage and are never charged.",
+    conditionSize: (size: string) => `Size: ${size}`,
+    conditionPhoto: "Condition photo",
     officialSite: "official site",
     notRentable: "This outfit isn't available right now.",
     fullRentalInfo: "Read the full rental policy",
@@ -306,7 +318,8 @@ export const messages: Messages = {
     tooLong: (days: number) => `Rentals can be up to ${days} days`,
     freeHandover: "Pickup, return and shipping days are free.",
     rentalLine: (range: string, days: number) => `Rental (${range}, ${days} ${days === 1 ? "day" : "days"})`,
-    addOnLine: (name: string) => `${name} (helmet cover)`,
+    addOnLine: (name: string) => `${name} (add-on)`,
+    addOnNeedsOutfit: "When renting a top or pants on its own, add-on prices apply once you rent both (add the matching top or pants).",
     deposit: "Deposit (refunded after return)",
     total: "Total",
     addToCart: "Add to Cart",
@@ -387,6 +400,15 @@ export const messages: Messages = {
     honeypot: "Website",
     shippingTooShort: (days: number) =>
       `Shipping requires at least ${days} ski days. Add more days or choose in-store pickup.`,
+    rushTitle: (days: number) => `Your first ski day is less than ${days} days away. How should we ship?`,
+    rushOption: (fee: string) => `Rush shipping +${fee}`,
+    rushOptionHint: "USPS Priority Mail; booked as soon as you pay",
+    waitOption: "No rush, wait for the owner to confirm",
+    waitOptionHint: "Pay as usual; we confirm within 24 hours whether it can arrive in time, with a full refund if not",
+    waitOptionManualHint: "We'll confirm whether it can arrive in time, then let you know",
+    chooseRush: "Your first ski day is less than a week away. Please choose rush shipping or wait for the owner to confirm.",
+    rushFee: "Rush shipping",
+    pickupAheadTip: "In-store pickup works whenever it's in stock, but booking ahead helps us set a pickup time (we're not always home).",
   },
   validation: {
     styleId: "Invalid item",
@@ -426,12 +448,15 @@ export const messages: Messages = {
     shipping_min_days: "Too few days for shipping. Add more ski days or choose in-store pickup",
     no_availability:
       "Sorry, these dates were just booked. Try other dates or sizes (shipping holds items longer, so in-store pickup may still work)",
-    addon_unavailable: "The helmet cover you picked was just booked. Choose another or remove it",
-    addon_not_found: "The helmet cover you picked is no longer available. Please choose another",
+    addon_unavailable: "An add-on you picked was just booked. Choose another or remove it",
+    addon_not_found: "An add-on you picked is no longer available. Please choose another",
+    addon_limit: "Add-on prices cover one helmet cover and one pair of gloves per outfit. Please rent extra accessories on their own",
     invalid_addons: "Invalid add-on. Please refresh the page and choose again",
     shipping_dates_differ:
       "Shipped orders go out in one package, so every item needs the same ski days. Place separate orders for different dates, or choose in-store pickup",
     invalid_cart: "Something in your cart isn't right. Please refresh the page and try again",
+    condition_not_acknowledged:
+      "This piece's condition notes just changed. Please refresh the cart, check them and tick the box again",
   },
   rangeErrors: {
     invalid_date: "Please choose your first and last ski days",
@@ -471,13 +496,14 @@ export const messages: Messages = {
     browse: "Browse outfits",
     loading: "Checking prices and availability…",
     loadFailed: "Something went wrong. Please refresh the page",
+    tooManyRequests: "Too many refreshes. Please try again in a few minutes",
     remove: "Remove",
     count: (n: number) => (n === 1 ? "1 item" : `${n} items`),
     dates: (range: string, days: number) => `${range} (${days} ${days === 1 ? "day" : "days"})`,
     size: "Size",
     rental: "Rental",
     deposit: "Deposit",
-    addOn: (name: string) => `Helmet cover add-on: ${name}`,
+    addOn: (name: string) => `Add-on: ${name}`,
     soldOut: "Fully booked for these dates. Remove it and try other dates or sizes.",
     shippingTaken:
       "Shipping holds items longer, and this one is booked during that time. Choose in-store pickup, or remove it and pick other dates.",
@@ -493,17 +519,26 @@ export const messages: Messages = {
       start_in_past: "These dates have passed. Please remove it and choose again",
       too_long: "Longer than the maximum rental. Please remove it and choose again",
       invalid_addons: "Invalid add-on. Please remove it and choose again",
-      addon_not_found: "The helmet cover add-on is no longer available. Please remove it and choose again",
+      addon_not_found: "The add-on is no longer available. Please remove it and choose again",
+      addon_limit:
+        "Add-on prices cover one helmet cover and one pair of gloves per outfit (a top or pants counts when both are rented). Please remove this item and add it again; extra accessories can be rented on their own",
     },
     lineError: (n: number, message: string) => `Item ${n}: ${message}`,
     fixFirst: "Please fix the items marked in red first",
+    conditionNotice: "This piece has condition notes. Please take a look:",
+    conditionConfirm: "I've seen the condition notes and photos and accept the piece as described",
+    conditionAlternative: "Not for you? Remove it and pick another style.",
+    conditionConfirmFirst: "Please confirm you've seen the condition notes",
+    conditionNotConfirmed: "The condition notes for this piece haven't been confirmed (they may have just changed). Please check them and tick the box",
     invalidCart: "Something in your cart isn't right. Please refresh the page and try again",
     summary: "Order summary",
     addOns: "Add-ons",
     depositTotal: "Deposit (refunded after return)",
     shipping: "Shipping",
     freeShipping: "Free",
-    freeShippingHint: (setDays: number, free: string) => `Free shipping with a full set for ${setDays}+ days, or ${free}+ in rentals and add-ons`,
+    freeShippingHint: (free: string) => `Free shipping with ${free}+ in rentals and add-ons`,
+    fullLookTip: "Tip: a full look (top, pants, helmet cover & gloves) ships free",
+    farFreeShipping: (fee: string) => `${fee} (free shipping, far-state surcharge)`,
     total: "Total",
     continueShopping: "Keep Shopping",
   },
@@ -550,7 +585,7 @@ export const messages: Messages = {
     paymentNote: "Please include your booking number in the payment note.",
     bookingNoLabel: "Booking number: ",
     days: (n: number) => ` (${n} ${n === 1 ? "day" : "days"})`,
-    addOnRow: (name: string) => `Helmet cover: ${name}`,
+    addOnRow: (name: string) => `Add-on: ${name}`,
     awaitingPaymentTitle: "One more step: complete your payment",
     awaitingPaymentBody: (minutes: number) =>
       `Your dates are held for ${minutes} minutes. Once you pay, your booking is confirmed automatically and we'll email you the confirmation.`,
@@ -559,6 +594,12 @@ export const messages: Messages = {
     paidBody: "Your dates are reserved and a confirmation is on its way to your inbox. Pickup or shipping follows the schedule above.",
     paidRow: "Paid",
     paidNotice: "Payment received. Thank you!",
+    awaitingOwnerTitle: "Paid. Waiting for the owner to confirm",
+    awaitingOwnerBody: (hours: number) =>
+      `Your first ski day is less than a week away, so we'll confirm within ${hours} hours whether it can reach you in time. We'll email you either way; if it can't, the booking is cancelled and refunded in full.`,
+    declinedTitle: "Sorry, we couldn't ship this in time, so it's cancelled",
+    declinedBody: "Your ski day is too close for us to guarantee delivery. Your payment will be refunded in full to your card, usually within 5–10 business days. In-store pickup or a later date may still work.",
+    shippingWithRush: (total: string, rush: string) => `${total} (incl. ${rush} rush)`,
     cardSavedNotice: "Card saved, your booking is confirmed!",
     accessTitle: "Sign in to view this booking",
     accessBody:
@@ -587,7 +628,7 @@ export const messages: Messages = {
   },
   /** Text on the Stripe payment page */
   payment: {
-    addOnItem: (name: string) => `Helmet cover add-on: ${name}`,
+    addOnItem: (name: string) => `Add-on: ${name}`,
     shippingItem: "Shipping",
     authorization:
       "I authorize Sunny Closet to charge this card later only for late returns, extra cleaning, repairs, or the retail price of an item that is lost or can't be repaired, as set out in the Rental Terms. You'll send me photos and an itemized list before any charge.",
@@ -616,11 +657,12 @@ export const messages: Messages = {
     exampleResult: "You pay for 2 days.",
     termsLink: "Read the full rental terms",
     shippingTitle: "Shipping & pickup",
-    shippingRules: (minDays: number, ahead: number, setDays: number, free: number, fee: number, far: number) => [
+    shippingRules: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number) => [
       "We ship to the 48 contiguous US states (plus Washington, DC) only. No shipping to Alaska, Hawaii or overseas.",
       `Shipped rentals start at ${minDays} days.`,
-      `Free shipping when your order includes a full set (suit or one-piece) rented for ${setDays}+ days, or when rentals and add-ons reach $${free} (deposit not included).`,
+      `Free shipping when rentals and add-ons reach $${free} (deposit not included), or when your order makes a full look: a top, pants, a helmet cover and gloves (a set, a one-piece or your own mix all count).`,
       `Otherwise there's one shipping fee per order: $${fee} to the Northeast, Midwest and most other states, or $${far} to some western and southern states (e.g. California, Washington, Texas, Florida).`,
+      `Free-shipping orders to those western and southern states pay $${farFree} toward shipping.`,
       "Local pickup in Ithaca starts at 1 day.",
       "Everything in a shipped order goes out in one package, so all items need the same ski days.",
       `Please book about ${ahead} days ahead for shipping.`,
@@ -644,7 +686,7 @@ export const messages: Messages = {
       },
       {
         title: "Damage & loss",
-        body: "Normal wear is free. Extra cleaning is $20–$40, repairable damage is the repair cost (up to $100), and items that are lost or can't be repaired are charged at retail price. Late returns are $25 per set or one-piece, $20 per single jacket or pants and $10 per accessory for each day late. We send photos and an itemized list before charging your card on file or deducting from your deposit.",
+        body: "Normal wear is free. Extra cleaning is $20–$40, repairable damage is the repair cost (up to $100), and items that are lost or can't be repaired are charged at retail price. Late returns are $25 per set or one-piece, $20 per single jacket or pants and $10 per accessory for each day late. Flaws disclosed in an item's condition notes aren't charged. We send photos and an itemized list before charging your card on file or deducting from your deposit.",
       },
     ],
   },
@@ -691,7 +733,7 @@ export const messages: Messages = {
           {
             list: [
               "Shipping: we ship with USPS to the 48 contiguous United States and Washington, D.C., and include a prepaid return label.",
-              `Shipping is free both ways when your order includes a full set (suit or one-piece) rented for ${a.freeSetMinDays} days or more, or when rentals and add-ons reach $${a.freeSubtotal}. Otherwise there is one shipping fee per order, $${a.fee} or $${a.farFee} depending on the state, shown at checkout.`,
+              `Shipping is free both ways when rentals and add-ons reach $${a.freeSubtotal}, or when your order makes a full look (a top, pants, a helmet cover and gloves); free-shipping orders to some western and southern states pay $${a.farFreeFee}. Otherwise there is one shipping fee per order, $${a.fee} or $${a.farFee} depending on the state, shown at checkout.`,
               "Local pickup: available in Ithaca, NY. You are welcome to try items on at pickup.",
               "Carrier delays: if we ship on time and the carrier delivers after your first rental day, we will refund the rental days you missed.",
             ],
@@ -759,6 +801,7 @@ export const messages: Messages = {
           },
           {
             list: [
+              "Flaws shown in an item's condition notes on our website, which you confirm before booking, are not damage and are never charged.",
               "Before charging anything, we will send you photos and an itemized list.",
               "If you saved a card, we charge it after sending you the itemized list. If you paid a deposit, charges come out of the deposit first, and any amount above it is due within 7 days.",
               "If you pay an item's full retail price, the item is yours to keep.",

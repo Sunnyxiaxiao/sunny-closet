@@ -83,6 +83,7 @@ async function StyleEditor({ params, searchParams }: PageProps<"/admin/inventory
             prices: style.rental_prices_cents?.map(centsToDollars).join(", ") ?? "",
             replacementValue:
               style.replacement_value_cents === null ? "" : centsToDollars(style.replacement_value_cents),
+            addonPrice: style.addon_price_cents === null ? "" : centsToDollars(style.addon_price_cents),
             sortOrder: String(style.sort_order),
             description: style.description,
             descriptionEn: style.description_en,
@@ -158,7 +159,7 @@ async function StyleEditor({ params, searchParams }: PageProps<"/admin/inventory
         ) : (
           <ul className="mt-4 space-y-4">
             {items.map((overview) => (
-              <AdminItemCard key={overview.item.id} overview={overview} today={today} returnTo={returnTo} />
+              <AdminItemCard key={overview.item.id} overview={overview} today={today} returnTo={returnTo} imageFolder={style.slug} />
             ))}
           </ul>
         )}

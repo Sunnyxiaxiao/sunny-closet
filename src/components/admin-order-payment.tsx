@@ -1,12 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { chargeSavedCard, markPaidInPerson } from "@/app/admin/actions";
+import { chargeSavedCard, markPaidInPerson, retryCardCharge } from "@/app/admin/actions";
 import type { CardChargeState } from "@/lib/admin/card-charge-state";
 import { formatMoney } from "@/lib/money";
 import type { CardChargeRow, PaymentMethod } from "@/lib/supabase/database.types";
 
 const CHARGE_STATUS: Record<CardChargeRow["status"], string> = {
+  pending: "正在扣款",
+  unknown: "结果未知",
   succeeded: "已扣款",
   processing: "处理中",
   failed: "失败",
@@ -85,9 +87,13 @@ export function AdminOrderPayment({
       {charges.length > 0 && (
         <ul className="mt-2 space-y-1 text-xs">
           {charges.map((c) => (
-            <li key={c.id} className={c.status === "failed" ? "text-red-700" : "text-neutral-700"}>
+            <li
+              key={c.id}
+              className={c.status === "failed" ? "text-red-700" : c.status === "unknown" ? "text-amber-800" : "text-neutral-700"}
+            >
               {CHARGE_STATUS[c.status]} {formatMoney(c.amount_cents)} · {c.reason}
-              {c.failure_message && `（${c.failure_message}）`}
+              {c.failure_message && c.status !== "unknown" && `（${c.failure_message}）`}
+              {(c.status === "unknown" || c.status === "pending") && c.idempotency_key && <RetryCharge chargeId={c.id} />}
             </li>
           ))}
         </ul>
@@ -131,5 +137,27 @@ export function AdminOrderPayment({
         <p className="mt-2 text-xs text-neutral-500">退款请在 Stripe 后台的 Payments 里操作。</p>
       )}
     </div>
+  );
+}
+
+/**
+ * A charge whose result is unknown (or stuck pending): the card may have been charged, so the only way forward is the same charge
+ * again (same idempotency key, never a second charge), after checking Stripe if in doubt
+ */
+function RetryCharge({ chargeId }: { chargeId: string }) {
+  const [state, action, pending] = useActionState<CardChargeState, FormData>(retryCardCharge, { nonce: "" });
+  return (
+    <form action={action} className="mt-1 flex flex-wrap items-center gap-2">
+      <input type="hidden" name="chargeId" value={chargeId} />
+      <span className="text-neutral-600">可能已经扣到，也可能没有。可以先去 Stripe 后台的 Payments 核对，或者：</span>
+      <button
+        type="submit"
+        disabled={pending}
+        className="h-7 rounded-full border border-amber-400 px-3 font-bold text-amber-900 hover:bg-amber-50 disabled:opacity-50"
+      >
+        {pending ? "重试中…" : "重试同一笔（不会重复扣）"}
+      </button>
+      {state.message && <span role="status">{state.message}</span>}
+    </form>
   );
 }

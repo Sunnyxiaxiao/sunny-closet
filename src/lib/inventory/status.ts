@@ -71,14 +71,14 @@ export function itemState(input: {
   return "available";
 }
 
-/** Occupying orders that haven't ended (return date not reached), sorted by first ski day */
+/** Occupying orders that haven't ended (return date not reached, or picked up and not back yet), sorted by first ski day */
 export function upcomingBookings<T extends ItemBooking>(bookings: readonly T[], today: IsoDate): T[] {
   return bookings
     .filter(
       (b) =>
         isBlockingStatus(b.status) &&
         b.status !== "returned" &&
-        compareDates(addDays(b.end, b.tailDays ?? 0), today) >= 0,
+        (b.status === "picked_up" || compareDates(addDays(b.end, b.tailDays ?? 0), today) >= 0),
     )
     .sort((a, b) => compareDates(a.start, b.start));
 }

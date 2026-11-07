@@ -27,6 +27,8 @@ export interface StyleFormValues {
   prices: string;
   /** 手套丢失赔偿价（美元），空 = 不显示 */
   replacementValue: string;
+  /** 手套搭配雪服的加购价（美元，整个租期），空 = 不能加购 */
+  addonPrice: string;
   sortOrder: string;
   /** 商品介绍（中文 / 英文），排版规则见 src/lib/description.ts */
   description: string;
@@ -116,6 +118,15 @@ export function AdminStyleForm({ initial }: { initial: StyleFormValues }) {
         {gloves && (
           <Field label="丢失赔偿价（美元，选填）" hint="显示在手套页面上；留空不显示" error={errors.replacementValue}>
             <input name="replacementValue" inputMode="decimal" defaultValue={v("replacementValue")} className={inputClass} />
+          </Field>
+        )}
+        {gloves && (
+          <Field
+            label="搭配雪服加购价（美元）"
+            hint="整个租期一口价，每套雪服限加购一副；留空 = 不能加购，只能单租"
+            error={errors.addonPrice}
+          >
+            <input name="addonPrice" inputMode="decimal" defaultValue={v("addonPrice")} className={inputClass} />
           </Field>
         )}
       </div>

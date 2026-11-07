@@ -6,8 +6,6 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { COST_ERROR, dollarsToCents, parseCost, parsePriceList } from "@/lib/admin/price-form";
 import type { AccountFormState } from "@/lib/account/form-state";
-import { blockedInterval, intervalsOverlap, isBlockingStatus } from "@/lib/booking/rules";
-import type { IsoDate } from "@/lib/dates";
 import {
   OUTFIT_CATEGORIES,
   SLUG_RE,
@@ -122,7 +120,10 @@ async function nextItemCode(
   return `${slug.toUpperCase()}-${n}`;
 }
 
-/** 手动锁定日期。和已有订单（含取件前后、清洁缓冲）重叠时不锁，提示先处理订单 */
+/**
+ * 手动锁定日期。和已有订单（含取件前后、清洁缓冲）重叠时不锁，提示先处理订单。
+ * 检查和写入在数据库函数 add_inventory_block 里一起做，并先锁住这件库存：同一时刻有人下单也不会两边都成功
+ */
 export async function addInventoryBlock(formData: FormData) {
   const { supabase } = await requireAdmin();
   const back = returnPath(formData);
@@ -133,29 +134,14 @@ export async function addInventoryBlock(formData: FormData) {
   if (!parsed.success) return done(parsed.error.issues[0].message);
   const { itemId, start, end, reason } = parsed.data;
 
-  const { data: bookings, error: readError } = await supabase
-    .from("bookings")
-    .select("booking_no, start_date, end_date, buffer_days, lead_days, tail_days, status")
-    .eq("inventory_item_id", itemId);
-  if (readError) throw new Error(`读取订单失败：${readError.message}`);
-
-  const wanted = blockedInterval({ start: start as IsoDate, end: end as IsoDate }, 0);
-  const conflict = bookings.find(
-    (b) =>
-      isBlockingStatus(b.status) &&
-      intervalsOverlap(
-        wanted,
-        blockedInterval({ start: b.start_date as IsoDate, end: b.end_date as IsoDate }, b.buffer_days, {
-          leadDays: b.lead_days,
-          tailDays: b.tail_days,
-        }),
-      ),
-  );
-  if (conflict) return done(`这段时间已有订单 ${conflict.booking_no}，请先处理这笔订单`);
-
-  const { error } = await supabase
-    .from("inventory_blocks")
-    .insert({ inventory_item_id: itemId, start_date: start, end_date: end, reason });
+  const { error } = await supabase.rpc("add_inventory_block", {
+    p_item_id: itemId,
+    p_start: start,
+    p_end: end,
+    p_reason: reason,
+  });
+  const conflict = /booking_conflict (\S+)/.exec(error?.message ?? "")?.[1];
+  if (conflict) return done(`这段时间已有订单 ${conflict}，请先处理这笔订单`);
   if (error) throw new Error(`锁定日期失败：${error.message}`);
   revalidatePath(back);
   return done();
@@ -185,6 +171,7 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
     slug: str("slug").toLowerCase(),
     prices: str("prices"),
     replacementValue: str("replacementValue"),
+    addonPrice: str("addonPrice"),
     sortOrder: str("sortOrder"),
     description: text("description"),
     descriptionEn: text("descriptionEn"),
@@ -209,6 +196,8 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
   else if (gloves && prices.cents === null) fieldErrors.prices = "手套需要自己的价目表";
   const replacement = values.replacementValue === "" ? null : dollarsToCents(values.replacementValue);
   if (values.replacementValue !== "" && replacement === null) fieldErrors.replacementValue = "请填 0–5000 之间的数字";
+  const addonPrice = values.addonPrice === "" ? null : dollarsToCents(values.addonPrice);
+  if (values.addonPrice !== "" && addonPrice === null) fieldErrors.addonPrice = "请填 0–5000 之间的数字";
   const sortOrder = Number(values.sortOrder || 0);
   if (!Number.isInteger(sortOrder)) fieldErrors.sortOrder = "排序请填整数";
   if (values.description.length > 8000) fieldErrors.description = "介绍太长了（8000 字以内）";
@@ -250,7 +239,7 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
     // 不收押金
     deposit_cents: 0,
     rental_prices_cents: rentalPrices,
-    ...(gloves ? { replacement_value_cents: replacement } : {}),
+    ...(gloves ? { replacement_value_cents: replacement, addon_price_cents: addonPrice } : {}),
     sort_order: sortOrder,
     description: values.description,
     description_en: values.descriptionEn,
@@ -313,4 +302,40 @@ export async function saveStyleImages(_previous: AccountFormState, formData: For
   if (error) return { message: `保存失败：${error.message}` };
   revalidatePath(`/admin/inventory/${id.data}`);
   return { notice: "图片已保存，前台马上生效。" };
+}
+
+const conditionSchema = z.object({
+  itemId: z.uuid(),
+  note: z.string().trim().max(1000, "中文说明最多 1000 字"),
+  noteEn: z.string().trim().max(1000, "英文说明最多 1000 字"),
+});
+
+/**
+ * 这一件的状态说明（给顾客看的瑕疵说明 + 特写照片）。写了说明，前台商品页会出现“状态说明”一栏，顾客下单前要勾选确认；
+ * 清空说明和照片就不再显示。已经下的订单里存的是下单时的版本，不受影响
+ */
+export async function saveItemCondition(_previous: AccountFormState, formData: FormData): Promise<AccountFormState> {
+  const { supabase } = await requireAdmin();
+  const parsed = conditionSchema.safeParse({
+    itemId: formData.get("itemId"),
+    note: formData.get("note") ?? "",
+    noteEn: formData.get("noteEn") ?? "",
+  });
+  if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "内容不正确" };
+  const urls = formData.getAll("conditionImages").filter((u): u is string => typeof u === "string");
+  // 只接受存在自己存储桶里的图片
+  const bucketPrefix = `${getPublicSupabaseEnv().url}/storage/v1/object/public/style-images/`;
+  if (urls.some((url) => !url.startsWith(bucketPrefix))) return { message: "图片地址不正确，请重新上传" };
+  if (urls.length > 10) return { message: "最多 10 张照片" };
+  const { note, noteEn, itemId } = parsed.data;
+  if (!note && (noteEn || urls.length > 0)) return { message: "请先写中文说明（照片和英文要配着说明一起显示）" };
+
+  const { error } = await supabase
+    .from("inventory_items")
+    .update({ condition_note: note, condition_note_en: noteEn, condition_image_urls: note ? urls : [] })
+    .eq("id", itemId);
+  if (error) return { message: `保存失败：${error.message}` };
+  revalidatePath(returnPath(formData));
+  if (!note) return { notice: "已清除，前台不再显示这件的状态说明。" };
+  return { notice: noteEn ? "已保存，前台马上显示。" : "已保存。英文说明还空着：英文页面会先显示中文，告诉 Claude 帮你翻译填上。" };
 }

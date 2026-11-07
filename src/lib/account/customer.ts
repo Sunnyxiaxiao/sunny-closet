@@ -1,12 +1,15 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
-import type { User } from "@supabase/supabase-js";
 import type { ProfileRow } from "@/lib/supabase/database.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface Customer {
-  user: User;
+  /**
+   * From the verified session token. Fine for display and prefilling forms; to match guest orders by email,
+   * use confirmedEmail() with getUser() instead (see src/lib/account/confirmed-email.ts)
+   */
+  user: { id: string; email: string };
   profile: Pick<ProfileRow, "full_name" | "phone" | "wechat">;
 }
 
@@ -21,10 +24,11 @@ export async function getCustomer(): Promise<Customer | null> {
   // Supabase 校验登录状态时会读当前时间，只能在请求时执行，不能参与预渲染
   await connection();
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getClaims() verifies the token locally (no request to the Auth server, unlike getUser())
+  const { data: auth } = await supabase.auth.getClaims();
+  const claims = auth?.claims;
+  if (!claims) return null;
+  const user = { id: claims.sub, email: claims.email ?? "" };
   const { data } = await supabase
     .from("profiles")
     .select("full_name, phone, wechat")
@@ -32,7 +36,7 @@ export async function getCustomer(): Promise<Customer | null> {
     .maybeSingle();
   return {
     user,
-    profile: data ?? { full_name: String(user.user_metadata?.full_name ?? ""), phone: "", wechat: "" },
+    profile: data ?? { full_name: String(claims.user_metadata?.full_name ?? ""), phone: "", wechat: "" },
   };
 }
 
@@ -41,7 +45,7 @@ export function checkoutDefaults(customer: Customer | null) {
   if (!customer) return undefined;
   return {
     name: customer.profile.full_name,
-    email: customer.user.email ?? "",
+    email: customer.user.email,
     phone: customer.profile.phone,
     wechat: customer.profile.wechat,
   };

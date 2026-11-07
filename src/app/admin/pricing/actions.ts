@@ -6,7 +6,7 @@ import { PRICE_TABLES, parsePriceRow } from "@/lib/admin/price-form";
 import type { AccountFormState } from "@/lib/account/form-state";
 import type { Database } from "@/lib/supabase/database.types";
 
-/** 保存三张价目表和邮寄最短天数。数据库只允许管理员改（settings_admin_update 策略） */
+/** 保存三张价目表、邮寄最短天数和逾期占用天数。数据库只允许管理员改（settings_admin_update 策略） */
 export async function savePrices(_previous: AccountFormState, formData: FormData): Promise<AccountFormState> {
   const { supabase } = await requireAdmin();
   const values = Object.fromEntries(
@@ -29,6 +29,12 @@ export async function savePrices(_previous: AccountFormState, formData: FormData
     fieldErrors.shippingMinDays = `请填 1–${days} 的整数`;
   } else {
     update.shipping_min_days = minDays;
+  }
+  const holdDays = Number(values.overdueHoldDays);
+  if (!Number.isInteger(holdDays) || holdDays < 1 || holdDays > 60) {
+    fieldErrors.overdueHoldDays = "请填 1–60 的整数";
+  } else {
+    update.overdue_hold_days = holdDays;
   }
   if (Object.keys(fieldErrors).length > 0) return { message: "请检查标红的内容", fieldErrors, values };
 

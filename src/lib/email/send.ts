@@ -9,7 +9,7 @@ import type { EmailMessage } from "@/lib/email/templates";
  *   SMTP_USER  店铺 Gmail 地址
  *   SMTP_PASS  Gmail 的 16 位“应用专用密码”（不是登录密码）
  * 可选：SMTP_HOST / SMTP_PORT（默认 smtp.gmail.com:465）、ADMIN_NOTIFY_EMAIL（新订单通知发给谁，默认联系邮箱）。
- * 没配置时不发信、只在日志里提示；发信失败也不影响下单和改状态。
+ * 没配置时不发信；发信失败也不影响下单和改状态（订单邮件会记下来，定期重试，后台可以重发，见 delivery.ts）。
  */
 
 export function emailConfigured(): boolean {
@@ -22,22 +22,28 @@ export function adminNotifyEmail(): string {
 }
 
 export async function sendEmail(message: EmailMessage): Promise<boolean> {
-  if (!emailConfigured()) {
-    console.warn(`[email] 没有配置 SMTP_USER / SMTP_PASS，跳过发信：${message.subject}`);
-    return false;
-  }
-  const port = Number(process.env.SMTP_PORT || 465);
   try {
-    const transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port,
-      secure: port === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-    await transport.sendMail({ from: { name: shop.name, address: process.env.SMTP_USER! }, ...message });
+    await sendEmailOrThrow(message);
     return true;
   } catch (error) {
     console.error(`[email] 发送失败：${message.subject}`, error);
     return false;
   }
+}
+
+/** Same, but throws with the reason (order emails record it, see src/lib/email/delivery.ts) */
+export async function sendEmailOrThrow(message: EmailMessage): Promise<void> {
+  if (!emailConfigured()) throw new Error("没有配置 SMTP_USER / SMTP_PASS");
+  const port = Number(process.env.SMTP_PORT || 465);
+  const transport = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port,
+    secure: port === 465,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    // Fail fast (the server function has seconds, not minutes); a failed order email is retried later
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
+  });
+  await transport.sendMail({ from: { name: shop.name, address: process.env.SMTP_USER! }, ...message });
 }

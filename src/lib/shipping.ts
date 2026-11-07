@@ -4,6 +4,7 @@
  */
 
 import { shop } from "@/config/shop";
+import { isFullLook, oneAccessoryShort, type OutfitLine } from "@/lib/add-ons";
 
 /** 可以邮寄的地区：美国本土 48 州 + 华盛顿特区（不含阿拉斯加、夏威夷和海外领地） */
 export const SHIPPING_STATES = [
@@ -76,33 +77,58 @@ export function formatShippingAddress(a: { street: string; city: string; state: 
 
 /**
  * 文案（款式页、下单表单、租赁须知）里用到的数字：邮寄最短天数、提前几天下单、
- * 包邮要一套租满几天、包邮门槛、近区运费、远区运费（金额是美元整数）
+ * 包邮门槛、近区运费、远区运费、远区包邮补的运费（金额是美元整数）
  */
 export function shippingPolicyArgs(minDays: number): [number, number, number, number, number, number] {
   const s = shop.shipping;
-  return [minDays, s.orderAheadDays, s.freeSetMinDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100];
+  return [minDays, s.orderAheadDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100, s.farFreeFeeCents / 100];
 }
 
-/** 算运费用到的每件信息 */
-export interface ShippingLine {
-  category: string;
-  rentalDays: number;
+/** 算运费用到的每件信息：品类、租金、加购价合计、加购的是什么（头盔套 / 手套） */
+export interface ShippingLine extends OutfitLine {
   rentalCents: number;
   addOnCents: number;
 }
 
-/** 套装和连体服算“一套” */
-const SET_CATEGORIES = new Set(["suit", "one_piece"]);
-
-/** 满足其一就包邮：有一套租满 2 天，或租金 + 加购满 $99（押金不算） */
-export function qualifiesForFreeShipping(lines: readonly ShippingLine[]): boolean {
-  const s = shop.shipping;
-  if (lines.some((l) => SET_CATEGORIES.has(l.category) && l.rentalDays >= s.freeSetMinDays)) return true;
-  return lines.reduce((sum, l) => sum + l.rentalCents + l.addOnCents, 0) >= s.freeSubtotalCents;
+/** 购物车 / 订单里每件 → 算运费用的信息 */
+export function shippingLines(
+  lines: readonly {
+    style: { category: string } | null;
+    rentalCents: number;
+    addOns: readonly { cents: number; category: string }[];
+  }[],
+): ShippingLine[] {
+  return lines.map((l) => ({
+    category: l.style?.category ?? "",
+    rentalCents: l.rentalCents,
+    addOnCents: l.addOns.reduce((sum, a) => sum + a.cents, 0),
+    addOnCategories: l.addOns.map((a) => a.category),
+  }));
 }
 
-/** 这单邮寄到这个州的运费（分）；包邮返回 0。还没选州时按近区算 */
+/** 满足其一就包邮：租金 + 加购满 $99（押金不算），或有一整套 full look（上衣、裤子、头盔套、手套） */
+export function qualifiesForFreeShipping(lines: readonly ShippingLine[]): boolean {
+  if (isFullLook(lines)) return true;
+  return lines.reduce((sum, l) => sum + l.rentalCents + l.addOnCents, 0) >= shop.shipping.freeSubtotalCents;
+}
+
+export function isFarState(state: string): boolean {
+  return (shop.shipping.farStates as readonly string[]).includes(state);
+}
+
+/** 这单邮寄到这个州的运费（分）：包邮时近区 0、远区补一点；不包邮按州收。还没选州时按近区算 */
 export function shippingFeeCents(lines: readonly ShippingLine[], state: string): number {
-  if (qualifiesForFreeShipping(lines)) return 0;
-  return (shop.shipping.farStates as readonly string[]).includes(state) ? shop.shipping.farFeeCents : shop.shipping.feeCents;
+  const s = shop.shipping;
+  if (qualifiesForFreeShipping(lines)) return isFarState(state) ? s.farFreeFeeCents : 0;
+  return isFarState(state) ? s.farFeeCents : s.feeCents;
+}
+
+/** 购物车里那行“full look 包邮”小提示：还没包邮，衣服齐了、只差头盔套或手套其中一样 */
+export function showFullLookTip(lines: readonly ShippingLine[]): boolean {
+  return !qualifiesForFreeShipping(lines) && oneAccessoryShort(lines);
+}
+
+/** 急单加急费（分）：近区 $15，远区 $25；包邮也收 */
+export function rushFeeCents(state: string): number {
+  return isFarState(state) ? shop.shipping.rushFarFeeCents : shop.shipping.rushFeeCents;
 }

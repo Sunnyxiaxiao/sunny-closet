@@ -141,6 +141,19 @@ describe("购物车内容 cartLinesSchema", () => {
     expect(cartLinesSchema.safeParse([{ ...line, addOnIds: [helmet] }]).success).toBe(true);
     expect(cartLinesSchema.safeParse([{ ...line, addOnIds: [helmet, helmet] }]).success).toBe(false);
   });
+
+  it("加购尺码：一个加购一个（头盔套是 null）；旧购物车没有尺码时补 null", () => {
+    const helmet = "8b7fed66-6e3d-419c-a11f-71fadcf6437d";
+    const gloves = "1924284a-af81-4360-a96e-90a476052dd4";
+    const parsed = cartLinesSchema.safeParse([
+      { ...line, addOnIds: [helmet, gloves], addOnSizes: [null, "玫红 · S"] },
+      { ...line, id: "old", addOnIds: [helmet] },
+    ]);
+    expect(parsed.success && parsed.data.map((l) => l.addOnSizes)).toEqual([[null, "玫红 · S"], [null]]);
+    expect(cartLinesSchema.safeParse([{ ...line, addOnIds: [helmet, gloves], addOnSizes: ["M"] }]).success).toBe(false);
+    const third = "66ee9f6b-b2b1-4376-b418-190f1c76c6f2";
+    expect(cartLinesSchema.safeParse([{ ...line, addOnIds: [helmet, gloves, third] }]).success).toBe(false);
+  });
 });
 
 describe("buildCustomerNote", () => {

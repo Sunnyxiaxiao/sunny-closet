@@ -7,8 +7,15 @@ import { availabilityQuerySchema } from "@/lib/validation/rental-query";
  * 款式详情页实时查询：GET /api/availability?styleId=...&start=YYYY-MM-DD&end=YYYY-MM-DD（滑雪日）
  * → { sizes: [{ size, total, available, shippingAvailable }] }
  *   available 按到店自取算；邮寄要提前寄出、晚些回来，占用更久，单独给出 shippingAvailable
- * 不带 styleId → { counts, shippingCounts }：{ 款式 id: 可租件数 }（雪服页的头盔套加购用）
+ * 不带 styleId → { counts, shippingCounts }：{ 款式 id: 可租件数 }（雪服页的头盔套加购用），
+ *   和 { sizeCounts, shippingSizeCounts }：{ 款式 id: { 尺码: 可租件数 } }（加购手套要选颜色 · 尺码）
  */
+function sizeCounts(availability: Awaited<ReturnType<typeof getAvailability>>) {
+  return Object.fromEntries(
+    [...availability].map(([styleId, sizes]) => [styleId, Object.fromEntries(sizes.map((s) => [s.size, s.available]))]),
+  );
+}
+
 export async function GET(request: NextRequest) {
   const parsed = availabilityQuerySchema.safeParse(
     Object.fromEntries(request.nextUrl.searchParams),
@@ -44,6 +51,8 @@ export async function GET(request: NextRequest) {
     {
       counts: Object.fromEntries(availableCounts(pickup)),
       shippingCounts: Object.fromEntries(availableCounts(shipping)),
+      sizeCounts: sizeCounts(pickup),
+      shippingSizeCounts: sizeCounts(shipping),
     },
     { headers },
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ConditionNotes } from "@/components/condition-notes";
 import { GlovesCard } from "@/components/gloves-card";
 import { HelmetCoverStage } from "@/components/helmet-cover-stage";
 import { PriceTierStrip } from "@/components/price-tier-strip";
@@ -15,6 +16,7 @@ import {
   listStyles,
   stylePriceTable,
 } from "@/lib/catalog";
+import { styleConditionNotes } from "@/lib/condition";
 import { parseDescription } from "@/lib/description";
 import { capFromDays, isCrystal, variantImageIndex } from "@/lib/gloves";
 import { CrystalBadge } from "@/components/gloves-card";
@@ -54,11 +56,12 @@ async function GlovesDetail({
   const gloves = await getStyleBySlug(slug, { kind: "gloves", locale });
   if (!gloves) notFound();
 
-  const [settings, today, availability, all] = await Promise.all([
+  const [settings, today, availability, all, conditionNotes] = await Promise.all([
     getSettings(),
     getToday(),
     getAvailability({ styleId: gloves.id }),
     listStyles({ kind: "gloves", locale }),
+    styleConditionNotes(gloves, locale),
   ]);
   // 颜色按图片顺序排，没有对应图片的排在最后
   const imageOf = (size: string) => gloves.variant_images[size] ?? Number.MAX_SAFE_INTEGER;
@@ -100,6 +103,15 @@ async function GlovesDetail({
           settings.glovesMaxRentalDays,
         )}
       </p>
+      {gloves.addon_price_cents !== null && (
+        <Link
+          href={localePath(locale, "/styles")}
+          className="mt-3 flex items-center justify-between gap-3 bg-neutral-100 px-4 py-3 text-sm hover:bg-neutral-200"
+        >
+          <span>{t.addOnPricing(formatMoney(gloves.addon_price_cents, { whole: true }))}</span>
+          <span className="shrink-0 font-semibold">→</span>
+        </Link>
+      )}
 
       <p className="mt-4 border-l-2 border-neutral-900 pl-3 text-xs leading-relaxed text-neutral-600">{t.hygiene}</p>
       {gloves.replacement_value_cents !== null && (
@@ -135,6 +147,7 @@ async function GlovesDetail({
           ))}
         </div>
       )}
+      <ConditionNotes notes={conditionNotes} locale={locale} className="mt-6 border-t" />
       {gloves.source_url && (
         <p className="mt-4 text-xs text-neutral-400">
           {messages.product.sourceCredit}

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useId, type ReactNode } from "react";
 import { thumbUrl } from "@/lib/images";
 import Link from "next/link";
 import { localePath, type Locale } from "@/i18n/config";
@@ -8,35 +9,47 @@ import type { AddOnOption } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { getMessages } from "@/messages";
 
-/** 雪服页的头盔套加购：横向滑动的卡片，点一下选中，再点一下取消 */
+/**
+ * 雪服页的加购（头盔套，或 kind="gloves" 的手套）：横向滑动的卡片，点一下选中，再点一下取消。
+ * children 显示在卡片下面（手套的颜色 · 尺码）
+ */
 export function CompleteTheLook({
   options,
   selectedId,
   onSelect,
   availableCounts,
+  kind = "helmet_cover",
+  children,
   locale,
 }: {
-  options: AddOnOption[];
+  options: Pick<AddOnOption, "id" | "name" | "imageUrl" | "addOnCents">[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   /** 选了日期后：款式 id → 这段时间可租件数；还没选日期或正在查询时为 null */
   availableCounts: Record<string, number> | null;
+  kind?: "helmet_cover" | "gloves";
+  children?: ReactNode;
   locale: Locale;
 }) {
   const messages = getMessages(locale);
   const t = messages.helmet;
+  const text =
+    kind === "gloves"
+      ? { title: messages.gloves.addOnTitle, body: messages.gloves.addOnBody, pickDates: messages.gloves.pickDatesFirst, href: "/gloves", icon: "🧤" }
+      : { title: t.completeTitle, body: t.completeBody, pickDates: t.pickDatesFirst, href: "/helmet-covers", icon: "🐰" };
+  const headingId = useId();
   return (
-    <section aria-labelledby="complete-the-look">
+    <section aria-labelledby={headingId}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="complete-the-look" className="text-base font-black">
-          {t.completeTitle}
+        <h2 id={headingId} className="text-base font-black">
+          {text.title}
         </h2>
-        <Link href={localePath(locale, "/helmet-covers")} className="shrink-0 text-xs underline underline-offset-4">
+        <Link href={localePath(locale, text.href)} className="shrink-0 text-xs underline underline-offset-4">
           {messages.home.viewAll}
         </Link>
       </div>
       <p className="mt-0.5 text-xs text-neutral-500">
-        {availableCounts ? t.completeBody : t.pickDatesFirst}
+        {availableCounts ? text.body : text.pickDates}
       </p>
 
       <ul className="no-scrollbar -mx-4 mt-3 flex snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
@@ -64,7 +77,7 @@ export function CompleteTheLook({
                   {option.imageUrl ? (
                     <Image src={thumbUrl(option.imageUrl)} alt="" fill sizes="160px" unoptimized className="object-cover" />
                   ) : (
-                    <span className="flex h-full items-center justify-center text-3xl">🐰</span>
+                    <span className="flex h-full items-center justify-center text-3xl">{text.icon}</span>
                   )}
                   {selected && (
                     <span className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs text-white">
@@ -89,6 +102,7 @@ export function CompleteTheLook({
           );
         })}
       </ul>
+      {children}
     </section>
   );
 }

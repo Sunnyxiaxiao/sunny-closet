@@ -23,8 +23,8 @@ export const HELMET_COVER_DEFAULTS = {
   addOnCents: { regular: 800, premium: 1200 } satisfies Record<HelmetCoverTier, number>,
 };
 
-/** 一套雪服最多加购几件配件。数据结构支持多件，先限制为 1 件 */
-export const MAX_ADD_ONS_PER_OUTFIT = 1;
+/** 一套雪服最多加购几件配件：一顶头盔套 + 一副手套（见 src/lib/add-ons.ts） */
+export const MAX_ADD_ONS_PER_OUTFIT = 2;
 
 export interface StandalonePrices {
   oneDay: number;
@@ -75,6 +75,16 @@ export function normalizeTags(raw: string): string[] {
     .map((tag) => tag.trim().toLowerCase())
     .filter((tag) => /^[\p{L}\p{N}-]{1,20}$/u.test(tag));
   return [...new Set(tags)].slice(0, 20);
+}
+
+/** 雪服页可加购的一副手套：哪些颜色 · 尺码有库存 */
+export interface GlovesAddOnOption {
+  id: string;
+  slug: string;
+  name: string;
+  imageUrl: string | undefined;
+  addOnCents: number;
+  sizes: string[];
 }
 
 /** 雪服页“Complete the Look”里一顶可加购的头盔套（传给浏览器端组件，只含展示需要的字段） */

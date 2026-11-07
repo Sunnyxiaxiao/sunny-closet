@@ -1,5 +1,6 @@
 import "server-only";
 import { connection } from "next/server";
+import { cache } from "react";
 import { shop } from "@/config/shop";
 import type { FulfillmentPaddings } from "@/lib/booking/rules";
 import type { FulfillmentMethod } from "@/config/shop";
@@ -147,7 +148,8 @@ export async function getToday(): Promise<IsoDate> {
   return todayIn(shop.timeZone);
 }
 
-export async function getSettings(): Promise<ShopSettings> {
+/** Memoized per request (React cache), like getStyleBySlug */
+export const getSettings = cache(async (): Promise<ShopSettings> => {
   await connection();
   const { data, error } = await createSupabasePublicClient()
     .from("settings")
@@ -155,7 +157,7 @@ export async function getSettings(): Promise<ShopSettings> {
     .single();
   if (error) throw new Error(`读取店铺设置失败：${error.message}`);
   return toShopSettings(data);
-}
+});
 
 /**
  * Active styles. Lists outfits by default; pass kind: "helmet_cover" for helmet covers or kind: "gloves" for gloves. Names and descriptions follow locale.
@@ -180,10 +182,15 @@ export async function listStyles({
     .map((row) => localize(row, locale));
 }
 
-export async function getStyleBySlug(
+/** A product page and its metadata both ask for the style: memoized per request (React cache), so it's read once */
+export function getStyleBySlug(
   slug: string,
   { kind = "outfit", locale = "zh" }: { kind?: StyleKind; locale?: Locale } = {},
 ): Promise<PublicStyle | null> {
+  return styleBySlug(slug, kind, locale);
+}
+
+const styleBySlug = cache(async (slug: string, kind: StyleKind, locale: Locale): Promise<PublicStyle | null> => {
   await connection();
   const { data, error } = await createSupabasePublicClient()
     .from("styles")
@@ -194,7 +201,7 @@ export async function getStyleBySlug(
   if (error) throw new Error(`读取款式失败：${error.message}`);
   if (!data || styleKind(data.category) !== kind) return null;
   return localize(data, locale);
-}
+});
 
 /**
  * Which price table this style uses: its own if it has one (helmet covers, gloves),

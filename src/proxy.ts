@@ -56,8 +56,9 @@ async function refreshSession(request: NextRequest, makeResponse: () => NextResp
     },
   });
 
-  // getUser() must be called: it refreshes the session when needed
-  await supabase.auth.getUser();
+  // Refreshes the session when the access token is about to expire. getClaims() checks the token locally against the
+  // project's public signing key (ES256), so a valid session costs no request to Supabase; getUser() would ask the Auth server on every page
+  await supabase.auth.getClaims();
 
   return response;
 }

@@ -13,10 +13,10 @@ export async function requireAdmin() {
   await connection();
   const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
+  // Verified locally against the project's signing key, without a request to the Auth server
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims) redirect("/admin/login");
+  const user = { id: auth.claims.sub, email: auth.claims.email ?? "" };
 
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) redirect("/admin/login?error=forbidden");

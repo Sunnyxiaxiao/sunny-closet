@@ -3,7 +3,6 @@ import { shop } from "@/config/shop";
 import type { Locale } from "@/i18n/config";
 import { earliestShippingStart, validateRentalRange } from "@/lib/booking/rules";
 import {
-  getAvailability,
   maxRentalDaysFor,
   SETTINGS_COLUMNS,
   styleKind,
@@ -12,8 +11,10 @@ import {
   type ShopSettings,
   type StyleKind,
 } from "@/lib/catalog";
-import { todayIn, type IsoDate } from "@/lib/dates";
-import { HELMET_COVER_CATEGORY, MAX_ADD_ONS_PER_OUTFIT } from "@/lib/helmet-covers";
+import { cartConditionNotes, conditionDigest, type ConditionNote } from "@/lib/condition";
+import { addDays, todayIn, type IsoDate } from "@/lib/dates";
+import { isAddOnCategory, linesOverAddOnLimit, type AddOnCategory } from "@/lib/add-ons";
+import { MAX_ADD_ONS_PER_OUTFIT } from "@/lib/helmet-covers";
 import { thumbUrl } from "@/lib/images";
 import { calculateQuote } from "@/lib/pricing";
 import type { StyleCategory } from "@/lib/supabase/database.types";
@@ -32,7 +33,8 @@ export type CartLineProblem =
   | "start_in_past"
   | "too_long"
   | "invalid_addons"
-  | "addon_not_found";
+  | "addon_not_found"
+  | "addon_limit";
 
 export interface PricedLine {
   input: CartLineInput;
@@ -50,7 +52,17 @@ export interface PricedLine {
   rentalCents: number;
   averageDailyCents: number;
   depositCents: number;
-  addOns: { id: string; name: string; cents: number }[];
+  addOns: PricedAddOn[];
+}
+
+/** An add-on as priced: a helmet cover, or gloves in a chosen color / size */
+export interface PricedAddOn {
+  id: string;
+  name: string;
+  cents: number;
+  category: AddOnCategory;
+  /** The gloves' color / size; null for a helmet cover */
+  size: string | null;
 }
 
 const STOREFRONT_PATH: Record<StyleKind, string> = {
@@ -114,13 +126,26 @@ export async function priceCart(
       return { ...empty, style, problem };
     }
 
-    // Only outfits can have helmet-cover add-ons
+    // Only outfits can have add-ons: one helmet cover and one pair of gloves at most, gloves in a chosen size
+    const addOnStyles = input.addOnIds.map((id) => styles.get(id));
+    const missingAddOn = addOnStyles.some((a) => !a || !isAddOnCategory(a.category) || a.addon_price_cents === null);
+    const addOns: PricedAddOn[] = missingAddOn
+      ? []
+      : addOnStyles.map((a, i) => ({
+          id: a!.id,
+          name: nameOf(a!),
+          cents: a!.addon_price_cents ?? 0,
+          category: a!.category as AddOnCategory,
+          size: a!.category === "gloves" ? (input.addOnSizes[i] ?? null) : null,
+        }));
     const addOnProblem =
-      input.addOnIds.length > 0 && (kind !== "outfit" || input.addOnIds.length > MAX_ADD_ONS_PER_OUTFIT)
+      input.addOnIds.length > 0 &&
+      (kind !== "outfit" ||
+        input.addOnIds.length > MAX_ADD_ONS_PER_OUTFIT ||
+        new Set(addOns.map((a) => a.category)).size < addOns.length ||
+        addOns.some((a) => a.category === "gloves" && !a.size))
         ? "invalid_addons"
         : null;
-    const addOns = input.addOnIds.map((id) => styles.get(id));
-    const missingAddOn = addOns.some((a) => !a || a.category !== HELMET_COVER_CATEGORY || a.addon_price_cents === null);
 
     const quote = calculateQuote({
       start: input.start,
@@ -136,11 +161,15 @@ export async function priceCart(
       rentalCents: quote.rentalCents,
       averageDailyCents: quote.averageDailyCents,
       depositCents: quote.depositCents,
-      addOns: missingAddOn
-        ? []
-        : addOns.map((a) => ({ id: a!.id, name: nameOf(a!), cents: a!.addon_price_cents ?? 0 })),
+      addOns,
     };
   });
+
+  // More add-ons than outfits (one helmet cover and one pair of gloves each): the items past the limit can't be ordered as they are
+  const over = linesOverAddOnLimit(
+    priced.map((l) => ({ category: l.style?.category ?? "", addOnCategories: l.addOns.map((a) => a.category) })),
+  );
+  for (const index of over) priced[index].problem ??= "addon_limit";
 
   return { settings, today, lines: priced };
 }
@@ -155,10 +184,14 @@ export interface CartQuoteLine {
   rentalDays: number;
   rentalCents: number;
   depositCents: number;
-  addOns: { id: string; name: string; cents: number; pickupOk: boolean; shippingOk: boolean }[];
-  /** Whether this item (with add-ons) is available for pickup / shipping on these dates (duplicates of the same style and size in one cart are counted together) */
+  addOns: (PricedAddOn & { pickupOk: boolean; shippingOk: boolean })[];
+  /** Whether this item (with add-ons) is available for pickup / shipping on these dates, after the items before it in the cart */
   pickupOk: boolean;
   shippingOk: boolean;
+  /** Disclosed flaws on the pieces this item could come with; the customer confirms them before ordering */
+  conditionNotes: ConditionNote[];
+  /** Fingerprint of those notes, sent back with the confirmation so checkout can tell if they changed since (null = no notes) */
+  conditionDigest: string | null;
 }
 
 export interface CartQuote {
@@ -167,6 +200,8 @@ export interface CartQuote {
   shippingLeadDays: number;
   /** Earliest first ski day available for shipping */
   earliestShippingStart: IsoDate;
+  /** Shipping orders starting before this give short notice: rush shipping, or wait for the owner to accept */
+  shortNoticeBefore: IsoDate;
 }
 
 function withPath({ slug, ...style }: NonNullable<PricedLine["style"]>) {
@@ -175,34 +210,37 @@ function withPath({ slug, ...style }: NonNullable<PricedLine["style"]>) {
 
 /** For the cart page: prices + per-item pickup / shipping availability */
 export async function quoteCart(lines: CartLineInput[], locale: Locale): Promise<CartQuote> {
-  const { settings, today, lines: priced } = await priceCart(lines, locale);
+  const [{ settings, today, lines: priced }, conditionNotes] = await Promise.all([
+    priceCart(lines, locale),
+    cartConditionNotes(lines, locale),
+  ]);
 
-  // Look up each date range only once: style id → available count per size
-  const ranges = [...new Set(priced.filter((l) => !l.problem).map((l) => `${l.input.start}|${l.input.end}`))];
-  const availability = new Map(
-    await Promise.all(
-      ranges.map(async (key) => {
-        const [start, end] = key.split("|") as [IsoDate, IsoDate];
-        const [pickup, shipping] = await Promise.all([
-          getAvailability({ start, end }),
-          getAvailability({ start, end, fulfillment: "shipping" }),
-        ]);
-        return [key, { pickup, shipping }] as const;
-      }),
-    ),
-  );
-
-  // Count of the same style, size and dates in the cart (the nth item needs n free items)
-  const demand = new Map<string, number>();
-  const need = (key: string) => {
-    const n = (demand.get(key) ?? 0) + 1;
-    demand.set(key, n);
-    return n;
-  };
-  const countOf = (map: Map<string, { size: string; available: number }[]>, styleId: string, size: string | null) =>
-    (map.get(styleId) ?? [])
-      .filter((s) => size === null || s.size === size)
-      .reduce((sum, s) => sum + s.available, 0);
+  // The whole cart allocated in the database the way an order is (overlapping dates, sets sharing pieces with single items,
+  // add-ons sharing helmet covers with standalone ones): items with a problem are left out
+  const checked = priced.filter((l) => !l.problem);
+  const availability = new Map<string, { pickup: boolean; shipping: boolean; addOnsPickup: boolean; addOnsShipping: boolean }>();
+  if (checked.length > 0) {
+    const { data, error } = await createSupabasePublicClient().rpc("cart_availability", {
+      p_lines: checked.map(({ input }) => ({
+        style_id: input.styleId,
+        size: input.size,
+        start: input.start,
+        end: input.end,
+        addon_style_ids: input.addOnIds,
+        addon_sizes: input.addOnSizes,
+      })),
+    });
+    if (error) throw new Error(`查询可用性失败：${error.message}`);
+    checked.forEach(({ input }, i) => {
+      const row = (method: "pickup" | "shipping") => data.find((r) => r.line === i + 1 && r.fulfillment_method === method);
+      availability.set(input.id, {
+        pickup: row("pickup")?.item_ok ?? false,
+        shipping: row("shipping")?.item_ok ?? false,
+        addOnsPickup: row("pickup")?.addons_ok ?? false,
+        addOnsShipping: row("shipping")?.addons_ok ?? false,
+      });
+    });
+  }
 
   const quoted = priced.map((line): CartQuoteLine => {
     const { input } = line;
@@ -216,26 +254,19 @@ export async function quoteCart(lines: CartLineInput[], locale: Locale): Promise
       rentalDays: line.rentalDays,
       rentalCents: line.rentalCents,
       depositCents: line.depositCents,
+      conditionNotes: conditionNotes.get(input.id) ?? [],
+      conditionDigest: conditionDigest(conditionNotes.get(input.id) ?? []),
     };
-    const avail = availability.get(`${input.start}|${input.end}`);
+    const avail = availability.get(input.id);
     if (line.problem || !avail) {
       return { ...base, addOns: line.addOns.map((a) => ({ ...a, pickupOk: false, shippingOk: false })), pickupOk: false, shippingOk: false };
     }
-    const key = `${input.styleId}|${input.size}|${input.start}|${input.end}`;
-    const n = need(key);
-    const addOns = line.addOns.map((a) => {
-      const m = need(`${a.id}|*|${input.start}|${input.end}`);
-      return {
-        ...a,
-        pickupOk: countOf(avail.pickup, a.id, null) >= m,
-        shippingOk: countOf(avail.shipping, a.id, null) >= m,
-      };
-    });
+    const addOns = line.addOns.map((a) => ({ ...a, pickupOk: avail.addOnsPickup, shippingOk: avail.addOnsShipping }));
     return {
       ...base,
       addOns,
-      pickupOk: countOf(avail.pickup, input.styleId, input.size) >= n && addOns.every((a) => a.pickupOk),
-      shippingOk: countOf(avail.shipping, input.styleId, input.size) >= n && addOns.every((a) => a.shippingOk),
+      pickupOk: avail.pickup && addOns.every((a) => a.pickupOk),
+      shippingOk: avail.shipping && addOns.every((a) => a.shippingOk),
     };
   });
 
@@ -244,5 +275,6 @@ export async function quoteCart(lines: CartLineInput[], locale: Locale): Promise
     shippingMinDays: settings.shippingMinDays,
     shippingLeadDays: settings.paddings.shipping.leadDays,
     earliestShippingStart: earliestShippingStart(today, settings.paddings),
+    shortNoticeBefore: addDays(today, shop.shipping.orderAheadDays),
   };
 }

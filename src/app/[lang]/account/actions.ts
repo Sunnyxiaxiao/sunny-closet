@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { DEFAULT_LOCALE, isLocale, localePath, type Locale } from "@/i18n/config";
 import type { AccountFormState } from "@/lib/account/form-state";
-import { safeNextPath, siteOrigin } from "@/lib/site-url";
+import { publicOrigin, safeNextPath } from "@/lib/site-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getMessages } from "@/messages";
@@ -60,7 +60,7 @@ export async function signUpCustomer(_previous: AccountFormState, formData: Form
     password,
     options: {
       data: { full_name: name },
-      emailRedirectTo: `${await siteOrigin()}/api/auth/callback?next=${encodeURIComponent(accountPath)}`,
+      emailRedirectTo: `${await publicOrigin()}/api/auth/callback?next=${encodeURIComponent(accountPath)}`,
     },
   });
   if (error) return { message: authError(locale, error), values };
@@ -112,7 +112,7 @@ export async function requestPasswordReset(
   const supabase = await createSupabaseServerClient();
   const next = localePath(locale, "/account/reset-password");
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${await siteOrigin()}/api/auth/callback?next=${encodeURIComponent(next)}`,
+    redirectTo: `${await publicOrigin()}/api/auth/callback?next=${encodeURIComponent(next)}`,
   });
   // 不告诉对方这个邮箱有没有注册过；只有发送太频繁时提示
   if (error && (error.status === 429 || error.code?.includes("rate_limit"))) {

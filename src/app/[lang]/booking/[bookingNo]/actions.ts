@@ -1,12 +1,11 @@
 "use server";
 
-import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { localePath } from "@/i18n/config";
 import { orderAccess } from "@/lib/booking/order-access";
+import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 import { createOrderCheckout, stripeEnabled } from "@/lib/stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getMessages } from "@/messages";
@@ -109,15 +108,7 @@ export async function startPayment(formData: FormData) {
   const { locale, bookingNo } = parsed.data;
   const orderPath = localePath(locale, `/booking/${bookingNo}`);
 
-  const requestHeaders = await headers();
-  const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip")?.trim() || "unknown";
-  const { data: allowed, error: limitError } = await createSupabaseServiceClient().rpc("hit_rate_limit", {
-    p_bucket: "payment_ip",
-    p_key_hash: createHash("sha256").update(ip).digest("hex"),
-    p_limit: 10,
-    p_window_seconds: 600,
-  });
-  if (limitError || !allowed) redirect(`${orderPath}?pay=error`);
+  if (!(await hitRateLimit("payment_ip", await clientIp(), 10, 600))) redirect(`${orderPath}?pay=error`);
 
   const { data: order } = await createSupabaseServiceClient()
     .from("bookings")

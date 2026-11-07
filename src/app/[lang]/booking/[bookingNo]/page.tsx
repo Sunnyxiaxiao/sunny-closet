@@ -8,11 +8,12 @@ import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { cardLabel } from "@/lib/booking/card-payment";
+import { ACCEPT_WINDOW_HOURS } from "@/lib/booking/acceptance";
 import { orderAccess, type OrderAccess } from "@/lib/booking/order-access";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDate, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { expireIfPaymentLapsed, PAYMENT_WINDOW_MINUTES, stripeEnabled } from "@/lib/stripe";
+import { PAYMENT_WINDOW_MINUTES, settleOrderOnView, stripeEnabled } from "@/lib/stripe";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getMessages, sizeLabel } from "@/messages";
@@ -103,25 +104,26 @@ async function BookingDetail({
       locale,
     );
 
-  // Card payments (only when Stripe is configured; see src/lib/stripe.ts). An unpaid order whose payment page expired is cancelled here
-  // too, in case the webhook isn't set up (e.g. local development)
+  // Card payments (only when Stripe is configured; see src/lib/stripe.ts). An unpaid order whose payment attempt is over is settled here
+  // too (confirmed if paid, cancelled if its page expired or never opened), in case the webhook and the sweep haven't yet (e.g. locally)
   const online = stripeEnabled();
   const pay = online
     ? (
         await service
           .from("bookings")
-          .select("payment_method, cash_deposit_cents, paid_cents, card_brand, card_last4, stripe_checkout_session_id")
+          .select(
+            "payment_method, cash_deposit_cents, paid_cents, card_brand, card_last4, stripe_checkout_session_id, rush_fee_cents, acceptance_status",
+          )
           .eq("id", booking.id)
           .single()
       ).data
     : null;
   const method = pay?.payment_method ?? null;
   let status = booking.status;
-  // Waiting on Stripe (paying, or saving a card instead of a deposit). Orders without a method yet are card orders whose payment page
-  // couldn't be opened. Once the Stripe page has expired, release the dates here too, in case the webhook isn't set up (e.g. locally)
-  const waitsOnStripe = (s: string) => online && s === "pending" && method !== "in_person";
+  // Waiting on Stripe (paying, or saving a card instead of a deposit). A paid short-notice order waiting for the owner isn't
+  const waitsOnStripe = (s: string) => online && s === "pending" && method !== "in_person" && pay?.paid_cents == null;
   if (waitsOnStripe(status)) {
-    const expired = await expireIfPaymentLapsed(pay?.stripe_checkout_session_id ?? null).catch((error) => {
+    const expired = await settleOrderOnView(booking.id).catch((error) => {
       console.error("[booking] 检查付款是否超时失败", error);
       return false;
     });
@@ -132,8 +134,13 @@ async function BookingDetail({
   const paidCents = pay?.paid_cents ?? null;
   const card = pay?.card_brand && pay.card_last4 ? cardLabel(pay.card_brand, pay.card_last4) : null;
   const cashDeposit = formatMoney(pay?.cash_deposit_cents ?? 0);
+  const acceptance = pay?.acceptance_status ?? null;
   const [title, body] =
-    waiting === "payment"
+    status === "pending" && acceptance === "awaiting" && paidCents !== null
+      ? [t.awaitingOwnerTitle, t.awaitingOwnerBody(ACCEPT_WINDOW_HOURS)]
+      : status === "cancelled" && acceptance === "declined"
+        ? [t.declinedTitle, t.declinedBody]
+        : waiting === "payment"
       ? [t.awaitingPaymentTitle, t.awaitingPaymentBody(PAYMENT_WINDOW_MINUTES)]
       : waiting === "card"
         ? [t.awaitingCardTitle, t.awaitingCardBody(PAYMENT_WINDOW_MINUTES)]
@@ -259,7 +266,13 @@ async function BookingDetail({
           {booking.fulfillment_method === "shipping" && (
             <Row
               label={t.shipping}
-              value={booking.shipping_cents > 0 ? formatMoney(booking.shipping_cents) : t.freeShipping}
+              value={
+                (pay?.rush_fee_cents ?? 0) > 0
+                  ? t.shippingWithRush(formatMoney(booking.shipping_cents), formatMoney(pay!.rush_fee_cents))
+                  : booking.shipping_cents > 0
+                    ? formatMoney(booking.shipping_cents)
+                    : t.freeShipping
+              }
             />
           )}
           {depositCents > 0 && <Row label={t.deposit} value={formatMoney(depositCents)} />}

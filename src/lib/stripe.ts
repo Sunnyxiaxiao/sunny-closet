@@ -2,15 +2,36 @@ import "server-only";
 import Stripe from "stripe";
 import { after } from "next/server";
 import { localePath, type Locale } from "@/i18n/config";
-import { notifyNewOrder, notifyOrderConfirmed } from "@/lib/email/order-notifications";
+import {
+  notifyAwaitingAcceptance,
+  notifyNewOrder,
+  notifyOrderConfirmed,
+  notifyRefundDue,
+} from "@/lib/email/order-notifications";
+import {
+  CheckoutError,
+  completeCheckout as completeWith,
+  expireCheckout as expireWith,
+  openCheckout,
+  PAYMENT_WINDOW_MINUTES,
+  settleWaitingOrder,
+  sweepWaitingOrders as sweepWith,
+  type CheckoutDeps,
+  type PaymentStore,
+  type WaitingOrder,
+} from "@/lib/payments/checkout";
 import { publicOrigin } from "@/lib/site-url";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getMessages } from "@/messages";
+
+export { CheckoutError, PAYMENT_WINDOW_MINUTES };
 
 /**
  * Card payments with Stripe: customers pay rental + shipping at checkout (or, for local pickup, save a card and pay in person),
  * which confirms the order; the card is saved so the admin can later charge it for serious damage, loss or a late return.
  * Without STRIPE_SECRET_KEY this is off and orders go through the manual flow (admin confirms, customer pays by Zelle / Venmo).
+ * The rules for opening, finishing and expiring payment pages are in src/lib/payments/checkout.ts; this file connects them
+ * to Stripe, the database and the emails.
  */
 export function stripeEnabled(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY);
@@ -25,95 +46,252 @@ export function getStripe(): Stripe {
   return client;
 }
 
-/** How long an unpaid order holds its dates (Stripe's minimum for a Checkout session) */
-export const PAYMENT_WINDOW_MINUTES = 30;
+/** Opens (or reopens) the Stripe page of an order that's waiting on the customer, and returns its URL */
+export async function createOrderCheckout(bookingNo: string, locale: Locale): Promise<string> {
+  return openCheckout(await deps(), bookingNo, locale);
+}
+
+/** Records a finished Checkout session and confirms the order (safe to call twice) */
+export async function completeCheckout(sessionId: string) {
+  return completeWith(await deps(), sessionId);
+}
+
+/** Webhook: a Stripe page expired unfinished */
+export async function expireCheckout(session: Stripe.Checkout.Session): Promise<void> {
+  return expireWith(await deps(), session);
+}
+
+/** The payment sweep (scheduled): settles orders whose payment attempt is over */
+export async function sweepWaitingOrders() {
+  return sweepWith(await deps());
+}
 
 /**
- * Opens a Stripe Checkout page for an order that's waiting on the customer, and returns its URL:
- *   - card orders: a payment page for rental + add-ons + shipping (one line each, from the stored order), saving the card;
- *   - in_person_card orders: a card-saving page (setup mode) that charges nothing; the rental is paid in person.
- * The latest session id is stored on the order, so only that session's expiry can cancel the order.
+ * The order page settles its own order when viewed (backup for the webhook and the sweep, e.g. in local development).
+ * Returns true if the order is now cancelled.
  */
-export async function createOrderCheckout(bookingNo: string, locale: Locale): Promise<string> {
-  const service = createSupabaseServiceClient();
-  const { data: main, error } = await service
-    .from("bookings")
-    .select(
-      "id, booking_no, status, style_id, rental_cents, shipping_cents, customer_name, customer_email, stripe_customer_id, parent_booking_id, payment_method",
-    )
-    .eq("booking_no", bookingNo)
-    .maybeSingle();
-  if (error) throw new Error(`读取订单失败：${error.message}`);
-  if (!main || main.parent_booking_id || main.status !== "pending" || main.payment_method === "in_person") {
-    throw new Error("order_not_payable");
-  }
-  const saveCardOnly = main.payment_method === "in_person_card";
-  const t = getMessages(locale).payment;
+export async function settleOrderOnView(bookingId: string): Promise<boolean> {
+  const store = supabaseStore();
+  const order = (await store.waitingOrders(bookingId))[0];
+  if (!order) return false;
+  return (await settleWaitingOrder(await deps(), order)) === "cancelled";
+}
 
-  const stripe = getStripe();
-  // One Stripe customer per order; reused when the customer retries
-  let customerId = main.stripe_customer_id;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      name: main.customer_name,
-      email: main.customer_email,
-      metadata: { booking_no: main.booking_no },
-    });
-    customerId = customer.id;
-  }
-
+async function deps(): Promise<CheckoutDeps> {
   const origin = await publicOrigin();
-  const metadata = { booking_id: main.id, booking_no: main.booking_no, locale };
-  const common = {
-    customer: customerId,
-    // Cards only (wallets like Apple Pay included): they can be charged again later without the customer present,
-    // unlike bank debits or buy-now-pay-later
-    allowed_payment_method_types: ["card" as const],
-    locale: locale === "zh" ? ("zh" as const) : ("en" as const),
-    metadata,
-    custom_text: { submit: { message: t.authorization } },
-    expires_at: Math.floor(Date.now() / 1000) + PAYMENT_WINDOW_MINUTES * 60,
-    success_url: `${origin}/api/stripe/checkout-return?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}${localePath(locale, `/booking/${main.booking_no}`)}`,
+  return {
+    stripe: getStripe(),
+    store: supabaseStore(),
+    now: () => new Date(),
+    pageParams: async (order, locale) => {
+      const t = getMessages(locale).payment;
+      return {
+        lineItems: order.saveCardOnly ? [] : await orderLineItems(order.id, locale),
+        submitMessage: t.authorization,
+        successUrl: `${origin}/api/stripe/checkout-return?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${origin}${localePath(locale, `/booking/${order.bookingNo}`)}`,
+        paymentDescription: `Sunny Closet ${order.bookingNo}`,
+        setupDescription: `Sunny Closet ${order.bookingNo} (card on file instead of a deposit)`,
+      };
+    },
+    onConfirmed: (bookingId) =>
+      after(async () => {
+        await notifyNewOrder(bookingId, origin);
+        await notifyOrderConfirmed(bookingId, origin);
+      }),
+    onAwaitingAcceptance: (bookingId) =>
+      after(async () => {
+        await notifyNewOrder(bookingId, origin);
+        await notifyAwaitingAcceptance(bookingId, origin);
+      }),
+    onRefundDue: (bookingId, cents, reason) => after(() => notifyRefundDue(bookingId, cents, reason, origin)),
   };
+}
 
-  const session = saveCardOnly
-    ? await stripe.checkout.sessions.create({
-        ...common,
-        mode: "setup",
-        currency: "usd",
-        setup_intent_data: { description: `Sunny Closet ${main.booking_no} (card on file instead of a deposit)`, metadata },
-      })
-    : await stripe.checkout.sessions.create({
-        ...common,
-        mode: "payment",
-        line_items: (await orderLineItems(main, locale)).map((i) => ({
-          quantity: 1,
-          price_data: { currency: "usd", unit_amount: i.cents, product_data: { name: i.name } },
-        })),
-        // Save the card for later charges (damage, loss, late return) made while the customer isn't on the site
-        payment_intent_data: { setup_future_usage: "off_session", description: `Sunny Closet ${main.booking_no}`, metadata },
+const WAITING_COLUMNS =
+  "id, created_at, checkout_attempt_key, checkout_attempt_expires_at, stripe_checkout_session_id, stripe_customer_id";
+
+/** The payment rules' database side (service role: customers can't write orders) */
+function supabaseStore(): PaymentStore & { waitingOrders(bookingId?: string): Promise<WaitingOrder[]> } {
+  const service = createSupabaseServiceClient();
+  // Throws on a database error; `null` stays possible for maybeSingle() (callers check it)
+  const check = <T>(result: { data: T | null; error: { message: string } | null }, what: string): T => {
+    if (result.error) throw new Error(`${what}：${result.error.message}`);
+    return result.data as T;
+  };
+  return {
+    async payableOrder(bookingNo) {
+      const main: { id: string; booking_no: string; status: string; customer_name: string; customer_email: string; parent_booking_id: string | null; payment_method: string | null; paid_at: string | null } | null = check(
+        await service
+          .from("bookings")
+          .select("id, booking_no, status, customer_name, customer_email, parent_booking_id, payment_method, paid_at")
+          .eq("booking_no", bookingNo)
+          .maybeSingle(),
+        "读取订单失败",
+      );
+      if (!main || main.parent_booking_id || main.status !== "pending" || main.paid_at || main.payment_method === "in_person") {
+        return null;
+      }
+      return {
+        id: main.id,
+        bookingNo: main.booking_no,
+        customerName: main.customer_name,
+        customerEmail: main.customer_email,
+        saveCardOnly: main.payment_method === "in_person_card",
+      };
+    },
+    async claimAttempt(bookingId, replaceKey) {
+      const { data, error } = await service.rpc("claim_checkout_attempt", {
+        p_booking_id: bookingId,
+        p_replace_key: replaceKey ?? null,
       });
-  if (!session.url) throw new Error("Stripe did not return a checkout URL");
-
-  const { error: saveError } = await service
-    .from("bookings")
-    .update({
-      payment_method: saveCardOnly ? "in_person_card" : "card",
-      stripe_customer_id: customerId,
-      stripe_checkout_session_id: session.id,
-    })
-    .eq("id", main.id);
-  if (saveError) throw new Error(`保存付款信息失败：${saveError.message}`);
-  return session.url;
+      if (error?.message.includes("order_not_payable")) throw new CheckoutError("order_not_payable");
+      const row = check({ data, error }, "领取付款尝试失败")[0];
+      return {
+        key: row.attempt_key,
+        expiresAt: new Date(row.expires_at),
+        sessionId: row.session_id,
+        customerId: row.customer_id,
+        created: row.created,
+      };
+    },
+    async saveCustomer(bookingId, customerId) {
+      check(
+        await service.from("bookings").update({ stripe_customer_id: customerId }).eq("id", bookingId).is("stripe_customer_id", null),
+        "保存 Stripe 顾客失败",
+      );
+    },
+    async saveSession(bookingId, attemptKey, sessionId) {
+      const rows = check(
+        await service
+          .from("bookings")
+          .update({ stripe_checkout_session_id: sessionId })
+          .eq("id", bookingId)
+          .eq("checkout_attempt_key", attemptKey)
+          .select("id"),
+        "保存付款页面失败",
+      );
+      return rows.length > 0;
+    },
+    async confirmPaid(bookingId, details) {
+      // Pending and unpaid: confirmed, unless it's a short-notice order the owner hasn't accepted (then it only gets paid)
+      const confirmed = check(
+        await service
+          .from("bookings")
+          .update({ ...details, status: "confirmed" })
+          .eq("id", bookingId)
+          .eq("status", "pending")
+          .is("parent_booking_id", null)
+          .is("paid_at", null)
+          .is("acceptance_status", null)
+          .select("id"),
+        "确认订单失败",
+      );
+      if (confirmed.length > 0) return "confirmed";
+      const awaiting = check(
+        await service
+          .from("bookings")
+          .update(details)
+          .eq("id", bookingId)
+          .eq("status", "pending")
+          .is("parent_booking_id", null)
+          .is("paid_at", null)
+          .eq("acceptance_status", "awaiting")
+          .select("id"),
+        "保存付款信息失败",
+      );
+      return awaiting.length > 0 ? "awaiting" : false;
+    },
+    async recordLatePayment(bookingId, details) {
+      const order: { paid_at: string | null; stripe_payment_intent_id: string | null } | null = check(
+        await service
+          .from("bookings")
+          .select("paid_at, stripe_payment_intent_id, refund_status")
+          .eq("id", bookingId)
+          .maybeSingle(),
+        "读取订单失败",
+      );
+      if (!order || order.stripe_payment_intent_id === details.stripe_payment_intent_id) return "recorded";
+      if (!order.paid_at) {
+        // Cancelled before the payment landed: keep the payment so the admin sees it, and owe it back
+        const rows = check(
+          await service
+            .from("bookings")
+            .update({ ...details, refund_status: "due", refund_cents: details.paid_cents })
+            .eq("id", bookingId)
+            .is("paid_at", null)
+            .select("id"),
+          "保存付款信息失败",
+        );
+        return rows.length > 0 ? "cancelled" : "recorded";
+      }
+      const rows = check(
+        await service
+          .from("bookings")
+          .update({ refund_status: "due", refund_cents: details.paid_cents })
+          .eq("id", bookingId)
+          .is("refund_status", null)
+          .select("id"),
+        "保存待退款失败",
+      );
+      if (rows.length > 0) return "second_payment";
+      console.error("[stripe] 又一笔需要退款的付款，订单已有待退款，请到 Stripe 核对", bookingId, details.stripe_payment_intent_id);
+      return "already_due";
+    },
+    async cancelAttempt(bookingId, attemptKey) {
+      let query = service
+        .from("bookings")
+        .update({ status: "cancelled" })
+        .eq("id", bookingId)
+        .eq("status", "pending")
+        .is("paid_at", null);
+      query = attemptKey ? query.eq("checkout_attempt_key", attemptKey) : query.is("checkout_attempt_key", null);
+      return check(await query.select("id"), "取消未付款订单失败").length > 0;
+    },
+    async cancelBySession(sessionId) {
+      const rows = check(
+        await service
+          .from("bookings")
+          .update({ status: "cancelled" })
+          .eq("stripe_checkout_session_id", sessionId)
+          .eq("status", "pending")
+          .is("paid_at", null)
+          .select("id"),
+        "取消未付款订单失败",
+      );
+      return rows.length > 0;
+    },
+    async waitingOrders(bookingId?: string) {
+      let query = service
+        .from("bookings")
+        .select(WAITING_COLUMNS)
+        .is("parent_booking_id", null)
+        .eq("status", "pending")
+        .is("paid_at", null)
+        .in("payment_method", ["card", "in_person_card"]);
+      if (bookingId) query = query.eq("id", bookingId);
+      const rows = check(await query.order("created_at").limit(200), "读取待付款订单失败");
+      return rows.map((r) => ({
+        id: r.id,
+        createdAt: new Date(r.created_at),
+        attemptKey: r.checkout_attempt_key,
+        attemptExpiresAt: r.checkout_attempt_expires_at ? new Date(r.checkout_attempt_expires_at) : null,
+        sessionId: r.stripe_checkout_session_id,
+        customerId: r.stripe_customer_id,
+      }));
+    },
+  };
 }
 
 /** Payment page lines: each item, each helmet-cover add-on, and shipping (bundle parts are $0 and left out) */
-async function orderLineItems(
-  main: { id: string; style_id: string; rental_cents: number; shipping_cents: number },
-  locale: Locale,
-): Promise<{ name: string; cents: number }[]> {
+async function orderLineItems(bookingId: string, locale: Locale): Promise<{ name: string; cents: number }[]> {
   const service = createSupabaseServiceClient();
+  const { data: main, error: mainError } = await service
+    .from("bookings")
+    .select("id, style_id, rental_cents, shipping_cents")
+    .eq("id", bookingId)
+    .single();
+  if (mainError) throw new Error(`读取订单失败：${mainError.message}`);
   const { data: children, error } = await service
     .from("bookings")
     .select("style_id, rental_cents, cart_item, bundle_part")
@@ -136,94 +314,4 @@ async function orderLineItems(
       .map((c) => ({ name: c.cart_item ? styleName(c.style_id) : t.addOnItem(styleName(c.style_id)), cents: c.rental_cents })),
     ...(main.shipping_cents > 0 ? [{ name: t.shippingItem, cents: main.shipping_cents }] : []),
   ].filter((i) => i.cents > 0);
-}
-
-/**
- * Records a finished Checkout session and confirms the order: a payment (card orders) or a saved card (in_person_card orders).
- * Called when the customer lands back on the site and from the webhook, so it must be safe to run twice:
- * the status only moves pending → confirmed once, and the emails go out only for that move.
- * The session is fetched from Stripe with the secret key, so its metadata and amount can be trusted.
- */
-export async function completeCheckout(sessionId: string): Promise<{ bookingNo: string; locale: string } | null> {
-  const session = await getStripe().checkout.sessions.retrieve(sessionId, {
-    expand: ["payment_intent.payment_method", "setup_intent.payment_method"],
-  });
-  const bookingId = session.metadata?.booking_id;
-  const bookingNo = session.metadata?.booking_no;
-  const locale = session.metadata?.locale ?? "en";
-  if ((session.mode !== "payment" && session.mode !== "setup") || !bookingId || !bookingNo) return null;
-  const result = { bookingNo, locale };
-
-  // The card used, from the payment or from the card-saving step
-  let card: Stripe.PaymentMethod | null = null;
-  let paid: { stripe_payment_intent_id: string; paid_cents: number; paid_at: string } | null = null;
-  if (session.mode === "payment") {
-    const intent = session.payment_intent;
-    if (session.payment_status !== "paid" || !intent || typeof intent === "string") return result;
-    card = typeof intent.payment_method === "object" ? intent.payment_method : null;
-    paid = { stripe_payment_intent_id: intent.id, paid_cents: session.amount_total ?? 0, paid_at: new Date().toISOString() };
-  } else {
-    const setup = session.setup_intent;
-    if (session.status !== "complete" || !setup || typeof setup === "string" || setup.status !== "succeeded") return result;
-    card = typeof setup.payment_method === "object" ? setup.payment_method : null;
-  }
-  const customer = typeof session.customer === "string" ? session.customer : session.customer?.id;
-  const details = {
-    stripe_customer_id: customer ?? null,
-    stripe_payment_method_id: card?.id ?? null,
-    card_brand: card?.card?.brand ?? null,
-    card_last4: card?.card?.last4 ?? null,
-    card_saved_at: card ? new Date().toISOString() : null,
-    ...paid,
-  };
-
-  const service = createSupabaseServiceClient();
-  const { data: confirmed, error } = await service
-    .from("bookings")
-    .update({ ...details, status: "confirmed" })
-    .eq("id", bookingId)
-    .eq("status", "pending")
-    .is("parent_booking_id", null)
-    .select("id");
-  if (error) throw new Error(`确认订单失败：${error.message}`);
-
-  if (confirmed.length > 0) {
-    const origin = await publicOrigin();
-    after(async () => {
-      await notifyNewOrder(bookingId, origin);
-      await notifyOrderConfirmed(bookingId, origin);
-    });
-  } else if (paid) {
-    // Already confirmed by an earlier call, or the order was cancelled before the payment landed:
-    // still keep the payment details so the admin sees it was paid (and can refund it in Stripe)
-    const { error: payError } = await service.from("bookings").update(details).eq("id", bookingId).is("paid_at", null);
-    if (payError) throw new Error(`保存付款信息失败：${payError.message}`);
-  }
-  return result;
-}
-
-/**
- * Releases the dates of an order whose Stripe page (payment or card saving) expired before the customer finished.
- * Only cancels when the expired session is still the order's latest one (the customer may have opened a new one);
- * a finished session has already moved the order out of "pending".
- */
-export async function cancelUnpaidOrder(sessionId: string): Promise<void> {
-  const { error } = await createSupabaseServiceClient()
-    .from("bookings")
-    .update({ status: "cancelled" })
-    .eq("stripe_checkout_session_id", sessionId)
-    .eq("status", "pending");
-  if (error) throw new Error(`取消未付款订单失败：${error.message}`);
-}
-
-/**
- * Same as the webhook's expiry handling, for when the webhook isn't set up (e.g. local development):
- * the order page calls this for unpaid orders, and cancels the order once its latest payment page has expired.
- */
-export async function expireIfPaymentLapsed(sessionId: string | null): Promise<boolean> {
-  if (!sessionId) return false;
-  const session = await getStripe().checkout.sessions.retrieve(sessionId);
-  if (session.status !== "expired") return false;
-  await cancelUnpaidOrder(sessionId);
-  return true;
 }
