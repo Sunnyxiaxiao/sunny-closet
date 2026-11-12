@@ -161,7 +161,7 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   // Shipping fee from the recomputed prices (free with $99+ in rentals and add-ons, or a full look)
   const shippingCents = shipping ? shippingFeeCents(shippingLines(lines), input.shippingState) : 0;
 
-  const { data, error } = await service.rpc("place_order", {
+  const { data, error } = await service.rpc("place_order_checked", {
     p_lines: lines.map((l) => ({
       style_id: l.input.styleId,
       size: l.input.size,
@@ -175,6 +175,7 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
       addon_sizes: l.addOns.map((a) => a.size),
       // The database refuses the order if this item gets a piece with a condition note and this is false
       condition_ack: conditionNotes.has(l.input.id),
+      condition_notes: conditionNotes.get(l.input.id) ?? [],
     })),
     p_customer_name: input.name,
     p_customer_email: input.email,
@@ -192,6 +193,9 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
     p_shipping_cents: shippingCents + rushCents,
     p_rush_fee_cents: rushCents,
     p_needs_acceptance: needsAcceptance,
+    p_payment_method: paymentMethod,
+    p_cash_deposit_cents: paymentMethod === "in_person" ? shop.payment.inPersonDepositCents : 0,
+    p_locale: locale,
   });
 
   const order = data?.[0];
@@ -223,14 +227,6 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
 
   // Rental and deposit in person: the order is confirmed right away (child orders follow the main order), and both emails go out
   if (paymentMethod === "in_person") {
-    const { error: confirmError } = await service
-      .from("bookings")
-      .update({ status: "confirmed", payment_method: "in_person", cash_deposit_cents: shop.payment.inPersonDepositCents })
-      .eq("id", order.booking_id);
-    if (confirmError) {
-      console.error("[submitOrder] 确认当面付款订单失败", confirmError);
-      return fail(defaultError);
-    }
     after(async () => {
       await notifyNewOrder(order.booking_id, origin);
       await notifyOrderConfirmed(order.booking_id, origin);
@@ -244,12 +240,6 @@ export async function submitOrder(_previous: BookingFormState, formData: FormDat
   // a failed request may still have created the page at Stripe.
   if (paymentMethod) {
     try {
-      // Recorded first, so the order counts as waiting on Stripe even if opening the page fails
-      const { error: methodError } = await service
-        .from("bookings")
-        .update({ payment_method: paymentMethod })
-        .eq("id", order.booking_id);
-      if (methodError) throw new Error(methodError.message);
       return { redirectTo: await createOrderCheckout(order.booking_no, locale) };
     } catch (checkoutError) {
       console.error("[submitOrder] 创建付款页面失败", checkoutError);

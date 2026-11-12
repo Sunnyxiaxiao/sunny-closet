@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { useState } from "react";
 import { localePath, type Locale } from "@/i18n/config";
 import { getMessages } from "@/messages";

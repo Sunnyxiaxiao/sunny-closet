@@ -22,7 +22,8 @@
       "images/skibear-ruffle-bear-snow-suit/6.jpg"
     ],
     "description": "奶白色外套配粉色工装雪裤，甜美又好拍照。尺码 M。\n\n## 设计细节\n- 外套前襟两条粉色荷叶边飘带\n- 两个口袋上各一只毛绒小熊刺绣\n- 帽子上有粉色小熊耳朵，背后 Skibear 字样\n- 宽松落肩版型，里面可以穿厚一点\n- 粉色工装雪裤，侧边大口袋，裤脚抽绳可以收口",
-    "descriptionEn": "A cream jacket with pink cargo snow pants — sweet and made for photos. Size M.\n\n## Design Details\n- Two pink ruffle ribbons down the front of the jacket\n- Fluffy embroidered bears on both pockets\n- Pink bear ears on the hood and Skibear lettering on the back\n- Relaxed dropped-shoulder fit with room for warm layers\n- Pink cargo snow pants with big side pockets and drawstring cuffs"
+    "descriptionEn": "A cream jacket with pink cargo snow pants — sweet and made for photos. Size M.\n\n## Design Details\n- Two pink ruffle ribbons down the front of the jacket\n- Fluffy embroidered bears on both pockets\n- Pink bear ears on the hood and Skibear lettering on the back\n- Relaxed dropped-shoulder fit with room for warm layers\n- Pink cargo snow pants with big side pockets and drawstring cuffs",
+    "replacementValue": 300
   },
   {
     "slug": "skibear-heart-bear-bib-snow-set-khaki",
@@ -52,7 +53,8 @@
     "descriptionEn": "A butter-yellow stand-collar top with khaki bib pants: a cream bear face on the bib and a cream heart on each leg. Soft, cute and playful. Also available with cream bib pants. Note the sizes: top L, bib pants XL.\n\n## Fabric & Tech\n- 3-layer technical fabric, waterproof in any weather and keeps snow out\n- Waterproof rating 15,000; breathability 10,000\n- Fully taped seams to stop leaks\n- Fleece-lined and windproof for warmth and comfort\n- Silicone heat-transfer bear on the bib\n\n## Size (jacket L · bib XL)\n- Bib pants XL: length 132 cm, hem 58 cm, thigh 78 cm, waist 104 cm, hips 134 cm\n- Oversized fit; the model is 160 cm (5'3\") / 45 kg and wears M",
     "tags": [
       "series:skibear-heart-bear"
-    ]
+    ],
+    "replacementValue": 300
   },
   {
     "slug": "skibear-heart-bear-bib-snow-set-cream",
@@ -83,6 +85,7 @@
     "descriptionEn": "A butter-yellow stand-collar top with cream bib pants: a fuzzy brown bear face on the bib, khaki hearts on the legs and Skibear embroidered on the back. Also available with khaki bib pants. Sizes: top L, bib pants L.\n\n## Fabric & Tech\n- 3-layer technical fabric, waterproof in any weather and keeps snow out\n- Waterproof rating 15,000; breathability 10,000\n- Fully taped seams to stop leaks\n- Fleece-lined and windproof for warmth and comfort\n- Silicone heat-transfer bear on the bib\n\n## Size (jacket L · bib L)\n- Bib pants L: length 128 cm, hem 56 cm, thigh 76 cm, waist 100 cm, hips 130 cm\n- Oversized fit; the model is 160 cm (5'3\") / 45 kg and wears M",
     "tags": [
       "series:skibear-heart-bear"
-    ]
+    ],
+    "replacementValue": 300
   }
 ]

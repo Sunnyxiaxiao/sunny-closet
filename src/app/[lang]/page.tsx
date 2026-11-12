@@ -1,4 +1,5 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import Link from "@/components/storefront-link";
 import { Suspense } from "react";
 import { HelmetCoverCard } from "@/components/helmet-cover-card";
 import { ProductCard, ProductGridSkeleton } from "@/components/product-card";
@@ -8,7 +9,15 @@ import { getLocale } from "@/i18n/server";
 import { getAvailability, getSettings, listStyles, crystalRegularTable,
   stylePriceTable } from "@/lib/catalog";
 import { STYLE_CATEGORIES } from "@/lib/categories";
+import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
+import { shop } from "@/config/shop";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = getMessages(locale).meta;
+  return pageSeo(locale, "/", { title: `${shop.name} · ${t.siteTitle}`, description: t.description });
+}
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -123,6 +132,7 @@ async function HomeCatalog({ locale }: { locale: Locale }) {
                     src={cover?.image_urls[0]}
                     alt={messages.categories[category]}
                     sizes="(min-width: 640px) 25vw, 42vw"
+                    priority
                     thumb
                   />
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-3 pb-3 pt-10 text-base font-bold text-white">
@@ -143,9 +153,10 @@ async function HomeCatalog({ locale }: { locale: Locale }) {
           </Link>
         </div>
         <ul className="mt-5 grid grid-cols-2 gap-x-2 gap-y-8 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
-          {newArrivals.map((style) => (
+          {newArrivals.map((style, index) => (
             <li key={style.id}>
               <ProductCard
+                priority={index < 2}
                 style={style}
                 fromCents={stylePriceTable(style, settings)[0]}
                 wasCents={crystalRegularTable(style, settings)?.[0]}

@@ -159,7 +159,7 @@ Open http://localhost:3000. Press `Ctrl + C` to stop.
 
 ### Set your own payment details
 
-Only used without Stripe: in `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your own handles. Customers only see them after you confirm the order.
+For legacy manual payments and local-pickup transfers: in `src/config/shop.ts`, replace `zelle` and `venmo` under `payment` with your own handles. The legacy manual flow shows them after confirmation; cash pickup can also use these methods. Fill the actual handles before offering them.
 
 > After receiving a Zelle / Venmo payment, confirm it in your bank or Venmo app before releasing the items. Zelle transfers can't be reversed and have no purchase protection.
 
@@ -182,6 +182,9 @@ With `STRIPE_SECRET_KEY` set, customers pay by card when they order and there is
   - **no rush, wait for the owner**: the customer pays as usual, but paying does **not** confirm the order. It stays pending with `acceptance_status = 'awaiting'` (holding its dates, skipped by the payment sweep) until the admin clicks "接单" (confirmed, confirmation email) or "拒单" (cancelled, the payment recorded as a refund due, the customer emailed about the full refund). The sweep reminds the owner after 12 hours and declines it automatically after 24 (`src/lib/booking/acceptance.ts`).
   
   The order and its short-notice choice are written in one transaction (`place_order`). Local pickup has no notice rule beyond availability.
+- **Fit returns**: contact and hand the return to USPS within 24 hours of delivery; indoor try-on is allowed, but items must otherwise be unused and returned in their original condition. Refund rental fees to the original payment method. If shipping was free, deduct $15 once per order (not more than the rental refund); if any shipping was charged, retain it without an additional $15 deduction. Far-state returns do not incur another fee. Shop errors are handled separately at our cost. These refunds are processed manually in Stripe, not automatically on a status change.
+- **Delivery delays**: if no booked rental day is usable, the rental fee can be refunded in full and unused items returned by arrangement. If later days remain usable, agree a proportional refund based on missed rental days; neither a fixed average daily rate nor automatic tier repricing applies. If no booked day is usable and unused items are returned by arrangement, refund paid shipping too, without the $15 fit-return deduction. If later days remain usable, retain paid shipping while agreeing the proportional rental refund.
+- **Cancellation shipping charges**: before shipment, refund paid shipping charges in full (including shipping surcharges and rush fees); rental-fee refunds follow the existing cancellation schedule. After shipment, shipping is nonrefundable for cancellation. Fit returns and shop errors are separate policies.
 - **Refunds** (cancellations) are made in the Stripe Dashboard → Payments. Orders that owe a refund (declined short-notice orders, payments after cancelling, second payments) show it on the order card until it's marked refunded, by the admin or by the `charge.refunded` webhook once Stripe's refunded total covers it (`src/lib/payments/refunds.ts`).
 - **Setup**: set `STRIPE_SECRET_KEY`, and in production `CRON_SECRET` (any long random string) for the sweep. Add a webhook at Stripe → Developers → Webhooks for `https://your-domain/api/stripe/webhook` with `checkout.session.completed`, `checkout.session.expired`, `payment_intent.succeeded`, `payment_intent.payment_failed` and `charge.refunded`, and set its signing secret as `STRIPE_WEBHOOK_SECRET`.
 - Without `STRIPE_SECRET_KEY` the site falls back to the manual flow: the admin confirms each order and the customer pays by Zelle / Venmo.
@@ -225,7 +228,7 @@ With `STRIPE_SECRET_KEY` set, customers pay by card when they order and there is
   3. On the same page under **Templates**, paste `supabase/email-templates/confirm-signup.html` and `reset-password.html` into
      "Confirm signup" and "Reset Password" (suggested subjects are in the comment at the top of each file). The emails are in English and their links work when opened on another device.
   4. **Authentication → URL Configuration**: set Site URL to the site address (`http://localhost:3000` locally, the production URL after launch),
-     and add `http://localhost:3000/**` and `https://your-domain/**` to Redirect URLs.
+     and add the exact callback URLs `http://localhost:3000/api/auth/callback` and `https://your-domain/api/auth/callback` to Redirect URLs.
   Gmail is free and sends roughly 500 emails a day, which is plenty for a small shop. At higher volume, switch to a service like Resend (requires your own domain).
 
 ### Order emails
@@ -238,10 +241,17 @@ With `STRIPE_SECRET_KEY` set, customers pay by card when they order and there is
 - **No email is lost silently.** Every order email is logged in `email_log` before it is sent and marked sent or failed after. The payment sweep retries failed ones (and ones cut off mid-send) up to 3 attempts; whatever still failed is listed at the top of the admin dashboard with the reason, a "重发" (resend) button and a "不用发了" (dismiss) button (`src/lib/email/delivery.ts`).
 - Email content is in `src/lib/email/templates.ts`; sending is in `src/lib/email/send.ts`.
 
+### Hosting usage
+
+- Storefront links load on click instead of automatically prefetching every visible navigation item, product and filter. Navigation still uses the Next.js client router.
+- A product date selection requests its own availability and add-on availability together, after a 250 ms debounce. Availability responses remain `no-store`; checkout checks stock in the database transaction.
+- Public catalog rows and raw shop settings share short caches (refresh after 60 seconds, expire after 300 seconds). Admin catalog / pricing saves invalidate the corresponding cache immediately. External catalog imports rely on the timed refresh. Order pricing, customer data and condition acknowledgments are not served from these caches.
+- Compare request counts and function compute over comparable traffic windows after deployment. Disabling prefetch does not block crawlers or guarantee a particular reduction in hosting credits.
+
 ### Launch: deployment and domain
 
 1. **Deploy to Netlify** (free plan): sign in to [netlify.com](https://www.netlify.com) with GitHub → Add new project → Import an existing project → pick the `sunny-closet` repo.
-   Netlify detects Next.js and fills in the build settings. Every push to `main` redeploys automatically.
+   Netlify detects Next.js and fills in the build settings. Git-triggered production builds are currently disabled to control credits. Deploy manually only after approval.
 2. **Environment variables** (Project configuration → Environment variables): add
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SMTP_USER` and `SMTP_PASS` from `.env.local`
    (`SUPABASE_DB_URL` is only for running migrations locally), plus `NEXT_PUBLIC_SITE_URL` = your production URL (required: links in sign-up, password-reset and order emails are built from it, never from request headers, and production refuses to send them without it) and, optionally, `NEXT_PUBLIC_GA_ID` (a Google Analytics 4 measurement ID; storefront pages load analytics only when it is set). Redeploy once for the changes to take effect.
@@ -355,17 +365,22 @@ The site has an English version (`/styles`, the default) and a Chinese version (
 
 ## Business rules at a glance
 
-- **Tiered pricing** by category, with **no deposit** (serious damage or loss is charged at retail price to the saved card):
+- **Tiered pricing** by category, with **no deposit for online payment or a saved card** (cash-deposit pickup is described above) (serious damage or loss is charged at retail price to the saved card):
+
+  Prices checked against production settings on November 7, 2026 (dashboard settings are authoritative):
 
   | Days | Jacket only | Pants only | Full set (set / one-piece) | Crystal set |
   |---|---|---|---|---|
-  | 1 | $35 | $25 | $49 | $58 |
-  | 2 | $50 | $35 | $89 | $108 |
-  | 3 | $60 | $45 | $99 | $118 |
-  | 4 | $70 | $55 | $109 | $128 |
-  | 5 | $80 | $65 | $119 | $138 |
-  | 6 | $85 | $70 | $129 | $158 |
-  | 7–10 | $90 | $75 | $139 | $168 |
+  | 1 | $35 | $25 | $49 | $59 |
+  | 2 | $50 | $35 | $79 | $99 |
+  | 3 | $60 | $45 | $99 | $119 |
+  | 4 | $70 | $55 | $109 | $129 |
+  | 5 | $80 | $65 | $119 | $139 |
+  | 6 | $85 | $70 | $129 | $149 |
+  | 7 | $90 | $75 | $139 | $159 |
+  | 8 | $95 | $80 | $149 | $169 |
+  | 9 | $100 | $85 | $159 | $179 |
+  | 10 | $105 | $90 | $169 | $189 |
 
   The price tables live in `settings` (in cents; item n = n days, longer rentals use the last tier):
   full set `rental_prices_cents`, jacket `jacket_prices_cents`, pants `pants_prices_cents`.

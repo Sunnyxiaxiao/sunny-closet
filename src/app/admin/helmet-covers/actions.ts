@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -12,6 +12,7 @@ import { firstFieldErrors } from "@/lib/validation/booking-request";
 import { helmetCoverFormSchema } from "@/lib/validation/helmet-cover";
 
 function refresh(id?: string) {
+  updateTag("storefront-catalog");
   revalidatePath("/admin/helmet-covers");
   if (id) revalidatePath(`/admin/helmet-covers/${id}`);
   // 前台中英文两个版本的头盔套页

@@ -1019,5 +1019,62 @@
         "size": "均码"
       }
     ]
+  },
+  {
+    "slug": "corgi",
+    "brand": "",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "sortOrder": 301,
+    "tags": [
+      "brown",
+      "white",
+      "dog",
+      "cute",
+      "fluffy"
+    ],
+    "name": "柯基头盔套",
+    "nameEn": "Corgi Helmet Cover",
+    "description": "焦糖色和奶白色拼接的柯基小狗，竖着两只尖耳朵，圆眼睛加小鼻子，毛绒绒的。后面留有雪镜扣开口，抽绳可以收紧。",
+    "descriptionEn": "A fluffy corgi in caramel and cream, with two pointy ears, round eyes and a little nose. There's a goggle-strap opening at the back and a drawcord to snug the fit.",
+    "images": [
+      "images/corgi/1.jpg",
+      "images/corgi/2.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC040",
+        "size": "均码"
+      }
+    ]
+  },
+  {
+    "slug": "brown-shaggy-floppy-pup",
+    "brand": "White Puff",
+    "category": "helmet_cover",
+    "tier": "regular",
+    "sortOrder": 302,
+    "tags": [
+      "brown",
+      "dog",
+      "fluffy",
+      "cute"
+    ],
+    "name": "长毛垂耳小狗头盔套",
+    "nameEn": "Brown Shaggy Floppy Pup Helmet Cover",
+    "description": "灰咖色毛绒小狗，两只长长的垂耳是蓬松的长毛，一直垂到肩膀，脸上绣着憨憨的笑脸。后面有雪镜扣开口，抽绳可以收紧。",
+    "descriptionEn": "A taupe plush puppy with long, shaggy floppy ears that hang down to your shoulders and a goofy embroidered smile. There's a goggle-strap opening at the back and a drawcord to snug the fit.",
+    "images": [
+      "images/brown-shaggy-floppy-pup/1.jpg",
+      "images/brown-shaggy-floppy-pup/2.jpg",
+      "images/brown-shaggy-floppy-pup/3.jpg",
+      "images/brown-shaggy-floppy-pup/4.jpg"
+    ],
+    "items": [
+      {
+        "code": "HC041",
+        "size": "均码"
+      }
+    ]
   }
 ]

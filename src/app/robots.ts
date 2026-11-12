@@ -15,7 +15,13 @@ const AI_TRAINING_BOTS = [
   "Diffbot",
 ];
 
-/** 搜索引擎抓取规则（/robots.txt）：后台、购物车、订单、账号这些页面不收录 */
+/** 给 SEO 工具公司采数据的爬虫：抓得很勤，同样不带来顾客 */
+const SEO_TOOL_BOTS = ["AhrefsBot", "SemrushBot", "MJ12bot", "DotBot", "PetalBot", "DataForSeoBot", "BLEXBot"];
+
+/**
+ * 搜索引擎抓取规则（/robots.txt）：后台、购物车、订单、账号这些页面不收录。
+ * 带参数的地址（筛选、日期的各种组合，数量无穷）也不让抓：每个都要查一次数据库，内容和不带参数的页面重复
+ */
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const origin = await publicOrigin();
   return {
@@ -23,9 +29,9 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api/", "/cart", "/zh/cart", "/booking/", "/zh/booking/", "/account", "/zh/account"],
+        disallow: ["/admin", "/api/", "/cart", "/zh/cart", "/booking/", "/zh/booking/", "/account", "/zh/account", "/*?"],
       },
-      { userAgent: AI_TRAINING_BOTS, disallow: "/" },
+      { userAgent: [...AI_TRAINING_BOTS, ...SEO_TOOL_BOTS], disallow: "/" },
     ],
     sitemap: `${origin}/sitemap.xml`,
   };

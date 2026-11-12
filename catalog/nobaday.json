@@ -1,0 +1,55 @@
+[
+  {
+    "slug": "nobaday-mountain-sunset-print-snow-suit",
+    "brand": "Nobaday",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 390,
+    "name": "雪山日落印花滑雪套装",
+    "nameEn": "Mountain Sunset Print Snow Suit",
+    "items": [
+      {
+        "code": "SC066",
+        "size": "S"
+      }
+    ],
+    "description": "整套印满日落时分的雪山，粉橘色的山峰渐变到深蓝夜色，像把风景穿在身上。连帽上衣配直筒雪裤，在雪场上很显眼。尺码 S。\n\n## 尺码（S，单位 cm）\n- 上衣：后中长 76.5 · 胸围 126 · 摆围 120.5 · 袖长 61\n- 雪裤：腰围 84.5 · 侧裤长 104 · 臀围 109 · 脚口周长 55",
+    "descriptionEn": "Covered head to toe in snowy peaks at sunset, fading from peachy pink summits into a deep blue night. It's like wearing the view. A hooded jacket with straight-leg pants that stand out on the slopes. Size S.\n\n## Measurements (S, cm)\n- Jacket: back length 76.5 · chest 126 · hem 120.5 · sleeve 61\n- Pants: waist 84.5 · outseam 104 · hips 109 · leg opening 55",
+    "images": [
+      "images/nobaday-mountain-sunset-print-snow-suit/1.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/2.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/3.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/4.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/5.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/6.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/7.jpg",
+      "images/nobaday-mountain-sunset-print-snow-suit/8.jpg"
+    ]
+  },
+  {
+    "slug": "nobaday-juicy-candy-checkerboard-snow-suit",
+    "brand": "Nobaday",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 391,
+    "name": "Juicy Candy 棋盘格滑雪套装",
+    "nameEn": "Juicy Candy Checkerboard Snow Suit",
+    "items": [
+      {
+        "code": "SC068",
+        "size": "上衣 L · 裤子 M"
+      }
+    ],
+    "description": "酒红和蜜桃粉的复古棋盘格，上衣是棒球夹克版型，胸前绣着「Juicy Candy」字样，配同色宽松雪裤，日常也能穿。尺码：上衣 L，雪裤 M。\n\n## 面料与科技\n- 特氟龙三防工艺：防油、防污、防泼水\n- 防水、透湿、防风\n- 上衣内里夹棉，保暖防寒\n\n## 设计细节\n- 两侧插手拉链口袋\n- 雪裤弹力腰头，腰部抽绳可调节\n- 腰头 D 型环，可以挂雪卡\n- 脚口内侧拉链，方便穿雪鞋\n\n## 尺码（单位 cm）\n- 上衣 L：后中长 72.5 · 胸围 127 · 袖长 55.4 · 摆围 102\n- 雪裤 M：裤外长 100 · 腰围 76 · 臀围 117 · 闭合脚口 28",
+    "descriptionEn": "A retro burgundy and peach-pink checkerboard: a baseball-style bomber jacket with a 'Juicy Candy' patch on the chest, plus matching relaxed pants. Cute enough to wear off the mountain too. Sizes: jacket L, pants M.\n\n## Fabric & Tech\n- Teflon finish that repels oil, stains and water\n- Waterproof, breathable and windproof\n- Insulated jacket lining for warmth\n\n## Design Details\n- Zip hand pockets on both sides\n- Stretch waistband with an adjustable drawcord\n- D-ring on the waistband for a ski pass\n- Inner zips at the leg openings to fit over snow boots\n\n## Measurements (cm)\n- Jacket L: back length 72.5 · chest 127 · sleeve 55.4 · hem 102\n- Pants M: outseam 100 · waist 76 · hips 117 · cuff 28",
+    "images": [
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/1.jpg",
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/2.jpg",
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/3.jpg",
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/4.jpg",
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/5.jpg",
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/6.jpg",
+      "images/nobaday-juicy-candy-checkerboard-snow-suit/7.jpg"
+    ]
+  }
+]

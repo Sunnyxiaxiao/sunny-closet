@@ -344,6 +344,7 @@ for (const entry of entries) {
       ),
       // 不收押金
       deposit_cents: 0,
+      ...(entry.replacementValue === undefined ? {} : { replacement_value_cents: cents(entry.replacementValue) }),
       ...helmetFields(entry),
       ...glovesFields(entry),
       variant_images: variantImages(entry),

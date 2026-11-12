@@ -25,7 +25,7 @@ export interface StyleFormValues {
   nameEn: string;
   /** 款式自己的价目表（美元，逗号分隔），空 = 按品类价目表 */
   prices: string;
-  /** 手套丢失赔偿价（美元），空 = 不显示 */
+  /** 商品丢失赔偿价（美元），空 = 未填写 */
   replacementValue: string;
   /** 手套搭配雪服的加购价（美元，整个租期），空 = 不能加购 */
   addonPrice: string;
@@ -115,11 +115,9 @@ export function AdminStyleForm({ initial }: { initial: StyleFormValues }) {
         <Field label="排序" hint="数字小的排前面" error={errors.sortOrder}>
           <input name="sortOrder" type="number" defaultValue={v("sortOrder")} className={inputClass} />
         </Field>
-        {gloves && (
-          <Field label="丢失赔偿价（美元，选填）" hint="显示在手套页面上；留空不显示" error={errors.replacementValue}>
-            <input name="replacementValue" inputMode="decimal" defaultValue={v("replacementValue")} className={inputClass} />
-          </Field>
-        )}
+        <Field label="替换价值（美元）" hint="用于丢失或无法修复时的全新替换价值，显示在商品页；采购价在库存里另填" error={errors.replacementValue}>
+          <input name="replacementValue" inputMode="decimal" defaultValue={v("replacementValue")} className={inputClass} />
+        </Field>
         {gloves && (
           <Field
             label="搭配雪服加购价（美元）"

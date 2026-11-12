@@ -79,9 +79,9 @@ export function formatShippingAddress(a: { street: string; city: string; state: 
  * 文案（款式页、下单表单、租赁须知）里用到的数字：邮寄最短天数、提前几天下单、
  * 包邮门槛、近区运费、远区运费、远区包邮补的运费（金额是美元整数）
  */
-export function shippingPolicyArgs(minDays: number): [number, number, number, number, number, number] {
+export function shippingPolicyArgs(minDays: number): [number, number, number, number, number, number, string] {
   const s = shop.shipping;
-  return [minDays, s.orderAheadDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100, s.farFreeFeeCents / 100];
+  return [minDays, s.orderAheadDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100, s.farFreeFeeCents / 100, s.farStates.join(", ")];
 }
 
 /** 算运费用到的每件信息：品类、租金、加购价合计、加购的是什么（头盔套 / 手套） */

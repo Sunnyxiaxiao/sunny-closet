@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { localePath } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getMessages } from "@/messages";

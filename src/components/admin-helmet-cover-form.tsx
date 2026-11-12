@@ -182,7 +182,7 @@ export function AdminHelmetCoverForm({ initial }: { initial: HelmetCoverFormValu
               className={inputClass}
             />
           </Field>
-          <Field label="重置价值" hint="选填" error={errors.replacementValue}>
+          <Field label="替换价值（美元）" hint="选填" error={errors.replacementValue}>
             <input name="replacementValue" inputMode="decimal" defaultValue={v("replacementValue")} className={inputClass} />
           </Field>
         </div>

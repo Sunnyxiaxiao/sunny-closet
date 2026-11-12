@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { submitOrder } from "@/app/[lang]/cart/actions";
@@ -125,7 +125,7 @@ export function CheckoutForm({
     <form id={CHECKOUT_FORM_ID} action={formAction} className="space-y-4">
       <div>
         <h2 className="text-base font-bold">{t.title}</h2>
-        <p className="mt-1 text-sm text-neutral-600">{payByCard ? paymentText[payment].subtitle : t.subtitle}</p>
+        <p className="mt-1 text-sm text-neutral-600">{payByCard ? (fulfillment === "shipping" && shortNotice && rush === "wait" ? t.subtitleAwaiting : paymentText[payment].subtitle) : t.subtitle}</p>
       </div>
 
       <input type="hidden" name="locale" value={locale} />
@@ -207,14 +207,14 @@ export function CheckoutForm({
                 className="sr-only"
               />
               {messages.fulfillment[method]}
-              {method === "shipping" && (
+              {method === "shipping" && shippingCents !== null && (
                 <span
                   className={[
                     "ml-2 px-1.5 py-0.5 text-xs font-bold",
                     fulfillment === method ? "bg-white text-neutral-900" : "bg-emerald-50 text-emerald-700",
                   ].join(" ")}
                 >
-                  {shippingCents === null || shippingCents === 0
+                  {shippingCents === 0
                     ? t.freeShippingTag
                     : t.shippingFeeTag(formatMoney(shippingCents, { whole: true }))}
                 </span>

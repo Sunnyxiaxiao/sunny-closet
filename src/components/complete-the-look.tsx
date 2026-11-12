@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useId, type ReactNode } from "react";
 import { thumbUrl } from "@/lib/images";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { localePath, type Locale } from "@/i18n/config";
 import type { AddOnOption } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";

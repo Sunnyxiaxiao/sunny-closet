@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { shop } from "@/config/shop";
 import { localePath, type Locale } from "@/i18n/config";
 import { getMessages } from "@/messages";
@@ -38,7 +38,8 @@ export function SiteHeader({ locale, hideLanguageSwitch }: { locale: Locale; hid
     <>
       <p className="bg-neutral-900 px-4 py-2 text-center text-xs tracking-wide text-white">{t.announcement}</p>
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
-        <div className="mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:h-16">
+        {/* 手机上右边的图标比左边的菜单按钮宽：店名在剩下的位置里居中，不然会和语言按钮挤在一起；宽屏才按整行居中 */}
+        <div className="mx-auto grid h-14 max-w-7xl grid-cols-[auto_1fr_auto] items-center px-4 sm:h-16 sm:grid-cols-[1fr_auto_1fr]">
           {/* 窄屏：左上角菜单按钮；宽屏：商品 */}
           <div className="flex items-center">
             <MobileMenu links={links} locale={locale} />
@@ -48,7 +49,7 @@ export function SiteHeader({ locale, hideLanguageSwitch }: { locale: Locale; hid
           <Link
             href={localePath(locale, "/")}
             translate="no"
-            className="notranslate text-lg font-black uppercase tracking-[0.15em] sm:text-xl sm:tracking-[0.2em]"
+            className="notranslate justify-self-center whitespace-nowrap text-sm font-black uppercase tracking-[0.1em] min-[360px]:text-base min-[400px]:text-lg min-[400px]:tracking-[0.15em] sm:text-xl sm:tracking-[0.2em]"
           >
             {shop.name}
           </Link>

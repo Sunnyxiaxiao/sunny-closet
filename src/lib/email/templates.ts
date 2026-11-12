@@ -272,6 +272,64 @@ export function orderConfirmedEmail(order: OrderEmailData, { origin }: { origin:
   };
 }
 
+const contactLine = `Questions? Just reply to this email, or text us at ${shop.contact.phone}.\n\n— ${shop.name}`;
+
+/** To the customer, on pickup day (local pickup): the pieces are ready from this evening, and what's due at pickup */
+export function pickupReminderEmail(order: OrderEmailData, { origin }: { origin: string }): EmailMessage {
+  const inPerson = order.payment.method === "in_person" || order.payment.method === "in_person_card";
+  const { text, html } = render([
+    {
+      kind: "p",
+      text: `Hi ${order.customerName},\n\nYour ski day is almost here! Your booking ${order.bookingNo} is ready for pickup in Ithaca.`,
+    },
+    { kind: "rows", rows: itemRows(order, "en") },
+    { kind: "rows", rows: handoverRows(order) },
+    ...(inPerson ? paymentBlocks(order) : []),
+    {
+      kind: "p",
+      text: `Pickup is by appointment. If we haven't set a time yet, reply to this email or text us at ${shop.contact.phone} and we'll sort it out.`,
+    },
+    { kind: "link", label: "View your booking", url: `${origin}${localePath("en", `/booking/${order.bookingNo}`)}` },
+    { kind: "p", text: `Have a great time on the slopes!\n\n— ${shop.name}` },
+  ]);
+  return {
+    to: order.customerEmail,
+    replyTo: shop.contact.email,
+    subject: `Pickup reminder: your ${shop.name} booking ${order.bookingNo}`,
+    text,
+    html,
+  };
+}
+
+/** To the customer, on the last ski day: when and how to bring (or send) everything back */
+export function returnReminderEmail(order: OrderEmailData, { origin }: { origin: string }): EmailMessage {
+  const how =
+    order.fulfillment === "shipping"
+      ? "When you're done, pack everything in the mailer, attach the prepaid return label and drop it at USPS by the date below. Please keep the USPS acceptance receipt."
+      : "When you're done, please bring everything back by the time below. Reply to this email or text us to set a drop-off time.";
+  const { text, html } = render([
+    {
+      kind: "p",
+      text: `Hi ${order.customerName},\n\nWe hope you're having a great time on the slopes! A quick reminder about returning your booking ${order.bookingNo}.\n\n${how}`,
+    },
+    { kind: "rows", rows: handoverRows(order).filter(([label]) => label !== "Method" && label !== "Ship to") },
+    { kind: "rows", rows: itemRows(order, "en") },
+    {
+      kind: "p",
+      text: "No need to wash anything: we clean every piece ourselves. Need an extra day? Let us know before the return time so we can check the next booking.",
+    },
+    { kind: "link", label: "View your booking", url: `${origin}${localePath("en", `/booking/${order.bookingNo}`)}` },
+    { kind: "p", text: contactLine },
+  ]);
+  return {
+    to: order.customerEmail,
+    replyTo: shop.contact.email,
+    subject: `Return reminder: your ${shop.name} booking ${order.bookingNo}`,
+    text,
+    html,
+  };
+}
+
 /** To the owner: a payment came in that has to be refunded (it landed on a cancelled order, or the order was already paid) */
 export function refundDueEmail({
   to,

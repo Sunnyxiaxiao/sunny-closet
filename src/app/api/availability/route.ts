@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return Response.json({ error: "invalid_query" }, { status: 400 });
   }
-  const { styleId, start, end } = parsed.data;
+  const { styleId, start, end, includeAddOns } = parsed.data;
 
   const [settings, today] = await Promise.all([getSettings(), getToday()]);
   // 这里不分品类，取较长的上限；每个品类各自的上限在下单时（create_booking）检查
@@ -34,26 +34,24 @@ export async function GET(request: NextRequest) {
   }
 
   const [pickup, shipping] = await Promise.all([
-    getAvailability({ start, end, styleId }),
-    getAvailability({ start, end, styleId, fulfillment: "shipping" }),
+    getAvailability({ start, end, styleId: includeAddOns ? undefined : styleId }),
+    getAvailability({ start, end, styleId: includeAddOns ? undefined : styleId, fulfillment: "shipping" }),
   ]);
   const headers = { "Cache-Control": "no-store" };
 
+  const counts = {
+    counts: Object.fromEntries(availableCounts(pickup)),
+    shippingCounts: Object.fromEntries(availableCounts(shipping)),
+    sizeCounts: sizeCounts(pickup),
+    shippingSizeCounts: sizeCounts(shipping),
+  };
   if (styleId) {
     const shippingSizes = shipping.get(styleId) ?? [];
     const sizes = (pickup.get(styleId) ?? []).map((s) => ({
       ...s,
       shippingAvailable: shippingSizes.find((x) => x.size === s.size)?.available ?? 0,
     }));
-    return Response.json({ sizes }, { headers });
+    return Response.json({ sizes, ...(includeAddOns ? counts : {}) }, { headers });
   }
-  return Response.json(
-    {
-      counts: Object.fromEntries(availableCounts(pickup)),
-      shippingCounts: Object.fromEntries(availableCounts(shipping)),
-      sizeCounts: sizeCounts(pickup),
-      shippingSizeCounts: sizeCounts(shipping),
-    },
-    { headers },
-  );
+  return Response.json(counts, { headers });
 }

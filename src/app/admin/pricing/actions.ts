@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { PRICE_TABLES, parsePriceRow } from "@/lib/admin/price-form";
 import type { AccountFormState } from "@/lib/account/form-state";
@@ -41,6 +41,7 @@ export async function savePrices(_previous: AccountFormState, formData: FormData
   const { data, error } = await supabase.from("settings").update(update).eq("id", true).select("id");
   if (error || !data?.length) return { message: `保存失败：${error?.message ?? "没有权限"}`, values };
 
+  updateTag("storefront-settings");
   revalidatePath("/admin/pricing");
   return { notice: "已保存，网站上的价格已经更新。之前下的订单不受影响。", values };
 }

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { Suspense } from "react";
 import { FilterChips, FilterSection } from "@/components/filter-chips";
 import { FilterPanel, ShopColumns } from "@/components/filter-panel";
 import { ProductCard, ProductGridSkeleton } from "@/components/product-card";
-import { RentalFilterForm } from "@/components/rental-filter-form";
+import { DateQuickBar, RentalFilterForm } from "@/components/rental-filter-form";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getAvailability, getSettings, getStyleBySlug, getToday, listStyles, crystalRegularTable,
@@ -14,10 +14,13 @@ import { formatDateRange } from "@/lib/dates";
 import { CRYSTAL_TAG, isCrystal } from "@/lib/gloves";
 import { sortSizes } from "@/lib/sizes";
 import { parseRentalSearch } from "@/lib/validation/rental-query";
+import { pageSeo } from "@/lib/seo";
 import { getMessages, sizeLabel } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).styles.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).styles.title;
+  return { title, ...pageSeo(locale, "/styles", { title }) };
 }
 
 export default async function StylesPage({ searchParams }: PageProps<"/[lang]/styles">) {
@@ -53,11 +56,18 @@ async function StylesContent({
   const search = parseRentalSearch(raw, { today, maxRentalDays: settings.maxRentalDays });
   const rawCategory = Array.isArray(raw.category) ? raw.category[0] : raw.category;
   const category = isStyleCategory(rawCategory) ? rawCategory : undefined;
-  const presentBrands = [...new Set(styles.map((s) => s.brand).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  // One entry per brand however it's capitalised in the catalog ("SwagLi" / "Swagli"); the most common spelling is shown
+  const spellings = new Map<string, Map<string, number>>();
+  for (const { brand: b } of styles) {
+    if (!b) continue;
+    const counts = spellings.get(b.toLowerCase()) ?? new Map<string, number>();
+    spellings.set(b.toLowerCase(), counts.set(b, (counts.get(b) ?? 0) + 1));
+  }
+  const presentBrands = [...spellings.values()]
+    .map((counts) => [...counts].sort((a, b) => b[1] - a[1])[0][0])
+    .sort((a, b) => a.localeCompare(b));
   const rawBrand = Array.isArray(raw.brand) ? raw.brand[0] : raw.brand;
-  const brand = rawBrand && presentBrands.includes(rawBrand) ? rawBrand : undefined;
+  const brand = presentBrands.find((b) => b.toLowerCase() === rawBrand?.toLowerCase());
   const hasCrystal = styles.some(isCrystal);
   const rawCollection = Array.isArray(raw.collection) ? raw.collection[0] : raw.collection;
   const collection = hasCrystal && rawCollection === CRYSTAL_TAG ? CRYSTAL_TAG : undefined;
@@ -70,7 +80,7 @@ async function StylesContent({
   const size = search.size;
   const rows = styles
     .filter((style) => !category || style.category === category)
-    .filter((style) => !brand || style.brand === brand)
+    .filter((style) => !brand || style.brand?.toLowerCase() === brand.toLowerCase())
     .filter((style) => !collection || isCrystal(style))
     // Crystal Collection 排在最前面（其余保持原来的顺序）
     .toSorted((a, b) => Number(isCrystal(b)) - Number(isCrystal(a)))
@@ -79,10 +89,12 @@ async function StylesContent({
       const relevant = (ranged ?? allSizes).get(style.id) ?? [];
       const matching = size ? relevant.filter((s) => s.size === size) : relevant;
       const available = matching.reduce((sum, s) => sum + s.available, 0);
-      return { style, sizes, matching, available };
+      return { style, sizes, matching, available, unavailable: ranged !== null && available === 0 };
     })
     .filter((row) => (size ? row.matching.length > 0 : true))
-    .filter((row) => (ranged ? row.available > 0 : true));
+    // 选了日期：这几天被订满的不隐藏，变灰排到最后（让顾客知道有这款，可以换日期）
+    .toSorted((a, b) => Number(a.unavailable) - Number(b.unavailable));
+  const availableCount = rows.filter((row) => !row.unavailable).length;
 
   const presentCategories = STYLE_CATEGORIES.filter((c) => styles.some((s) => s.category === c));
 
@@ -125,7 +137,7 @@ async function StylesContent({
               ? t.availableSummary(
                   formatDateRange(search.start, search.end, locale),
                   size && sizeLabel(size, locale),
-                  rows.length,
+                  availableCount,
                 )
               : t.count(rows.length)}
           </p>
@@ -184,6 +196,16 @@ async function StylesContent({
   return (
     <>
       <ShopColumns filters={<div className="px-2 sm:px-0">{filters}</div>}>
+        <DateQuickBar
+          today={today}
+          keepParams={{ category, brand, collection, size, addon: addOn?.slug }}
+          start={search.kind !== "none" ? search.start : undefined}
+          end={search.kind !== "none" ? search.end : undefined}
+          locale={locale}
+        />
+        {ranged && rows.length > 0 && availableCount === 0 && (
+          <p className="mx-2 mt-4 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:mx-0 lg:mt-0">{t.emptyRanged}</p>
+        )}
         {search.kind === "invalid" && (
           <p className="mx-2 mt-4 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:mx-0 lg:mt-0">
             {search.error === "too_long"
@@ -197,7 +219,7 @@ async function StylesContent({
           </p>
         ) : (
           <ul className="mt-5 grid grid-cols-2 gap-x-2 gap-y-8 sm:grid-cols-3 sm:gap-x-4 lg:mt-0 xl:grid-cols-4">
-            {rows.map(({ style, sizes }) => (
+            {rows.map(({ style, sizes, unavailable }, index) => (
               <li key={style.id}>
                 <ProductCard
                   style={style}
@@ -205,6 +227,8 @@ async function StylesContent({
                   query={detailSuffix}
                   fromCents={stylePriceTable(style, settings)[0]}
                   wasCents={crystalRegularTable(style, settings)?.[0]}
+                  priority={index < 4}
+                  unavailable={unavailable}
                   locale={locale}
                 />
               </li>

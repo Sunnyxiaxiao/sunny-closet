@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { formatMoney } from "@/lib/money";
+import Link from "@/components/storefront-link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { BookingPanel } from "@/components/booking-panel";
@@ -31,13 +32,20 @@ import { formatDate } from "@/lib/dates";
 import { priceTiers } from "@/lib/pricing";
 import { shippingPolicyArgs } from "@/lib/shipping";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
+import { pageSeo, productSummary } from "@/lib/seo";
 import { getMessages, sizeLabel } from "@/messages";
 import { StyleReviews } from "@/components/style-reviews";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/styles/[slug]">): Promise<Metadata> {
   const locale = await getLocale();
-  const style = await getStyleBySlug((await params).slug, { locale });
-  return { title: style?.name ?? getMessages(locale).styles.title };
+  const { slug } = await params;
+  const style = await getStyleBySlug(slug, { locale });
+  if (!style) return { title: getMessages(locale).styles.title };
+  const title = [style.brand, style.name].filter(Boolean).join(" ");
+  return {
+    title: style.name,
+    ...pageSeo(locale, `/styles/${slug}`, { title, description: productSummary(style.description), image: style.image_urls[0] }),
+  };
 }
 
 export default async function StyleDetailPage({ params, searchParams }: PageProps<"/[lang]/styles/[slug]">) {
@@ -241,11 +249,17 @@ async function StyleDetail({
                 glovesOptions={glovesOptions}
                 separate={isSeparate(style)}
                 initialAddOnSlug={addonSlug}
+                productName={[style.brand, style.name].filter(Boolean).join(" ")}
                 locale={locale}
               />
             )}
           </div>
 
+          {style.replacement_value_cents !== null && (
+            <p className="mt-4 text-xs text-neutral-600">
+              {t.replacementValue}{formatMoney(style.replacement_value_cents)}
+            </p>
+          )}
           <div className="mt-8 border-t border-neutral-200">
             {parseDescription(style.description).map((section, index) => (
               <Accordion key={index} title={section.title ?? t.description} defaultOpen={index === 0}>

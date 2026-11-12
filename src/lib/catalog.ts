@@ -1,6 +1,7 @@
 import "server-only";
 import { connection } from "next/server";
 import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { shop } from "@/config/shop";
 import type { FulfillmentPaddings } from "@/lib/booking/rules";
 import type { FulfillmentMethod } from "@/config/shop";
@@ -14,7 +15,7 @@ import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 /**
  * The storefront's single entry point for products and availability (anonymous role, subject to RLS).
- * Every function calls connection() first, so data is read at request time rather than prerendered at build time.
+ * Availability stays live. Public descriptions and settings share a short cache; checkout re-reads prices independently.
  */
 
 export type PublicStyle = Pick<
@@ -151,13 +152,20 @@ export async function getToday(): Promise<IsoDate> {
 /** Memoized per request (React cache), like getStyleBySlug */
 export const getSettings = cache(async (): Promise<ShopSettings> => {
   await connection();
+  return toShopSettings(await settingsRow());
+});
+
+async function settingsRow() {
+  "use cache";
+  cacheLife({ stale: 0, revalidate: 60, expire: 300 });
+  cacheTag("storefront-settings");
   const { data, error } = await createSupabasePublicClient()
     .from("settings")
     .select(SETTINGS_COLUMNS)
     .single();
   if (error) throw new Error(`读取店铺设置失败：${error.message}`);
-  return toShopSettings(data);
-});
+  return data;
+}
 
 /**
  * Active styles. Lists outfits by default; pass kind: "helmet_cover" for helmet covers or kind: "gloves" for gloves. Names and descriptions follow locale.
@@ -169,15 +177,8 @@ export async function listStyles({
   withPantsOptions = false,
 }: { kind?: StyleKind; locale?: Locale; withPantsOptions?: boolean } = {}): Promise<PublicStyle[]> {
   await connection();
-  const query = createSupabasePublicClient().from("styles").select(STYLE_COLUMNS).eq("is_active", true);
-  const { data, error } = await (kind === "outfit"
-    ? query.not("category", "in", `(${ACCESSORY_CATEGORIES.join(",")})`)
-    : query.eq("category", kind)
-  )
-    .order("sort_order")
-    .order("name");
-  if (error) throw new Error(`读取款式失败：${error.message}`);
-  return data
+  return (await activeStyleRows())
+    .filter((row) => styleKind(row.category) === kind)
     .filter((row) => withPantsOptions || !row.tags.includes(WITH_PANTS_TAG))
     .map((row) => localize(row, locale));
 }
@@ -192,16 +193,22 @@ export function getStyleBySlug(
 
 const styleBySlug = cache(async (slug: string, kind: StyleKind, locale: Locale): Promise<PublicStyle | null> => {
   await connection();
-  const { data, error } = await createSupabasePublicClient()
-    .from("styles")
-    .select(STYLE_COLUMNS)
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (error) throw new Error(`读取款式失败：${error.message}`);
+  const data = (await activeStyleRows()).find((row) => row.slug === slug);
   if (!data || styleKind(data.category) !== kind) return null;
   return localize(data, locale);
 });
+
+/** Shared by all three catalog categories and product metadata, never used for order authorization. */
+async function activeStyleRows(): Promise<StyleRowWithEnglish[]> {
+  "use cache";
+  cacheLife({ stale: 0, revalidate: 60, expire: 300 });
+  cacheTag("storefront-catalog");
+  const { data, error } = await createSupabasePublicClient()
+    .from("styles").select(STYLE_COLUMNS).eq("is_active", true)
+    .order("sort_order").order("name");
+  if (error) throw new Error(`读取款式失败：${error.message}`);
+  return data;
+}
 
 /**
  * Which price table this style uses: its own if it has one (helmet covers, gloves),

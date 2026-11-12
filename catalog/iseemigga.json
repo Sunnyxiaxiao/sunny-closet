@@ -27,7 +27,8 @@
     ],
     "template": "isee-migga",
     "description": "官方款名：3D Naked Starry Sky Ski Suit\n蓝灰星空印花，满身细碎星点，上衣 + 背带雪裤一整套。",
-    "descriptionEn": "Official name: 3D Naked Starry Sky Ski Suit\nBlue-gray starry-sky print scattered with tiny stars. Jacket + bib pants set."
+    "descriptionEn": "Official name: 3D Naked Starry Sky Ski Suit\nBlue-gray starry-sky print scattered with tiny stars. Jacket + bib pants set.",
+    "replacementValue": 330
   },
   {
     "slug": "barbie-pink-diamond-ski-suit",
@@ -53,6 +54,7 @@
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_4828ff36-16e6-4a35-a74a-1609eef678af.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_03984ead-fff3-44d6-8903-6180d7d38b06.jpg",
       "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_e51b8020-6f77-441c-a583-7d3aa78431a6.jpg",
+      "images/barbie-pink-diamond-ski-suit-extra/1.jpg",
       "images/isee-size-chart/1.jpg",
       "images/isee-size-chart/2.jpg",
       "images/isee-quality-report/1.jpg"
@@ -62,7 +64,8 @@
     "descriptionEn": "Official name: Barbie Pink Ski Suit with Diamonds (Diamond series)\nBarbie-pink fabric covered in rhinestones that sparkle in the sun. Jacket + bib pants set.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "dark-night-purple-cross-ski-suit",
@@ -98,7 +101,8 @@
     "tags": [
       "crystal",
       "series:isee-cross"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "mystery-of-the-rose-ski-suit",
@@ -133,7 +137,8 @@
     "tags": [
       "crystal",
       "series:isee-mystery"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "fire-cloud-ski-suit",
@@ -164,7 +169,8 @@
     ],
     "template": "isee-migga",
     "description": "官方款名：Fire Cloud Ski Suit\n粉色，上衣 + 背带雪裤一整套。",
-    "descriptionEn": "Official name: Fire Cloud Ski Suit\nPink. Jacket + bib pants set."
+    "descriptionEn": "Official name: Fire Cloud Ski Suit\nPink. Jacket + bib pants set.",
+    "replacementValue": 330
   },
   {
     "slug": "snowy-powder-shadow-ski-suit",
@@ -196,7 +202,8 @@
     ],
     "template": "isee-migga",
     "description": "官方款名：Snowy Powder Shadow Ski Suit\n粉色，上衣 + 背带雪裤一整套。",
-    "descriptionEn": "Official name: Snowy Powder Shadow Ski Suit\nPink. Jacket + bib pants set."
+    "descriptionEn": "Official name: Snowy Powder Shadow Ski Suit\nPink. Jacket + bib pants set.",
+    "replacementValue": 330
   },
   {
     "slug": "rhinestone-flame-ski-suit",
@@ -231,7 +238,8 @@
     "descriptionEn": "Official name: Rhinestone Flame Ski Suit\nBlack with rhinestone flame details. Jacket + bib pants set.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "pink-3d-bow-ski-suit",
@@ -263,7 +271,8 @@
     ],
     "template": "isee-migga",
     "description": "官方款名：Pink 3D Bow Ski Suit\n粉色，3D 蝴蝶结设计，上衣 + 背带雪裤一整套。",
-    "descriptionEn": "Official name: Pink 3D Bow Ski Suit\nPink with 3D bow details. Jacket + bib pants set."
+    "descriptionEn": "Official name: Pink 3D Bow Ski Suit\nPink with 3D bow details. Jacket + bib pants set.",
+    "replacementValue": 330
   },
   {
     "slug": "diamond-denim-ski-suit",
@@ -297,7 +306,8 @@
     "descriptionEn": "Official name: Diamond Denim Ski Suit\nBlue denim look finished with rhinestones. Jacket + bib pants set.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "velvet-quilted-ski-suit",
@@ -329,7 +339,8 @@
     ],
     "template": "isee-migga",
     "description": "官方款名：Velvet Quilted Ski Suit\n白色丝绒绗缝款（丝绒系列）。",
-    "descriptionEn": "Official name: Velvet Quilted Ski Suit\nWhite quilted velvet (Velvet series)."
+    "descriptionEn": "Official name: Velvet Quilted Ski Suit\nWhite quilted velvet (Velvet series).",
+    "replacementValue": 330
   },
   {
     "slug": "sweetheart-guava-ski-suit",
@@ -361,7 +372,8 @@
     ],
     "template": "isee-migga",
     "description": "官方款名：Sweetheart Guava Ski Suit\n粉色，上衣 + 背带雪裤一整套。",
-    "descriptionEn": "Official name: Sweetheart Guava Ski Suit\nPink. Jacket + bib pants set."
+    "descriptionEn": "Official name: Sweetheart Guava Ski Suit\nPink. Jacket + bib pants set.",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-tweed-snow-suit-cream",
@@ -387,7 +399,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "米白色滑雪套装，上衣的肩袖、前胸和雪裤膝盖拼接毛绒粗花呢，其余是光面防水面料，软糯又有质感，男生女生都能穿。\n只有米白色（最后一张是三色对比图，仅供参考）。尺码 M。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 肩袖、前胸、膝盖拼接毛绒粗花呢，其余为光面防水面料\n- 连帽设计\n- 全身抽绳调节扣，可按身形调整松紧\n- 两侧大容量口袋\n- 普通腰头雪裤（不是背带裤），直筒版型",
-    "descriptionEn": "A cream ski suit with fluffy tweed panels on the shoulders, sleeves and chest of the jacket and on the knees of the pants; the rest is smooth waterproof fabric. Soft, textured and unisex.\nCream only (the last photo shows all three colors for reference). Size M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Fluffy tweed panels on the shoulders, sleeves, chest and knees; smooth waterproof fabric elsewhere\n- Hooded jacket\n- Drawcord adjusters throughout for a custom fit\n- Two roomy side pockets\n- Regular-waist pants (not bibs) with a straight fit"
+    "descriptionEn": "A cream ski suit with fluffy tweed panels on the shoulders, sleeves and chest of the jacket and on the knees of the pants; the rest is smooth waterproof fabric. Soft, textured and unisex.\nCream only (the last photo shows all three colors for reference). Size M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Fluffy tweed panels on the shoulders, sleeves, chest and knees; smooth waterproof fabric elsewhere\n- Hooded jacket\n- Drawcord adjusters throughout for a custom fit\n- Two roomy side pockets\n- Regular-waist pants (not bibs) with a straight fit",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-pink-purple-cross-jacket",
@@ -451,7 +464,8 @@
     "descriptionEn": "Official name: Diamond Black Warrior Ski Suit\nAll-black ski suit finished with rhinestones and white ISEE MIGGA logos on the chest and leg. Cool, timeless and easy to style. Size S.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Underarm and inner-thigh vents to cool down fast\n- Drawcord adjusters throughout for a custom fit\n- Extended cuffs keep snow out; adjustable hook-and-loop cuffs fit easily over gloves\n- Two roomy side pockets, plus a ski pass pocket on the inner arm — just raise your arm to scan\n- Inner mesh pocket on the jacket for your goggles\n- Snow skirts at the jacket hem and pant cuffs\n- Zippered pant cuffs make it easy to get on over ski boots",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-brown-cream-belted-one-piece",
@@ -478,7 +492,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "咖啡色连体滑雪服，胸前和腿侧拼接奶白色绗缝面料，配金属扣腰带，收腰显腿长，复古又高级。图里的滑雪板包不包含。尺码 M。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 咖啡色 × 奶白色撞色拼接，奶白部分是绗缝面料\n- 金属扣可调腰带，收出腰线\n- 拼接处一圈金属铆钉装饰\n- 立领 + 前襟长拉链，穿脱方便\n- 直筒裤腿，显腿长",
-    "descriptionEn": "A brown one-piece ski suit with quilted cream panels across the chest and down the legs, plus a belt with a metal buckle that cinches the waist and makes your legs look longer. Retro and elegant. The board bag in the photos isn't included. Size M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Brown and cream color-blocking; the cream panels are quilted\n- Adjustable belt with a metal buckle to define the waist\n- Metal stud trim along the seams\n- Stand collar and long front zip for easy on and off\n- Straight legs for a longer-looking line"
+    "descriptionEn": "A brown one-piece ski suit with quilted cream panels across the chest and down the legs, plus a belt with a metal buckle that cinches the waist and makes your legs look longer. Retro and elegant. The board bag in the photos isn't included. Size M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Brown and cream color-blocking; the cream panels are quilted\n- Adjustable belt with a metal buckle to define the waist\n- Metal stud trim along the seams\n- Stand collar and long front zip for easy on and off\n- Straight legs for a longer-looking line",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-silver-spring-rhinestone-denim-suit",
@@ -509,7 +524,8 @@
     "tags": [
       "crystal",
       "series:isee-mountain-spring-denim"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-ink-spring-rhinestone-denim-suit",
@@ -539,7 +555,8 @@
     "tags": [
       "crystal",
       "series:isee-mountain-spring-denim"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-crimson-spring-rhinestone-denim-suit",
@@ -569,7 +586,8 @@
     "tags": [
       "crystal",
       "series:isee-mountain-spring-denim"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-pink-rhinestone-bow-snow-suit",
@@ -602,7 +620,8 @@
     "descriptionEn": "A pale pink hooded ski suit with rhinestone-covered bows and pink ribbons on the chest, sleeves and legs, finished with rose-pink zippers. Sweet, with plenty of sparkle. Size M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water repellency grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5; abrasion resistance >500,000 cycles (lab tested)\n- Breathable hydrophobic membrane lets sweat vapor out so you stay dry\n- Brushed fleece lining with no cold spots; warms up as you move (rated +4.5°C by the brand)\n\n## Design Details\n- Extra-high windproof collar\n- Drawcord hem to seal out cold air\n- Roomier crotch and articulated knees for full freedom of movement\n- Quilt-free construction that moves easily and stays warm",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-blue-star-fur-bib-pants",
@@ -657,7 +676,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "奶白色工装风连体滑雪服：上身是短款工装造型，高立领、胸前两个翻盖大口袋，黑色拉链和袖口拇指套做撞色；下身是黑色修身微喇裤，腰间一条黑色腰带，看起来像两件套，其实是一件连体。干净利落，很显腿长。\n⚠️ 尺码偏小：S 码，适合体重 50kg（100 斤）左右的女生。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 连体设计，腰部不进雪\n- 高立领挡风，胸前两个翻盖大口袋\n- 腰带可调节，收腰显腿长\n- 修身微喇裤脚，袖口拇指套防风",
-    "descriptionEn": "A cream utility-style ski jumpsuit: the top has a cropped workwear look with a tall stand collar, two big flap chest pockets and black contrast zips and thumbhole cuffs; the bottom is slim black flared pants with a black belt at the waist. It looks like two pieces but it's one jumpsuit. Clean, sharp and leg-lengthening.\n⚠️ Runs small: size S, best for women around 50 kg (110 lb).\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- One-piece design keeps snow out of your waist\n- Tall stand collar and two big flap chest pockets\n- Adjustable belt for a defined waist\n- Slim flared legs; thumbhole cuffs to seal out wind"
+    "descriptionEn": "A cream utility-style ski jumpsuit: the top has a cropped workwear look with a tall stand collar, two big flap chest pockets and black contrast zips and thumbhole cuffs; the bottom is slim black flared pants with a black belt at the waist. It looks like two pieces but it's one jumpsuit. Clean, sharp and leg-lengthening.\n⚠️ Runs small: size S, best for women around 50 kg (110 lb).\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- One-piece design keeps snow out of your waist\n- Tall stand collar and two big flap chest pockets\n- Adjustable belt for a defined waist\n- Slim flared legs; thumbhole cuffs to seal out wind",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-reflective-devil-ski-suit",
@@ -685,7 +705,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "黑灰拼色几何滑雪套装，灰色拼块是反光面料，晚上被灯一照整片发亮。帽子上有一对立体小恶魔角，肩上一对可拆的蝙蝠翅膀和尖刺，又酷又搞怪，男生女生都能穿。\n尺码 M。",
-    "descriptionEn": "A black-and-grey geometric ski suit whose grey panels are reflective, so they light up under night lights. The hood has a pair of 3D devil horns, and detachable bat wings and spikes sit on the shoulders. Edgy, playful and unisex.\nSize M."
+    "descriptionEn": "A black-and-grey geometric ski suit whose grey panels are reflective, so they light up under night lights. The hood has a pair of 3D devil horns, and detachable bat wings and spikes sit on the shoulders. Edgy, playful and unisex.\nSize M.",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-lemon-tie-dye-ski-suit",
@@ -711,7 +732,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "奶白底晕染柠檬黄的扎染滑雪套装，白色拉链和黑色细节点缀，宽松廓形，在雪地里清新又显眼。\n尺码 S。",
-    "descriptionEn": "A cream ski suit washed with lemon-yellow tie-dye, finished with white zips and black accents. Relaxed and oversized, fresh and easy to spot on the snow.\nSize S."
+    "descriptionEn": "A cream ski suit washed with lemon-yellow tie-dye, finished with white zips and black accents. Relaxed and oversized, fresh and easy to spot on the snow.\nSize S.",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-pink-sparkle-heart-ski-suit",
@@ -739,7 +761,8 @@
     "descriptionEn": "A pale pink relaxed ski suit scattered with sparkly hearts in all sizes on the jacket and pants. Sweet through and through.\nSize M.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-pink-lilac-star-ski-suit",
@@ -765,7 +788,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "粉色、浅紫和白色的山峰形拼色滑雪套装，胸前两颗紫色星星，背后一颗大大的白色星星，复古又俏皮。\n尺码 M。",
-    "descriptionEn": "A pink, lilac and white colorblock ski suit with mountain-peak panels, two lilac stars on the chest and one big white star on the back. Retro and playful.\nSize M."
+    "descriptionEn": "A pink, lilac and white colorblock ski suit with mountain-peak panels, two lilac stars on the chest and one big white star on the back. Retro and playful.\nSize M.",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-cloud-grey-glacier-ski-suit",
@@ -796,7 +820,8 @@
     "descriptionEn": "A ski suit that fades from white to soft grey-blue, dotted with rhinestone cross motifs, with utility cargo pockets on both the jacket and pants. Clean, elevated and unisex.\nSize M.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-pastel-tie-dye-rhinestone-ski-suit",
@@ -827,7 +852,8 @@
     "descriptionEn": "A dreamy pastel tie-dye ski suit in soft pink, yellow, blue and lilac, covered in tiny rhinestones and rhinestone crosses that sparkle in the sun.\nSize M.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-black-dachshund-ski-suit",
@@ -852,7 +878,8 @@
       "images/isee-quality-report/1.jpg"
     ],
     "description": "黑色滑雪套装，前襟一条奶白色撞色拼条，全身印着穿小毛衣的腊肠狗，可爱又不幼稚。\n尺码 S。",
-    "descriptionEn": "A black ski suit with a cream contrast placket, printed all over with little dachshunds in sweaters. Cute without being childish.\nSize S."
+    "descriptionEn": "A black ski suit with a cream contrast placket, printed all over with little dachshunds in sweaters. Cute without being childish.\nSize S.",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-mystery-of-the-ocean-ski-suit",
@@ -883,7 +910,8 @@
     "tags": [
       "crystal",
       "series:isee-mystery"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-purple-starlight-rhinestone-ski-suit",
@@ -912,7 +940,8 @@
     "descriptionEn": "A deep purple ski suit with bursts of rhinestone starlight across the chest and legs and a metallic ISEE MIGGA script logo. Rich and sparkly.\nSize M.",
     "tags": [
       "crystal"
-    ]
+    ],
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-ink-spring-rhinestone-denim-jacket",
@@ -942,5 +971,84 @@
     ],
     "description": "「墨色山泉满钻牛仔滑雪套装」的上衣单独出租：深灰黑色牛仔质感夹克，全身铺满亮钻。只租上衣，图里的裤子不包含。尺码 L。\n搭配任意黑色雪裤都很好看，可以在 Mix & Match 挑一条黑色雪裤自己搭。\n\n## 面料与科技\n- 内里抓绒，蓄热锁温，官方标注适合 0℃ 到 -10℃\n- 防水防风外层，雪地里摔了也不容易湿\n\n## 设计细节\n- 牛仔质感面料上铺满大小亮钻，阳光下特别闪\n- 立领 + 门襟暗扣，挡风\n- 胸前两个大翻盖口袋，工装感",
     "descriptionEn": "The jacket from the Ink Mountain Spring Rhinestone Denim Ski Suit, rented on its own: a charcoal-black denim-look jacket covered in rhinestones. Jacket only — the pants in the photos aren't included. Size L.\nIt looks great with any black snow pants — pick a pair from Mix & Match.\n\n## Fabric & Tech\n- Fleece lining that holds in heat; rated by the brand for 0°C to −10°C (32°F to 14°F)\n- Waterproof, windproof shell — stays dry even after a fall\n\n## Design Details\n- Denim-look fabric covered in rhinestones of different sizes — it really sparkles in the sun\n- Stand collar with a covered placket to block the wind\n- Two big flap chest pockets for a workwear feel"
+  },
+  {
+    "slug": "isee-migga-pink-3d-heart-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "粉色立体爱心滑雪套装",
+    "nameEn": "Pink 3D Heart Ski Suit",
+    "dailyPrice": 49,
+    "sortOrder": 86,
+    "template": "isee-migga",
+    "items": [
+      {
+        "code": "SC062",
+        "size": "S"
+      }
+    ],
+    "images": [
+      "images/isee-migga-pink-3d-heart-ski-suit/1.jpg",
+      "images/isee-migga-pink-3d-heart-ski-suit/2.jpg",
+      "images/isee-migga-pink-3d-heart-ski-suit/3.jpg",
+      "images/isee-migga-pink-3d-heart-ski-suit/4.jpg",
+      "images/isee-size-chart/1.jpg",
+      "images/isee-size-chart/2.jpg",
+      "images/isee-quality-report/1.jpg"
+    ],
+    "description": "粉色连帽滑雪套装：上衣是饱和的芭比粉，雪裤是淡淡的樱花粉，白色拉链和 ISEE MIGGA 字母点缀，整套甜而不腻。尺码 S。",
+    "descriptionEn": "A hooded ski suit in two shades of pink: a bright Barbie-pink jacket over pale cherry-blossom pants, finished with white zippers and ISEE MIGGA lettering. Sweet without being too much. Size S."
+  },
+  {
+    "slug": "isee-migga-barbie-mecha-cropped-jacket",
+    "brand": "ISEE MIGGA",
+    "category": "jacket",
+    "sortOrder": 1011,
+    "name": "芭比机甲黑白蝴蝶结短款上衣",
+    "nameEn": "Barbie Mecha Black & White Bow Cropped Jacket",
+    "items": [
+      {
+        "code": "SC069",
+        "size": "M"
+      }
+    ],
+    "description": "黑白撞色的短款滑雪上衣，胸前一个丝绒大蝴蝶结，泡泡袖、高立领，下摆是收紧的松紧腰。只出租上衣（图里的黑色连体裤不包含）。尺码 M。\n短款上衣露腰，建议搭配背带雪裤，可以在 Mix & Match 里挑一条。",
+    "descriptionEn": "A cropped black-and-white snow jacket with a big velvet bow on the chest, puffed sleeves, a high stand collar and an elastic cinched hem. Jacket only (the black jumpsuit in the photos isn't included). Size M.\nBecause it's cropped, pair it with bib pants; you can pick a pair in Mix & Match.",
+    "images": [
+      "images/isee-migga-barbie-mecha-cropped-jacket/1.jpg",
+      "images/isee-migga-barbie-mecha-cropped-jacket/2.jpg",
+      "images/isee-migga-barbie-mecha-cropped-jacket/3.jpg"
+    ]
+  },
+  {
+    "slug": "isee-migga-hot-pink-rhinestone-3l-snow-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 1012,
+    "template": "isee-migga",
+    "tags": [
+      "crystal"
+    ],
+    "name": "寒武纪玫红满钻 3L 滑雪套装",
+    "nameEn": "Cambrian Hot Pink Rhinestone 3L Ski Suit",
+    "items": [
+      {
+        "code": "SC073",
+        "size": "M"
+      }
+    ],
+    "description": "寒武纪系列黑标款：亮眼的玫红色，从上衣到雪裤缀满细碎水钻，阳光下一闪一闪。P 棉保暖，3L 全压胶，内置 RECCO 救援反射片。尺码 M。",
+    "descriptionEn": "From the Cambrian black-label series: vivid hot pink scattered with tiny rhinestones from jacket to pants, sparkling in the sun. Primaloft-style insulation, fully taped 3-layer shell and a built-in RECCO rescue reflector. Size M.",
+    "images": [
+      "images/isee-migga-hot-pink-rhinestone-3l-snow-suit/1.jpg",
+      "images/isee-migga-hot-pink-rhinestone-3l-snow-suit/2.jpg",
+      "images/isee-migga-hot-pink-rhinestone-3l-snow-suit/3.jpg",
+      "images/isee-migga-hot-pink-rhinestone-3l-snow-suit/4.jpg",
+      "images/isee-migga-hot-pink-rhinestone-3l-snow-suit/5.jpg",
+      "images/isee-size-chart/1.jpg",
+      "images/isee-size-chart/2.jpg",
+      "images/isee-quality-report/1.jpg"
+    ]
   }
 ]

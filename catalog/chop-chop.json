@@ -73,6 +73,96 @@
       "images/chop-chop-cherry-kitty-snow-set/5.jpg"
     ],
     "description": "樱桃猫猫毛绒连帽上衣（Chop Chop）+ 樱桃蝴蝶结背带雪裤（ISEE MIGGA）。这两件来自不同品牌，不是官方套装，但红白配色和樱桃元素完全一致，穿在一起就是一整套，比分开租更划算。尺码 M。\n\n## 设计细节\n- 毛绒猫耳帽 + 红色蝴蝶结，胸前大樱桃刺绣和毛绒球\n- 背带雪裤红色侧边条纹，腿上樱桃蝴蝶结刺绣\n- 红色毛绒腰带和蝴蝶结挂饰",
-    "descriptionEn": "The Cherry Kitty Plush Hoodie (Chop Chop) + the Cherry Bow Bib Snow Pants (ISEE MIGGA). They come from two different brands and aren't sold as a set, but the red-and-white colors and cherry details match perfectly — together they look like one outfit, and the set costs less than renting them separately. Size M.\n\n## Design Details\n- Plush kitty-ear hood with a red bow; big embroidered cherries and pom-poms on the chest\n- Bib pants with red side stripes and embroidered cherry bows on the legs\n- Red plush belt and bow charm"
+    "descriptionEn": "The Cherry Kitty Plush Hoodie (Chop Chop) + the Cherry Bow Bib Snow Pants (ISEE MIGGA). They come from two different brands and aren't sold as a set, but the red-and-white colors and cherry details match perfectly — together they look like one outfit, and the set costs less than renting them separately. Size M.\n\n## Design Details\n- Plush kitty-ear hood with a red bow; big embroidered cherries and pom-poms on the chest\n- Bib pants with red side stripes and embroidered cherry bows on the legs\n- Red plush belt and bow charm",
+    "replacementValue": 300
+  },
+  {
+    "slug": "chop-chop-white-emoji-print-snow-suit",
+    "brand": "Chop Chop",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 380,
+    "name": "白色涂鸦印花滑雪套装",
+    "nameEn": "White Emoji Print Snow Suit",
+    "items": [
+      {
+        "code": "SC063",
+        "size": "M"
+      }
+    ],
+    "description": "白底满印小猪、笑脸、彩虹、星星和复古电话的涂鸦图案，上衣是宽松的连帽冲锋衣，雪裤是阔腿直筒，整套俏皮又出片。尺码 M。\n\n## 面料与科技\n- 三层复合面料：外层四级防泼水（仿荷叶效果，遇水成珠），中层高密度涤纶，内层加厚 TPU 防水膜\n- 防水、透气、耐磨、防风\n\n## 设计细节\n- 加高立领 + 连帽，双重防护\n- 双头拉链 + 防水门襟\n- 弹力防风袖口，袖口有雪卡位\n- 腰部雪裙双排扣，可调节\n- 雪裤带拉链口袋；裤脚防雪裙加抽绳，内侧硅胶防滑\n\n## 尺码（M，单位 cm）\n- 上衣：胸围 135 · 袖长 58.5 · 衣长 77\n- 雪裤：腰围 74 · 臀围 138 · 裤长 109",
+    "descriptionEn": "A white snow suit covered in a playful doodle print of piggy banks, smiley faces, rainbows, stars and retro phones: a roomy hooded shell jacket over wide straight-leg pants. Fun and very photogenic. Size M.\n\n## Fabric & Tech\n- 3-layer fabric: grade-4 water-repellent outer layer (water beads up like on a lotus leaf), dense polyester middle layer, thick TPU waterproof membrane inside\n- Waterproof, breathable, abrasion-resistant and windproof\n\n## Design Details\n- High stand collar plus hood for double protection\n- Two-way zipper with a waterproof storm flap\n- Stretch windproof cuffs with a ski-pass pocket on the sleeve\n- Adjustable snow skirt with double snaps\n- Zip pockets on the pants; leg gaiters with drawcords and silicone grip\n\n## Measurements (M, cm)\n- Jacket: chest 135 · sleeve 58.5 · length 77\n- Pants: waist 74 · hips 138 · length 109",
+    "images": [
+      "images/chop-chop-white-emoji-print-snow-suit/1.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/2.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/3.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/4.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/5.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/6.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/7.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/8.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/9.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/10.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/11.jpg",
+      "images/chop-chop-white-emoji-print-snow-suit/12.jpg"
+    ]
+  },
+  {
+    "slug": "chop-chop-pink-sherpa-cargo-snow-suit",
+    "brand": "Chop Chop",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 381,
+    "name": "粉色毛边工装滑雪套装",
+    "nameEn": "Pink Sherpa-Trim Cargo Snow Suit",
+    "items": [
+      {
+        "code": "SC064",
+        "size": "S"
+      }
+    ],
+    "description": "糖果粉工装风滑雪套装，上衣和雪裤的口袋、门襟、袖子都滚了一圈白色羊羔毛边，胸前两个毛绒翻盖口袋，雪裤是多口袋阔腿工装裤，软萌又有型。尺码 S。\n合照里的浅蓝色只是同款的另一个颜色，店里只有粉色。",
+    "descriptionEn": "A candy-pink cargo-style snow suit with fluffy white sherpa trim around the pockets, placket and sleeves. The jacket has two plush flap chest pockets; the pants are wide-leg cargos with plenty of pockets. Soft and cute, but still sharp. Size S.\nThe light blue suit in the couple photos is another color of the same style; we only carry pink.",
+    "images": [
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/1.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/2.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/3.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/4.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/5.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/6.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/7.jpg",
+      "images/chop-chop-pink-sherpa-cargo-snow-suit/8.jpg"
+    ]
+  },
+  {
+    "slug": "chop-chop-tie-dye-denim-snow-suit",
+    "brand": "Chop Chop",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 382,
+    "name": "扎染牛仔滑雪套装",
+    "nameEn": "Tie-Dye Denim Snow Suit",
+    "items": [
+      {
+        "code": "SC065",
+        "size": "上衣 M · 裤子 S"
+      }
+    ],
+    "description": "蓝色扎染牛仔纹理的套头连帽滑雪服，配多口袋宽松工装雪裤，金属标牌点缀，街头感很强，男女都能穿。尺码：上衣 M，雪裤 S。\n内里加绒，比较厚实保暖，也比一般雪服重一些。\n\n## 面料与科技\n- 三层复合面料\n- 防水 15000mmH₂O，透气 10000g/m²/24h\n- 全压胶缝合\n\n## 设计细节\n- 防水防风雪帽，可以套在头盔外面\n- 袖口雪卡包、可调节魔术贴袖口\n- 可调节防风雪裙、防雪灌下摆\n- 定制防水拉链\n- 雪裤腰头可调节，裤脚可调节\n\n## 尺码（单位 cm）\n- 上衣 M：衣长 77 · 胸围 128 · 肩宽 56.5 · 袖长 81\n- 雪裤 S：裤长 105 · 腰围 73 · 臀围 133",
+    "descriptionEn": "A blue tie-dye denim-look pullover hoodie snow jacket with roomy multi-pocket cargo pants and metal badge details. Very streetwear, and unisex. Sizes: jacket M, pants S.\nThe fleece lining makes it warm and thick, and a bit heavier than most snow suits.\n\n## Fabric & Tech\n- 3-layer fabric\n- Waterproof 15,000 mmH₂O, breathability 10,000 g/m²/24h\n- Fully taped seams\n\n## Design Details\n- Waterproof, windproof hood that fits over a helmet\n- Ski-pass pocket on the sleeve; adjustable Velcro cuffs\n- Adjustable snow skirt and snow-proof hem\n- Custom waterproof zippers\n- Adjustable waistband and leg openings on the pants\n\n## Measurements (cm)\n- Jacket M: length 77 · chest 128 · shoulders 56.5 · sleeve 81\n- Pants S: length 105 · waist 73 · hips 133",
+    "images": [
+      "images/chop-chop-tie-dye-denim-snow-suit/1.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/2.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/3.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/4.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/5.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/6.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/7.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/8.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/9.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/10.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/11.jpg",
+      "images/chop-chop-tie-dye-denim-snow-suit/12.jpg"
+    ]
   }
 ]

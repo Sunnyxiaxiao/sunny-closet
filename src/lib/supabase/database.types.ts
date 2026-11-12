@@ -32,7 +32,9 @@ export type EmailKind =
   | "refund_due"
   | "awaiting_acceptance"
   | "order_declined"
-  | "acceptance_reminder";
+  | "acceptance_reminder"
+  | "pickup_reminder"
+  | "return_reminder";
 export type EmailLogStatus = "sending" | "sent" | "failed" | "dismissed";
 
 export type Database = {
@@ -615,6 +617,17 @@ export type Database = {
         Returns: { booking_id: string; booking_no: string }[];
       };
       /** create_order plus the short-notice shipping choice (p_shipping_cents includes the rush fee); service role only */
+      place_order_checked: {
+        Args: Omit<Database["public"]["Functions"]["place_order"]["Args"], "p_lines"> & {
+          p_lines: (Database["public"]["Functions"]["place_order"]["Args"]["p_lines"][number] & {
+            condition_notes: { itemId: string; text: string; imageUrls: string[] }[];
+          })[];
+          p_payment_method: PaymentMethod | null;
+          p_cash_deposit_cents: number;
+          p_locale: "en" | "zh";
+        };
+        Returns: { booking_id: string; booking_no: string }[];
+      };
       place_order: {
         Args: {
           /** Each cart item: style, size, ski days, server-computed prices, helmet-cover add-ons */

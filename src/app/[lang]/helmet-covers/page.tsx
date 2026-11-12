@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { Suspense } from "react";
 import { FilterChips, FilterSection } from "@/components/filter-chips";
 import { FilterPanel, ShopColumns } from "@/components/filter-panel";
 import { HelmetCoverCard, HelmetGridSkeleton } from "@/components/helmet-cover-card";
-import { RentalFilterForm } from "@/components/rental-filter-form";
+import { DateQuickBar, RentalFilterForm } from "@/components/rental-filter-form";
 import { localePath, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { availableCounts, getAvailability, getSettings, getToday, listStyles } from "@/lib/catalog";
@@ -12,10 +12,13 @@ import { formatDateRange } from "@/lib/dates";
 import { HELMET_COVER_DEFAULTS, HELMET_TAG_GROUPS } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { parseRentalSearch } from "@/lib/validation/rental-query";
+import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).helmet.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).helmet.title;
+  return { title, ...pageSeo(locale, "/helmet-covers", { title }) };
 }
 
 export default async function HelmetCoversPage({ searchParams }: PageProps<"/[lang]/helmet-covers">) {
@@ -60,7 +63,10 @@ async function HelmetCovers({
   const visible = covers
     .filter((c) => !color || c.tags.includes(color))
     .filter((c) => !style || c.tags.includes(style))
-    .filter((c) => !ranged || (ranged.get(c.id) ?? 0) > 0);
+    // 选了日期：这几天被订满的不隐藏，变灰排到最后
+    .map((cover) => ({ cover, unavailable: ranged !== null && (ranged.get(cover.id) ?? 0) === 0 }))
+    .toSorted((a, b) => Number(a.unavailable) - Number(b.unavailable));
+  const availableCount = visible.filter((v) => !v.unavailable).length;
 
   const current = { color, style } as Record<string, string | undefined>;
   const dateQuery = new URLSearchParams();
@@ -138,9 +144,17 @@ async function HelmetCovers({
           </div>
         }
       >
+        <DateQuickBar
+          action="/helmet-covers"
+          today={today}
+          keepParams={current}
+          start={search.kind !== "none" ? search.start : undefined}
+          end={search.kind !== "none" ? search.end : undefined}
+          locale={locale}
+        />
         {search.kind === "valid" && (
           <p className="mx-2 mt-4 text-sm text-neutral-500 sm:mx-0 lg:mt-0 lg:mb-4">
-            {t.availableCount(formatDateRange(search.start, search.end, locale), visible.length)}
+            {t.availableCount(formatDateRange(search.start, search.end, locale), availableCount)}
           </p>
         )}
         {search.kind === "invalid" && (
@@ -156,9 +170,9 @@ async function HelmetCovers({
           </p>
         ) : (
           <ul className="mt-5 grid grid-cols-2 gap-x-2 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:mt-0 xl:grid-cols-4">
-            {visible.map((cover) => (
+            {visible.map(({ cover, unavailable }) => (
               <li key={cover.id}>
-                <HelmetCoverCard cover={cover} query={detailSuffix} locale={locale} />
+                <HelmetCoverCard cover={cover} unavailable={unavailable} query={detailSuffix} locale={locale} />
               </li>
             ))}
           </ul>

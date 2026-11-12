@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { localePath, type Locale } from "@/i18n/config";
 import { useCart } from "@/lib/cart";
 

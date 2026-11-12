@@ -3,10 +3,13 @@ import { Suspense } from "react";
 import { getLocale } from "@/i18n/server";
 import { getSettings } from "@/lib/catalog";
 import { termsArgs, type TermsBlock } from "@/lib/terms";
+import { pageSeo } from "@/lib/seo";
 import { getMessages, type Messages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).terms.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).terms.title;
+  return { title, ...pageSeo(locale, "/terms", { title }) };
 }
 
 export default async function TermsPage() {

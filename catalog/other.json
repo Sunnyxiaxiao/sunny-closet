@@ -18,5 +18,55 @@
     ],
     "description": "咖啡色系迷彩阔腿雪裤：松紧腰配抽绳，前后和两侧都是带金属按扣的工装大口袋，裤脚可以抽绳收紧。很好搭，配纯色上衣就很酷。尺码 S。",
     "descriptionEn": "Wide-leg snow pants in a brown camo print, with an elastic drawstring waist, snap-button cargo pockets front, back and on the sides, and drawcord cuffs. Easy to style — pair them with a solid top for an effortlessly cool look. Size S."
+  },
+  {
+    "slug": "red-peony-floral-snow-suit",
+    "brand": "",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 396,
+    "name": "东北大花滑雪套装",
+    "nameEn": "Red Peony Floral Snow Suit",
+    "items": [
+      {
+        "code": "SC070",
+        "size": "均码"
+      }
+    ],
+    "description": "满身大红牡丹和凤凰的东北大花图案，连帽宽松上衣配同款雪裤，喜庆又抢镜，男女都能穿。\n均码，适合身高 160–175 cm、体重 75 kg 左右。",
+    "descriptionEn": "Bold northeastern Chinese floral print with big red peonies and phoenixes: a roomy hooded jacket with matching pants. Festive, eye-catching and unisex.\nOne size, fits about 160–175 cm (5'3\"–5'9\") and up to about 75 kg (165 lb).",
+    "images": [
+      "images/red-peony-floral-snow-suit/1.jpg",
+      "images/red-peony-floral-snow-suit/2.jpg",
+      "images/red-peony-floral-snow-suit/3.jpg",
+      "images/red-peony-floral-snow-suit/4.jpg"
+    ]
+  },
+  {
+    "slug": "blue-star-sherpa-snow-suit",
+    "brand": "Snowall",
+    "category": "suit",
+    "dailyPrice": 49,
+    "sortOrder": 397,
+    "name": "浅蓝星星毛绒拼接滑雪套装",
+    "nameEn": "Sky Blue Star Sherpa Snow Suit",
+    "items": [
+      {
+        "code": "SC074",
+        "size": "S"
+      }
+    ],
+    "description": "天蓝色滑雪套装，胸前和袖子拼着奶白色羊羔毛，背后和袖子上缝着毛绒大星星，帽子一圈毛边。复古又温柔。尺码 S。",
+    "descriptionEn": "A sky-blue snow suit with cream sherpa panels across the chest and sleeves, big fluffy stars on the back and sleeves, and a fleece-trimmed hood. Retro and soft. Size S.",
+    "images": [
+      "images/blue-star-sherpa-snow-suit/1.jpg",
+      "images/blue-star-sherpa-snow-suit/2.jpg",
+      "images/blue-star-sherpa-snow-suit/3.jpg",
+      "images/blue-star-sherpa-snow-suit/4.jpg",
+      "images/blue-star-sherpa-snow-suit/5.jpg",
+      "images/blue-star-sherpa-snow-suit/6.jpg",
+      "images/blue-star-sherpa-snow-suit/7.jpg",
+      "images/blue-star-sherpa-snow-suit/8.jpg"
+    ]
   }
 ]

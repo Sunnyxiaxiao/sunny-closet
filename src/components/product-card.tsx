@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import type { PublicStyle } from "@/lib/catalog";
 import { localePath, type Locale } from "@/i18n/config";
 import { isCrystal } from "@/lib/gloves";
@@ -13,6 +13,8 @@ export function ProductCard({
   query = "",
   fromCents,
   wasCents,
+  priority,
+  unavailable,
   locale,
 }: {
   style: PublicStyle;
@@ -23,6 +25,10 @@ export function ProductCard({
   fromCents: number;
   /** 特惠期内的正价（划掉显示），见 crystalRegularTable */
   wasCents?: number;
+  /** 首屏的前几张卡片：图片不等滚动、直接加载 */
+  priority?: boolean;
+  /** 选了日期且这段时间被订满时为 true：变灰、标“已被预订”，仍然可以点进去看 */
+  unavailable?: boolean;
   locale: Locale;
 }) {
   const messages = getMessages(locale);
@@ -34,15 +40,21 @@ export function ProductCard({
       className={`group block h-full ${crystal ? "bg-neutral-950 pb-3 text-white" : ""}`}
     >
       <div className="relative overflow-hidden">
-        <div className="transition duration-500 group-hover:scale-[1.03]">
+        <div className={`transition duration-500 group-hover:scale-[1.03] ${unavailable ? "opacity-50 grayscale" : ""}`}>
           <StyleImage
             src={style.image_urls[0]}
             alt={style.name}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            priority={priority}
             thumb
           />
         </div>
         {crystal && <CrystalBadge className="absolute left-2 top-2" />}
+        {unavailable && (
+          <span className="absolute inset-x-2 bottom-2 bg-white/90 py-1 text-center text-xs font-semibold text-neutral-900">
+            {messages.styles.bookedBadge}
+          </span>
+        )}
         {style.bundle_style_ids && (
           <span className="absolute left-2 top-2 bg-white/90 px-2 py-0.5 text-[11px] font-semibold tracking-wide">
             {messages.product.styledBadge}

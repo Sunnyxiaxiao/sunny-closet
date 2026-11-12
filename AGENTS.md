@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Launch preparation handoff
+
+When the user asks to resume launch tasks (for example, “回来处理上线待办”), first read `docs/launch-checklist.md`. It records agreed policies, code / deployment status, Claude's handoff and the exact next discussion. Do not redeploy without explicit user approval.

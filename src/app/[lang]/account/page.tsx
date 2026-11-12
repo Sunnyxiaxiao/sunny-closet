@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { signOutCustomer } from "@/app/[lang]/account/actions";

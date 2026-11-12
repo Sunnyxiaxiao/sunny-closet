@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { localePath } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
+import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).story.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).story.title;
+  return { title, ...pageSeo(locale, "/story", { title }) };
 }
 
 /** 品牌故事：为什么做 Sunny Closet。文字在 messages 的 story 里改（中英文各一份） */

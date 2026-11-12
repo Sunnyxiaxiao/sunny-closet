@@ -3,7 +3,7 @@
  *
  * Current rule: tiered pricing. Rental = the table's total for n days; days beyond the table use the last tier;
  * total = rental + add-ons + deposit. The price table lives in the database at settings.rental_prices_cents,
- * e.g. [4900, 7900, 9400, 10900, 11900, 12900, 13900] means 1 day $49, 2 days $79, 3 days $94 … 7 days $139.
+ * e.g. [4900, 7900, 9900, 10900, 11900, 12900, 13900] means 1 day $49, 2 days $79, 3 days $99 … 7 days $139.
  * Styles can have their own table (styles.rental_prices_cents, e.g. helmet covers [1500, 2000, 2000, 2500]).
  * Add-ons (helmet covers with an outfit) are a flat price for the whole rental, regardless of days.
  * The database's create_booking re-validates with the same rules.

@@ -1,4 +1,17 @@
+import { shop } from "@/config/shop";
 import type { TermsArgs, TermsSection } from "@/lib/terms";
+
+// 租赁须知和完整条款共用同一份不合身退租规则。
+const cancellationShippingPolicy = "订单尚未寄出时，取消预订会全额退还已收运费（包括补运费和加急费，如有），租金仍按取消时间对应的规则处理。订单寄出后，因取消预订不退运费；物流延误、符合条件的不合身退租及店方问题，按各自对应的规则另行处理。";
+
+const deliveryDelayPolicy = "如果物流延误影响租赁使用，请尽快联系我们，一起核对物流记录并安排后续处理。如果延误导致整个预订租期内一天都无法使用，可以退还全部租金和已收运费，不扣除不合身退租的 $15，并联系安排未使用商品的退回；如果仍可使用后续天数，我们会根据实际错过的租赁天数，与你协商按比例退还租金，已收运费不退。";
+
+const fitReturnPolicy = [
+  `如果邮寄商品不合身，请在签收后 24 小时内联系 ${shop.contact.email}，并将退件交给 USPS。可以在室内短暂试穿，但商品不得实际使用，退回时须保持原状。请使用预付退货面单，并保留 USPS 收件凭证。`,
+  "收到并检查退回商品后，我们会将这些商品的租金原路退款，不发放抵用额。订单原本未收运费的，从退款中固定扣除 $15，同一订单只扣一次，且不超过本次应退租金；订单原本已收运费的，已收运费（含补运费或加急费，如有）不退，但不再额外扣 $15。以上规则适用于所有可邮寄州，不按退货距离额外收费。",
+  "如果我们发错商品或尺码，或存在未披露且影响正常使用的问题，请在签收后 24 小时内联系并提供照片。我们承担解决店方问题的费用，不适用上述不合身退租的运费扣除。如果你认为尺码信息不准确，请提供尺码标签和相关部位的测量照片，我们会与你一起核对。",
+];
+
 
 /**
  * 界面文字集中放在这里（中文）。英文在 en.ts，结构必须完全一样：
@@ -36,7 +49,7 @@ export const messages = {
     stepsTitle: "怎么租",
     steps: [
       { title: "挑一套喜欢的", body: "每套雪服都有单独的页面，看清尺码和细节。" },
-      { title: "选日期并提交预订", body: "确认这段时间有空，填写联系方式，我们会尽快确认。" },
+      { title: "选日期并提交预订", body: "选择可租日期，在结算时选择付款方式。预订是否确认会显示在订单页，并通过邮件通知。" },
       { title: "取件上雪场", body: "到店自取或邮寄到家，用完按时归还即可。" },
     ],
     helmetTitle: "Top It Off 🐰",
@@ -58,6 +71,7 @@ export const messages = {
     dropAddOn: "不加购",
     filterToggle: "按日期 / 尺码筛选",
     emptyRanged: "这段时间没有符合条件的雪服，换个日期或尺码试试。",
+    bookedBadge: "这段时间已被预订",
     empty: "暂无雪服。",
   },
   filterForm: {
@@ -71,6 +85,7 @@ export const messages = {
     title: "筛选",
     close: "关闭",
     dates: "按日期看可租",
+    quickTitle: "哪几天滑雪？填上日期看哪些可租",
   },
   helmet: {
     title: "头盔套",
@@ -85,7 +100,7 @@ export const messages = {
     addOnCta: "搭配雪服一起租",
     notice:
       "头盔套仅为装饰配件，不提供任何额外的防撞保护。滑雪时请务必佩戴合格认证、尺寸合适的滑雪或单板头盔。",
-    replacementValue: "丢失或严重损坏按重置价赔偿：",
+    replacementValue: "替换价值：",
     filters: { color: "颜色", style: "风格", all: "全部" },
     dateFilter: "按日期看可租",
     empty: "暂时没有符合条件的头盔套。",
@@ -227,14 +242,14 @@ export const messages = {
     crystalBadge: "Limited Availability",
     crystalBody: "限量水钻款，每个颜色只有一副，喜欢的话早点订。",
     regularTitle: "经典手套",
-    regularBody: "1 天 $10、2 天 $18、3–10 天 $25 封顶。单租最长 10 天，随雪服租的跟雪服一起还。",
+    regularBody: "单租价格和最长租期见各商品页；搭配雪服加购按整个租期一口价，选择配件时显示，与雪服一起归还。",
     choiceLabel: "颜色 · 尺码",
     dateFilter: "按日期看可租",
     empty: "暂时没有可租的手套。",
     regularEmpty: "经典手套即将上架。",
     unavailable: "这段时间已被预订",
     hygiene: "每次归还后清洗、消毒并晾干再出租。",
-    replacementValue: "丢失或严重损坏按重置价赔偿：",
+    replacementValue: "替换价值：",
     notRentable: "这款手套暂时不可租。",
     upTo: (price: string) => `最多 ${price}`,
     colorCount: (n: number) => `${n} 色可选`,
@@ -273,8 +288,9 @@ export const messages = {
     pickupMin: "到店自取",
     shippingMin: "邮寄",
     minDaysUnit: "天起租",
-    shippingPolicy: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number) =>
-      `仅限美国本土 48 州（含华盛顿特区）；邮寄 ${minDays} 天起租；租金满 $${free} 或租一整套 full look（上衣、裤子、头盔套、手套）包邮，西部、南部部分州的包邮订单补运费 $${farFree}；不包邮运费 $${fee}（西部、南部部分州 $${far}）；Ithaca 本地自取 1 天起；邮寄需提前约 ${ahead} 天下单。`,
+    shippingPolicy: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number, farStates: string) =>
+      `仅限美国本土 48 州（含华盛顿特区）；邮寄 ${minDays} 天起租；租金 + 加购满 $${free} 或租一整套 full look（上衣、裤子、头盔套、手套）包邮，${farStates} 这些州的包邮订单补运费 $${farFree}；不包邮运费 $${fee}（西部、南部部分州 $${far}）；Ithaca 本地自取 1 天起；邮寄需提前约 ${ahead} 天下单。`,
+    replacementValue: "替换价值：",
     deposit: "押金",
     size: "尺码",
     description: "商品介绍",
@@ -283,7 +299,7 @@ export const messages = {
     rentalNotesBody: [
       "只按滑雪日计费：周六、周日滑雪，周五晚上取、周一中午前还，按 2 天计费。",
       "邮寄会提前寄出，保证滑雪前送到；用完后次日前交给快递寄回即可，运输时间不计费。",
-      "无需押金。损坏、丢失和逾期按租赁条款处理。",
+      "在线付款或留卡可免押金；到店自取且全部当面付款时，需要支付可退押金。具体见结算页付款选项和租赁条款。",
       "每次归还后都会专业清洗消毒，并预留整理时间。",
     ],
     questions: "有疑问？",
@@ -301,6 +317,15 @@ export const messages = {
     galleryImage: (n: number) => `查看第 ${n} 张图`,
   },
   bookingPanel: {
+    sizeHelp: "不确定选哪个尺码？把身高体重发给我们，帮你挑：",
+    notifyHelp: "特别想要这一款？告诉我们，这几天空出来了就通知你：",
+    textUs: "发短信",
+    emailUs: "发邮件",
+    sizeHelpSubject: (name: string) => `尺码咨询：${name}`,
+    sizeHelpBody: (name: string) => `你好！我想租 ${name}，不确定选哪个尺码。\n身高：\n体重：\n平时穿的尺码：`,
+    notifySubject: (name: string) => `有空档请通知我：${name}`,
+    notifyBody: (name: string, size: string | null, dates: string) =>
+      `你好！我想在 ${dates} 租 ${name}${size ? `（尺码 ${size}）` : ""}，但是已经被订了。如果空出来了请通知我。`,
     pantsLabel: "要不要配雪裤",
     jacketOnly: "只要上衣",
     withPants: "加一条黑色滑雪裤",
@@ -372,6 +397,7 @@ export const messages = {
     submit: "提交预订",
     submitting: "提交中…",
     subtitlePay: "提交后跳转到 Stripe 安全页面刷卡付款，付款成功即确认预订。无需押金。",
+    subtitleAwaiting: "下一步到 Stripe 付款。这笔急单付款后仍待店主在 24 小时内接单；拒单则全额退款。",
     subtitleInPersonCard: "提交后跳转到 Stripe 留卡（不扣钱），留卡成功即确认预订。租金取件时当面付。",
     subtitleInPerson: (deposit: string) => `提交后预订立即确认。取件时当面付租金和押金 ${deposit}，押金在归还检查后当面退还。`,
     submitPay: "去付款",
@@ -478,7 +504,8 @@ export const messages = {
     empty: "购物车是空的。",
     browse: "去逛逛",
     loading: "正在查询价格和库存…",
-    loadFailed: "查询失败，请刷新页面重试",
+    loadFailed: "查询失败，请重试",
+    retry: "重试",
     tooManyRequests: "刷新得太频繁了，请过几分钟再试",
     remove: "删除",
     count: (n: number) => `${n} 件`,
@@ -516,7 +543,8 @@ export const messages = {
     shipping: "运费",
     freeShipping: "包邮",
     freeShippingHint: (free: string) => `租金 + 加购满 ${free} 即可包邮`,
-    fullLookTip: "小提示：上衣、裤子、头盔套、手套搭齐一套 Full look 可包邮",
+    fullLookTip: "小提示：上衣、裤子、头盔套、手套搭齐一套 Full look 可享包邮优惠",
+    shippingExtras: (fee: string) => `远区满足包邮条件后仍补运费 ${fee}；如选择加急，另收加急费。`,
     farFreeShipping: (fee: string) => `${fee}（包邮，远区补运费）`,
     total: "合计",
     continueShopping: "继续逛",
@@ -602,7 +630,7 @@ export const messages = {
     addOnItem: (name: string) => `加购：${name}`,
     shippingItem: "运费",
     authorization:
-      "我授权 Sunny Closet 日后仅在逾期归还、额外清洁、维修，或物品丢失、无法修复（按零售价）时从这张卡扣款，详见租赁条款。扣款前会先发给我照片和费用明细。",
+      "我授权 Sunny Closet 日后仅在逾期归还、额外清洁、维修，或物品丢失、无法修复（按下单时显示的替换价值）时从这张卡扣款，详见租赁条款。扣款前会先发给我照片和费用明细。",
   },
   rentalInfo: {
     title: "租赁须知",
@@ -628,20 +656,28 @@ export const messages = {
     exampleResult: "按 2 天计费。",
     termsLink: "查看完整租赁条款",
     shippingTitle: "邮寄与自取",
-    shippingRules: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number) => [
+    shippingRules: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number, farStates: string) => [
       "仅限美国本土 48 州（含华盛顿特区），暂不寄送阿拉斯加、夏威夷和海外地区。",
       `邮寄 ${minDays} 天起租。`,
       `包邮条件（满足其一）：租金 + 加购满 $${free}（押金不算）；或订单里有一整套 full look：上衣、裤子、头盔套、手套各一件，官方套装、连体服或自己混搭都算。`,
       `不满足包邮条件时，一单收一次运费：东北部、中西部等地区 $${fee}，西部和南部部分州（如加州、华盛顿州、德州、佛州）$${far}。`,
-      `寄往西部和南部部分州的包邮订单，补运费 $${farFree}。`,
+      `寄往 ${farStates} 的包邮订单，补运费 $${farFree}。`,
       "Ithaca 本地自取 1 天起租。",
       "同一单邮寄的商品会一起寄出，每件的滑雪日需要相同。",
       `邮寄需提前约 ${ahead} 天下单。`,
     ],
     sections: [
       {
+        title: "物流延误",
+        body: deliveryDelayPolicy,
+      },
+      {
+        title: "不合身退租",
+        body: fitReturnPolicy.join(" "),
+      },
+      {
         title: "付款与押金",
-        body: "在线刷卡付款免押金：这张卡会安全地保存在支付平台 Stripe（我们看不到完整卡号），只有在物品严重损毁、丢失或逾期归还时才会扣费。到店自取还可以选择取件时当面付租金：在线留一张卡（不扣钱）即可免押金，或者当面付 $200 押金，归还检查后当面退还。",
+        body: "在线刷卡付款免押金：这张卡会安全地保存在支付平台 Stripe（我们看不到完整卡号），仅会按租赁条款因逾期、额外清洁、维修或丢失扣费。到店自取还可以选择取件时当面付租金：在线留一张卡（不扣钱）即可免押金，或者当面付 $200 押金，归还检查后当面退还。",
       },
       {
         title: "取件与归还",
@@ -653,18 +689,18 @@ export const messages = {
       },
       {
         title: "取消与改期",
-        body: "第一个滑雪日前 7 天或更早取消，全额退款；提前 2–6 天取消，退 50% 或全额转为本雪季另一笔预订的抵用额；不到 48 小时或订单已寄出，租金不退。想多租几天，请在归还日之前联系我们。",
+        body: "第一个滑雪日前 7 天或更早取消，全额退款；距开始至少 48 小时、不足 7 天取消，退 50% 或全额转为本雪季另一笔预订的抵用额；不到 48 小时或订单已寄出，因取消预订不退租金；物流延误、符合条件的不合身退租及店方问题按各自对应规则和租赁条款另行处理。想多租几天，请在归还日之前联系我们。" + " " + cancellationShippingPolicy,
       },
       {
         title: "损坏与遗失",
-        body: "正常磨损免费。需要额外清洁 $20–$40，可修复的损坏按维修费（最多 $100），丢失或无法修复按零售价赔偿。逾期归还每天套装或连体服每套 $25、单件上衣或裤子每件 $20、配件每件 $10。商品页“状态说明”里已写明的瑕疵不收费。扣款前我们会先发给你照片和费用明细，从你留的卡中扣除或从押金中扣除。",
+        body: "正常磨损免费。需要额外清洁 $20–$40，可修复的损坏按维修费（最多 $100），丢失或无法修复时，按下单时显示的替换价值处理。逾期归还每天套装或连体服每套 $25、单件上衣或裤子每件 $20、配件每件 $10。商品页“状态说明”里已写明的瑕疵不收费。扣款前我们会先发给你照片和费用明细，从你留的卡中扣除或从押金中扣除。",
       },
     ],
   },
   /** 租赁条款（/terms）。数字来自 src/config/shop.ts 和后台设置（见 src/lib/terms.ts），改条款内容时中英文一起改 */
   terms: {
     title: "租赁条款",
-    updated: "最后更新：2026 年 11 月 1 日",
+    updated: "最后更新：2026 年 11 月 7 日",
     intro:
       "本条款适用于 Sunny Closet（sssunnycloset.com）的每一笔租赁。“我们”指 Sunny Closet，“你”指下单的人。下单即表示你同意本条款。",
     sections: (a: TermsArgs): TermsSection[] => [
@@ -675,10 +711,10 @@ export const messages = {
       {
         title: "下单与付款",
         blocks: [
-          "在网站上选好商品和日期后下单。付款或留卡期间，档期会为你保留 30 分钟；未完成的话档期会被释放。付款方式三选一：",
+          "在网站上选好商品和日期后下单。付款或留卡期间，档期会为你保留约 30 分钟；未完成的话档期会被释放。付款方式三选一：",
           {
             list: [
-              "在线刷卡（邮寄订单必须选这种）：下单时通过 Stripe 支付租金和运费（如有）。付款成功即预订确认，这张卡会保存在 Stripe。",
+              "在线刷卡（邮寄订单必须选这种）：下单时通过 Stripe 支付租金和运费（如有）。付款成功即预订确认（选择等待店主接单的急单除外），这张卡会保存在 Stripe。",
               "到店自取 · 留卡免押金：在 Stripe 留一张卡（留卡时不扣钱），取件时用现金、Zelle 或 Venmo 当面付租金。留卡成功即预订确认，不收押金。",
               `到店自取 · 押金 $${a.deposit}：取件时用现金、Zelle 或 Venmo 当面付租金和 $${a.deposit} 可退押金。下单即确认。`,
             ],
@@ -705,18 +741,17 @@ export const messages = {
           {
             list: [
               "邮寄：我们用 USPS 寄送，范围是美国本土 48 州和华盛顿特区，包裹里附预付的退货面单。",
-              `租金 + 加购满 $${a.freeSubtotal}，或订单里有一整套 full look（上衣、裤子、头盔套、手套各一件），往返包邮；寄往西部、南部部分州的包邮订单补运费 $${a.farFreeFee}。否则每单收一次运费，按州 $${a.fee} 或 $${a.farFee}，结算时显示。`,
+              `租金 + 加购满 $${a.freeSubtotal}，或订单里有一整套 full look（上衣、裤子、头盔套、手套各一件），往返包邮；寄往 ${a.farStates} 的包邮订单补运费 $${a.farFreeFee}。否则每单收一次运费，按州 $${a.fee} 或 $${a.farFee}，结算时显示。`,
+              `距第一个租赁日不足 ${a.aheadDays} 天的邮寄急单：如仍满足可邮寄日期要求，可选择加急（额外 $${a.rushFee}，远区 $${a.rushFarFee}，满足包邮条件也收），或先付款等待店主接单。选择等待接单时，付款不代表预订确认；我们会在 ${a.acceptanceHours} 小时内接单或拒单，超时自动拒单，拒单应全额退款。`,
               "到店自取：在纽约州 Ithaca。取件时欢迎试穿。",
-              "快递延误：如果我们按时寄出，但快递在你第一个租赁日之后才送到，我们会退还你错过的租赁天数的租金。",
+              deliveryDelayPolicy,
             ],
           },
         ],
       },
       {
         title: "收到货后",
-        blocks: [
-          `请在签收后 24 小时内、穿着之前检查商品。如有缺件、损坏或不合身，请拍照发邮件到 ${a.email}。有合适的尺码我们会给你换；如果没有合适的尺码，请把未穿过的商品寄回，我们会退还租金，扣除 $15 运费。`,
-        ],
+        blocks: fitReturnPolicy,
       },
       {
         title: "租赁期间",
@@ -767,7 +802,7 @@ export const messages = {
                 ["正常磨损：轻微起球、正常洗涤能洗掉的小污渍、雪水印", "免费"],
                 ["需要额外清洁：大面积泥污、化妆品、食物、红酒、烟味、宠物毛", "$20–$40"],
                 ["可修复的损坏：拉链或按扣坏了、小破口", "按实际维修费，最多 $100"],
-                ["无法修复、丢失或被盗", "该商品的零售价"],
+                ["无法修复、丢失或被盗", "下单时显示的替换价值"],
               ],
             },
           },
@@ -776,7 +811,8 @@ export const messages = {
               "商品页“状态说明”里已经写明、你下单前确认过的瑕疵，不算损坏，不会收费。",
               "收取任何费用前，我们会先发给你照片和费用明细。",
               "留了卡的，我们在发出明细后从卡中扣款。付了押金的，先从押金中扣除，超出押金的部分请在 7 天内付清。",
-              "如果你付了商品的全额零售价，这件商品就归你了。",
+              "替换价值参考购入全新替换商品的成本，并在下单前显示；如需收费，我们会先说明原因和费用明细。",
+              "如果你支付了全额替换价值，且商品仍可交付给你，这件商品就归你了。",
             ],
           },
         ],
@@ -790,16 +826,18 @@ export const messages = {
       {
         title: "取消预订",
         blocks: [
+          cancellationShippingPolicy,
           {
             table: {
               head: ["取消时间", "租金", "押金（如有）"],
               rows: [
                 ["第一个租赁日前 7 天或更早", "全额退款", "全额退还"],
-                ["提前 2–6 天", "退 50%，或全额转为本雪季另一笔预订的抵用额", "全额退还"],
+                ["距开始至少 48 小时、不足 7 天", "退 50%，或全额转为本雪季另一笔预订的抵用额", "全额退还"],
                 ["不到 48 小时，或订单已寄出", "不退款", "商品寄回后全额退还"],
               ],
             },
           },
+          "订单寄出后的取消预订不退租金规则，不影响第 4 条物流延误，以及第 5 条符合条件的不合身退租或店方问题处理。",
           "如果因为商品不可用或损坏需要由我们取消，你会收到全额退款。租金退回你付款用的卡，当面付款的按原方式退回。",
         ],
       },
@@ -815,7 +853,7 @@ export const messages = {
       },
       {
         title: "隐私",
-        blocks: ["你的姓名、联系方式和地址只用于处理预订、寄送商品和与你沟通。卡片信息由 Stripe 处理。我们不会出售你的信息。"],
+        blocks: ["你的姓名、联系方式和地址只用于处理预订、寄送商品和与你沟通。卡片信息由 Stripe 处理，托管及数据库服务商协助网站运行。启用 Google Analytics 时，我们会收集网站使用情况以改进网站。我们不会出售你的信息。"],
       },
       {
         title: "问题与争议",
@@ -851,8 +889,8 @@ export const messages = {
     textOnly: "（仅短信，不接电话）",
     address: "地址",
     hours: "营业时间",
-    addressValue: "（门店地址占位）",
-    hoursValue: "周一至周日 9:00–18:00",
+    addressValue: "纽约州 Ithaca · 下单后联系约定取件地点",
+    hoursValue: "取件需提前预约",
   },
   notFound: {
     title: "页面不存在",

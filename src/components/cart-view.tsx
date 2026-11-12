@@ -1,13 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import { shop } from "@/config/shop";
+
+import Link from "@/components/storefront-link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { CHECKOUT_FORM_ID, CheckoutForm } from "@/components/checkout-form";
 import { ConditionNoteBody } from "@/components/condition-notes";
 import { localePath, type Locale } from "@/i18n/config";
 import { removeFromCart, useCart } from "@/lib/cart";
 import type { CartQuote, CartQuoteLine } from "@/lib/cart-quote";
-import { formatDateRange, formatShortDate } from "@/lib/dates";
+import { daysBetween, formatDateRange, formatShortDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import {
   qualifiesForFreeShipping,
@@ -41,6 +43,8 @@ export function CartView({
   // 购物车存在浏览器里，服务端渲染时还读不到：读到之前先显示“查询中”，不要闪一下“购物车是空的”
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
   const [result, setResult] = useState<{ key: string; quote?: CartQuote; failed?: boolean; tooMany?: boolean } | null>(null);
+  // 查询失败后点“重试”再查一次
+  const [attempt, setAttempt] = useState(0);
   const [fulfillment, setFulfillment] = useState("pickup");
   const [shippingState, setShippingState] = useState("");
   // Shipping on short notice: "rush" (extra fee) or "wait" (the owner accepts first); "" = not chosen yet
@@ -55,7 +59,7 @@ export function CartView({
       return next;
     });
 
-  const key = JSON.stringify([lines, locale]);
+  const key = JSON.stringify([lines, locale, attempt]);
   useEffect(() => {
     if (lines.length === 0) return;
     const controller = new AbortController();
@@ -125,9 +129,13 @@ export function CartView({
   const datesDiffer =
     shipping && quote !== null && quote.lines.some((l) => l.start !== quote.lines[0].start || l.end !== quote.lines[0].end);
   const hasIssue = quote !== null && quote.lines.some((l) => issueOf(l, quote) !== null);
-  const unconfirmed = quote !== null && quote.lines.some((l) => l.conditionNotes.length > 0 && !acknowledged.has(l.id));
+  const unconfirmed = quote !== null && quote.lines.some((l) => l.conditionNotes.length > 0 && !acknowledged.has(`${l.id}:${l.conditionDigest}`));
   const blocked = !quote
-    ? t.loading
+    ? current?.failed
+      ? current.tooMany
+        ? t.tooManyRequests
+        : t.loadFailed
+      : t.loading
     : datesDiffer
       ? t.shippingDatesDiffer
       : hasIssue
@@ -142,7 +150,14 @@ export function CartView({
     <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_420px]">
       <section>
         <p className="text-sm text-neutral-500">{t.count(lines.length)}</p>
-        {current?.failed && <p className="mt-4 text-sm text-red-600">{current.tooMany ? t.tooManyRequests : t.loadFailed}</p>}
+        {current?.failed && (
+          <p role="alert" className="mt-4 text-sm text-red-600">
+            {current.tooMany ? t.tooManyRequests : t.loadFailed}{" "}
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="font-semibold underline underline-offset-4">
+              {t.retry}
+            </button>
+          </p>
+        )}
         <ul className="mt-3 divide-y divide-neutral-200 border-y border-neutral-200">
           {lines.map((cartLine) => {
             const line = quote?.lines.find((l) => l.id === cartLine.id);
@@ -171,7 +186,7 @@ export function CartView({
                     {t.size} {sizeLabel(cartLine.size, locale)}
                   </p>
                   <p className="text-neutral-600">
-                    {t.dates(formatDateRange(cartLine.start, cartLine.end, locale), line?.rentalDays ?? 0)}
+                    {t.dates(formatDateRange(cartLine.start, cartLine.end, locale), line?.rentalDays || daysBetween(cartLine.start, cartLine.end) + 1)}
                   </p>
                   {line && !line.problem && (
                     <p className="text-neutral-600">
@@ -203,8 +218,8 @@ export function CartView({
                           form={CHECKOUT_FORM_ID}
                           name="conditionAck"
                           value={`${line.id}:${line.conditionDigest}`}
-                          checked={acknowledged.has(line.id)}
-                          onChange={(e) => toggleAck(line.id, e.target.checked)}
+                          checked={acknowledged.has(`${line.id}:${line.conditionDigest}`)}
+                          onChange={(e) => toggleAck(`${line.id}:${line.conditionDigest}`, e.target.checked)}
                           className="mt-0.5 h-4 w-4 shrink-0 accent-neutral-900"
                         />
                         <span>{t.conditionConfirm}</span>
@@ -261,6 +276,7 @@ export function CartView({
                   {showFullLookTip(forShipping)
                     ? t.fullLookTip
                     : t.freeShippingHint(formatMoney(freeSubtotal * 100, { whole: true }))}
+                  {" "}{t.shippingExtras(formatMoney(shop.shipping.farFreeFeeCents, { whole: true }))}
                 </p>
               )}
             </dl>

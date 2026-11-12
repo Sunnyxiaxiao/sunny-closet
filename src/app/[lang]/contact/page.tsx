@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { shop } from "@/config/shop";
 import { getLocale } from "@/i18n/server";
+import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).contact.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).contact.title;
+  return { title, ...pageSeo(locale, "/contact", { title }) };
 }
 
 export default async function ContactPage() {

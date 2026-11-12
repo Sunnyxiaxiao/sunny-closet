@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { useEffect, useState } from "react";
 import { CompleteTheLook } from "@/components/complete-the-look";
 import { earliestShippingStart, validateRentalRange, type FulfillmentPaddings } from "@/lib/booking/rules";
 import { localePath, type Locale } from "@/i18n/config";
 import { addToCart, MAX_CART_LINES } from "@/lib/cart";
+import { contactLinks } from "@/lib/contact";
 import { handoverText } from "@/lib/booking/schedule";
-import { formatDateRange, formatShortDate, type IsoDate } from "@/lib/dates";
+import { addDays, formatDateRange, formatShortDate, isIsoDate, type IsoDate } from "@/lib/dates";
 import type { AddOnOption, GlovesAddOnOption } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { calculateQuote } from "@/lib/pricing";
@@ -57,6 +58,7 @@ export function BookingPanel({
   glovesOptions = [],
   separate = false,
   initialAddOnSlug,
+  productName,
   locale,
 }: {
   styleId: string;
@@ -88,6 +90,8 @@ export function BookingPanel({
   separate?: boolean;
   /** 从头盔套 / 手套页点“搭配雪服一起租”过来时预先选中的那一款 */
   initialAddOnSlug?: string;
+  /** 商品名：写进“问尺码 / 有空档通知我”的短信和邮件里 */
+  productName: string;
   locale: Locale;
 }) {
   const messages = getMessages(locale);
@@ -119,7 +123,10 @@ export function BookingPanel({
 
   const rangeError = validateRentalRange({ start, end }, { today, maxRentalDays });
   const rangeValid = rangeError === null;
-  const query = rangeValid ? new URLSearchParams({ styleId, start, end }).toString() : null;
+  const hasAddOns = addOnOptions.length + glovesOptions.length > 0;
+  const query = rangeValid
+    ? new URLSearchParams({ styleId, start, end, ...(hasAddOns ? { includeAddOns: "1" } : {}) }).toString()
+    : null;
 
   const availability: AvailabilityState = !query
     ? { status: "idle" }
@@ -128,7 +135,7 @@ export function BookingPanel({
       : { status: "loading" };
 
   const dateQuery = rangeValid ? new URLSearchParams({ start, end }).toString() : null;
-  const wantsAddOnCounts = addOnOptions.length + glovesOptions.length > 0 && dateQuery !== null;
+  const wantsAddOnCounts = hasAddOns && dateQuery !== null;
   // 还没选日期 / 正在查询：null（卡片都可点）；查到后按件数标记已订满
   const addOnCounts: AddOnCounts =
     wantsAddOnCounts && addOnResult?.query === dateQuery ? addOnResult.counts : null;
@@ -166,47 +173,30 @@ export function BookingPanel({
   useEffect(() => {
     if (!query) return;
     const controller = new AbortController();
-    fetch(`/api/availability?${query}`, { signal: controller.signal, cache: "no-store" })
-      .then(async (res) => {
-        const body = await res.json();
-        if (!res.ok) throw new Error(t.queryFailed);
-        setResult({ query, state: { status: "ok", sizes: body.sizes } });
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setResult({
-          query,
-          state: {
-            status: "error",
-            message: error instanceof Error ? error.message : t.queryFailed,
-          },
+    // Date inputs often change together. Don't send requests for intermediate selections.
+    const timer = setTimeout(() => {
+      fetch(`/api/availability?${query}`, { signal: controller.signal, cache: "no-store" })
+        .then(async (res) => {
+          const body = await res.json();
+          if (!res.ok) throw new Error(t.queryFailed);
+          setResult({ query, state: { status: "ok", sizes: body.sizes } });
+          if (hasAddOns && dateQuery) {
+            setAddOnResult({ query: dateQuery, counts: {
+              pickup: body.counts, shipping: body.shippingCounts,
+              pickupSizes: body.sizeCounts, shippingSizes: body.shippingSizeCounts,
+            } });
+          }
+        })
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return;
+          setResult({ query, state: {
+            status: "error", message: error instanceof Error ? error.message : t.queryFailed,
+          } });
+          if (hasAddOns && dateQuery) setAddOnResult({ query: dateQuery, counts: null });
         });
-      });
-    return () => controller.abort();
-  }, [query, t.queryFailed]);
-
-  useEffect(() => {
-    if (!wantsAddOnCounts || !dateQuery) return;
-    const controller = new AbortController();
-    fetch(`/api/availability?${dateQuery}`, { signal: controller.signal, cache: "no-store" })
-      .then(async (res) => {
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.error);
-        setAddOnResult({
-          query: dateQuery,
-          counts: {
-            pickup: body.counts,
-            shipping: body.shippingCounts,
-            pickupSizes: body.sizeCounts,
-            shippingSizes: body.shippingSizeCounts,
-          },
-        });
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setAddOnResult({ query: dateQuery, counts: null });
-      });
-    return () => controller.abort();
-  }, [wantsAddOnCounts, dateQuery]);
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [query, dateQuery, hasAddOns, t.queryFailed]);
 
   useEffect(() => {
     onSizeChange?.(size);
@@ -244,6 +234,15 @@ export function BookingPanel({
   }
 
   const showRangeHint = Boolean(start || end) && rangeError;
+
+  // 只在选衣服尺码时提示可以来问（头盔套、手套选的是颜色）
+  const sizeHelp = choiceLabel ? null : (
+    <ContactPrompt
+      text={t.sizeHelp}
+      links={contactLinks(t.sizeHelpSubject(productName), t.sizeHelpBody(productName))}
+      labels={t}
+    />
+  );
 
   const dateInputClass =
     "h-12 w-full border border-neutral-300 bg-white px-3 text-base focus:border-neutral-900 focus:outline-none";
@@ -283,12 +282,15 @@ export function BookingPanel({
         </fieldset>
       )}
       {hideSize ? null : singleSize ? (
-        <p className="text-sm">
-          <span className="text-neutral-500">{label}</span>
-          <span className="ml-3 inline-flex min-w-12 justify-center border border-neutral-900 px-3 py-1.5 font-semibold">
-            {sizeLabel(singleSize, locale)}
-          </span>
-        </p>
+        <div>
+          <p className="text-sm">
+            <span className="text-neutral-500">{label}</span>
+            <span className="ml-3 inline-flex min-w-12 justify-center border border-neutral-900 px-3 py-1.5 font-semibold">
+              {sizeLabel(singleSize, locale)}
+            </span>
+          </p>
+          {sizeHelp}
+        </div>
       ) : (
         <fieldset>
           <legend className="text-sm text-neutral-500">
@@ -321,6 +323,7 @@ export function BookingPanel({
               );
             })}
           </div>
+          {sizeHelp}
         </fieldset>
       )}
 
@@ -343,6 +346,7 @@ export function BookingPanel({
               type="date"
               value={end}
               min={start || today}
+              max={isIsoDate(start) ? addDays(start, maxRentalDays - 1) : undefined}
               onChange={(e) => setEnd(e.target.value)}
               className={dateInputClass}
             />
@@ -482,9 +486,19 @@ export function BookingPanel({
               ✓ {singleSize ? t.availableSingle : t.availableChoice(label)}
             </p>
           ) : (
-            <p className="font-semibold text-red-600">
-              ✗ {singleSize ? t.unavailableSingle : t.unavailableChoice(label)}
-            </p>
+            <>
+              <p className="font-semibold text-red-600">
+                ✗ {singleSize ? t.unavailableSingle : t.unavailableChoice(label)}
+              </p>
+              <ContactPrompt
+                text={t.notifyHelp}
+                links={contactLinks(
+                  t.notifySubject(productName),
+                  t.notifyBody(productName, hideSize ? null : sizeLabel(size, locale), formatDateRange(start, end, locale)),
+                )}
+                labels={t}
+              />
+            </>
           )}
         </div>
       </div>
@@ -544,5 +558,29 @@ export function BookingPanel({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** 一句提示 + “发短信 / 发邮件”，点开顾客自己的短信或邮件应用，内容已经写好 */
+function ContactPrompt({
+  text,
+  links,
+  labels,
+}: {
+  text: string;
+  links: { sms: string; email: string };
+  labels: { textUs: string; emailUs: string };
+}) {
+  return (
+    <p className="mt-2 text-xs leading-relaxed text-neutral-500">
+      {text}{" "}
+      <a href={links.sms} className="font-semibold text-neutral-900 underline underline-offset-2">
+        {labels.textUs}
+      </a>
+      {" · "}
+      <a href={links.email} className="font-semibold text-neutral-900 underline underline-offset-2">
+        {labels.emailUs}
+      </a>
+    </p>
   );
 }

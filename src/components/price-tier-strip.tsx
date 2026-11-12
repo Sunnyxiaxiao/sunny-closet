@@ -1,7 +1,11 @@
+import type { CSSProperties } from "react";
 import type { Locale } from "@/i18n/config";
 import { formatMoney } from "@/lib/money";
 import { getMessages } from "@/messages";
 import { rentalPriceCents, type PriceTier } from "@/lib/pricing";
+
+/** 手机上一排最多放几格，再多就折成两排（10 档挤在一排，价格会叠在一起） */
+const MAX_PER_ROW_MOBILE = 5;
 
 /** 一排价格格子：每档一格，上面天数、下面价格。showPerDay 时在最长一档下面显示“低至 $x/天” */
 export function PriceTierStrip({
@@ -17,15 +21,17 @@ export function PriceTierStrip({
   locale: Locale;
 }) {
   const t = getMessages(locale).product;
+  // 窄屏：超过 5 档时平分成两排；宽屏始终一排
+  const mobileColumns = tiers.length > MAX_PER_ROW_MOBILE ? Math.ceil(tiers.length / 2) : tiers.length;
   return (
     <dl
-      className="grid divide-x divide-neutral-200 border border-neutral-200"
-      style={{ gridTemplateColumns: `repeat(${tiers.length}, minmax(0, 1fr))` }}
+      className="grid grid-cols-[repeat(var(--tier-cols-mobile),minmax(0,1fr))] border-l border-t border-neutral-200 sm:grid-cols-[repeat(var(--tier-cols),minmax(0,1fr))]"
+      style={{ "--tier-cols": tiers.length, "--tier-cols-mobile": mobileColumns } as CSSProperties}
     >
       {tiers.map((tier, index) => {
         const isLongest = showPerDay && index === tiers.length - 1 && tiers.length > 1;
         return (
-          <div key={tier.label} className="px-1 py-2.5 text-center">
+          <div key={tier.label} className="border-b border-r border-neutral-200 px-1 py-2.5 text-center">
             <dt className="text-xs text-neutral-500">{tier.label}</dt>
             {regularPrices && (
               <dd className="mt-0.5 text-[11px] leading-none text-neutral-400 tabular-nums">

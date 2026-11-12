@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { Suspense } from "react";
 import { localePath } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getSettings } from "@/lib/catalog";
 import { shippingPolicyArgs } from "@/lib/shipping";
+import { pageSeo } from "@/lib/seo";
 import { getMessages, type Messages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).rentalInfo.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).rentalInfo.title;
+  return { title, ...pageSeo(locale, "/rental-info", { title }) };
 }
 
 export default async function RentalInfoPage() {

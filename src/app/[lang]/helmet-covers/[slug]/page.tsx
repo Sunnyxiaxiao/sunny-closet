@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BookingPanel } from "@/components/booking-panel";
@@ -24,6 +24,7 @@ import { HELMET_COVER_INFO_IMAGE, helmetColorTags } from "@/lib/helmet-covers";
 import { formatMoney } from "@/lib/money";
 import { priceTiers } from "@/lib/pricing";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
+import { pageSeo, productSummary } from "@/lib/seo";
 import { getMessages } from "@/messages";
 import { StyleReviews } from "@/components/style-reviews";
 
@@ -33,8 +34,14 @@ const ZH_TAGS = getMessages("zh").helmet.tags;
 export async function generateMetadata({ params }: PageProps<"/[lang]/helmet-covers/[slug]">): Promise<Metadata> {
   const locale = await getLocale();
   const t = getMessages(locale).helmet;
-  const cover = await getStyleBySlug((await params).slug, { kind: "helmet_cover", locale });
-  return { title: cover ? t.metaTitle(cover.name) : t.title };
+  const { slug } = await params;
+  const cover = await getStyleBySlug(slug, { kind: "helmet_cover", locale });
+  if (!cover) return { title: t.title };
+  const title = t.metaTitle(cover.name);
+  return {
+    title,
+    ...pageSeo(locale, `/helmet-covers/${slug}`, { title, description: productSummary(cover.description), image: cover.image_urls[0] }),
+  };
 }
 
 export default async function HelmetCoverPage({ params, searchParams }: PageProps<"/[lang]/helmet-covers/[slug]">) {
@@ -186,6 +193,7 @@ async function HelmetCoverDetail({
         paddings={settings.paddings}
         initial={initial}
         hideSize
+        productName={cover.name}
         locale={locale}
       />
     );
@@ -210,6 +218,7 @@ async function HelmetCoverDetail({
             maxRentalDays: settings.maxRentalDays,
             paddings: settings.paddings,
             initial,
+            productName: cover.name,
             locale,
           }}
         />

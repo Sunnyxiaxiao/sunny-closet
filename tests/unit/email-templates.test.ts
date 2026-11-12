@@ -184,3 +184,42 @@ describe("邮寄急单", () => {
     expect(email.text).toContain("full refund of $109.00");
   });
 });
+
+describe("提醒邮件", () => {
+  it("取件提醒：给顾客，写明取件时间；当面付的订单带应付金额", async () => {
+    const { pickupReminderEmail } = await import("@/lib/email/templates");
+    const pickup: OrderEmailData = {
+      ...order,
+      fulfillment: "pickup",
+      shippingAddress: null,
+      shippingCents: 0,
+      rushFeeCents: 0,
+      lines: order.lines.map((l) => ({ ...l, leadDays: 1, tailDays: 1 })),
+      payment: { method: "in_person_card", paidCents: null, card: "Visa •••• 4242", cashDepositCents: 0 },
+    };
+    const email = pickupReminderEmail(pickup, { origin: "https://example.com" });
+    expect(email.to).toBe("amy@example.com");
+    expect(email.subject).toContain("Pickup reminder");
+    expect(email.text).toContain("pick up from the evening of Jan 19");
+    expect(email.text).toContain("Due at pickup");
+    expect(email.text).toContain("https://example.com/booking/SC-ABCD2345");
+    expect(email.html).not.toContain("<script>");
+  });
+
+  it("归还提醒：邮寄写 USPS 和寄回日期，自取写归还时间，都提醒不用自己洗", async () => {
+    const { returnReminderEmail } = await import("@/lib/email/templates");
+    const shipped = returnReminderEmail(order, { origin: "https://example.com" });
+    expect(shipped.subject).toContain("Return reminder");
+    expect(shipped.text).toContain("prepaid return label");
+    expect(shipped.text).toContain("send back by Jan 22");
+    expect(shipped.text).not.toContain("Ship to");
+    expect(shipped.text).toContain("No need to wash");
+
+    const local = returnReminderEmail(
+      { ...order, fulfillment: "pickup", shippingAddress: null, lines: order.lines.map((l) => ({ ...l, leadDays: 1, tailDays: 1 })) },
+      { origin: "https://example.com" },
+    );
+    expect(local.text).toContain("return by noon on Jan 22");
+    expect(local.text).not.toContain("USPS");
+  });
+});

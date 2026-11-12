@@ -1,3 +1,4 @@
+import { ACCEPT_WINDOW_HOURS } from "@/lib/booking/acceptance";
 import { shop } from "@/config/shop";
 
 /**
@@ -26,6 +27,11 @@ export interface TermsArgs {
   /** What a free-shipping order to a far state pays */
   farFreeFee: number;
   deposit: number;
+  aheadDays: number;
+  rushFee: number;
+  rushFarFee: number;
+  acceptanceHours: number;
+  farStates: string;
   lateSet: number;
   latePiece: number;
   lateAccessory: number;
@@ -41,6 +47,11 @@ export function termsArgs(shippingMinDays: number): TermsArgs {
     farFee: s.farFeeCents / 100,
     farFreeFee: s.farFreeFeeCents / 100,
     deposit: shop.payment.inPersonDepositCents / 100,
+    aheadDays: s.orderAheadDays,
+    rushFee: s.rushFeeCents / 100,
+    rushFarFee: s.rushFarFeeCents / 100,
+    acceptanceHours: ACCEPT_WINDOW_HOURS,
+    farStates: s.farStates.join(", "),
     lateSet: shop.lateFees.setCents / 100,
     latePiece: shop.lateFees.pieceCents / 100,
     lateAccessory: shop.lateFees.accessoryCents / 100,

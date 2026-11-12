@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -239,7 +239,8 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
     // 不收押金
     deposit_cents: 0,
     rental_prices_cents: rentalPrices,
-    ...(gloves ? { replacement_value_cents: replacement, addon_price_cents: addonPrice } : {}),
+    replacement_value_cents: replacement,
+    ...(gloves ? { addon_price_cents: addonPrice } : {}),
     sort_order: sortOrder,
     description: values.description,
     description_en: values.descriptionEn,
@@ -253,6 +254,7 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
       .update({ ...row, ...(rentalPrices ? { daily_price_cents: rentalPrices[0] } : {}) })
       .eq("id", id.data);
     if (error) return { message: `保存失败：${error.message}`, values };
+    updateTag("storefront-catalog");
     revalidatePath(`/admin/inventory/${id.data}`);
     return { notice: "已保存。", values };
   }
@@ -265,6 +267,7 @@ export async function saveStyle(_previous: AccountFormState, formData: FormData)
   if (error?.code === "23505") return { fieldErrors: { slug: "这个网址名已经被用了，换一个" }, values };
   if (error) return { message: `保存失败：${error.message}`, values };
 
+  updateTag("storefront-catalog");
   const code = values.code || (await nextSeriesCode(supabase, codePrefix(styleCategory)));
   const { error: itemError } = await supabase
     .from("inventory_items")
@@ -301,6 +304,7 @@ export async function saveStyleImages(_previous: AccountFormState, formData: For
   const { error } = await supabase.from("styles").update({ image_urls: urls }).eq("id", id.data);
   if (error) return { message: `保存失败：${error.message}` };
   revalidatePath(`/admin/inventory/${id.data}`);
+  updateTag("storefront-catalog");
   return { notice: "图片已保存，前台马上生效。" };
 }
 

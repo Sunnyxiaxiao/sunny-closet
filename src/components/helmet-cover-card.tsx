@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { localePath, type Locale } from "@/i18n/config";
 import type { PublicStyle } from "@/lib/catalog";
 import { rentalPriceCents } from "@/lib/pricing";

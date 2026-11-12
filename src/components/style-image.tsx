@@ -28,6 +28,7 @@ export function StyleImage({
   if (aspect === "helmet") {
     // 头盔套封面是正方形：width/height 先按正方形留出位置（加载后按图片自己的比例显示），不在首屏的图等滚动到附近再加载
     return src ? (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt={alt}

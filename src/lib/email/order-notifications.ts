@@ -1,5 +1,7 @@
 import "server-only";
-import type { IsoDate } from "@/lib/dates";
+import { shop } from "@/config/shop";
+import { dueReminders, REMINDER_HOUR, REMINDER_KINDS, type ReminderKind } from "@/lib/booking/reminders";
+import { addDays, todayIn, type IsoDate } from "@/lib/dates";
 import {
   deliver,
   resend,
@@ -19,6 +21,8 @@ import {
   orderDeclinedEmail,
   orderConfirmedEmail,
   overdueConflictEmail,
+  pickupReminderEmail,
+  returnReminderEmail,
   refundDueEmail,
   type OrderEmailData,
 } from "@/lib/email/templates";
@@ -155,6 +159,64 @@ export async function notifyAcceptanceReminder(bookingId: string, deadline: Date
   await deliverOrderEmail(bookingId, "acceptance_reminder", { deadline: deadline.toISOString() }, origin);
 }
 
+/**
+ * Scheduled sweep: pickup-day and last-ski-day reminders to customers (rules: src/lib/booking/reminders.ts).
+ * Looks at orders whose dates are around today; each reminder is logged once per order (unique in email_log).
+ */
+export async function sendDueReminders(origin: string, now = new Date()): Promise<{ sent: number; failed: number }> {
+  const today = todayIn(shop.timeZone, now);
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: shop.timeZone, hour: "numeric", hourCycle: "h23" }).format(now));
+  if (hour < REMINDER_HOUR) return { sent: 0, failed: 0 };
+
+  const service = createSupabaseServiceClient();
+  // Pickup day is a few days before the first ski day at most; the last ski day is today for a return reminder
+  const { data: bookings, error } = await service
+    .from("bookings")
+    .select("id, parent_booking_id, status, fulfillment_method, created_at, start_date, end_date, lead_days, tail_days, cart_item, bundle_part")
+    .in("status", ["confirmed", "picked_up"])
+    .lte("start_date", addDays(today, 7))
+    .gte("end_date", today)
+    .limit(1000);
+  if (error) throw new Error(`读取订单失败：${error.message}`);
+  const mains = bookings.filter((b) => !b.parent_booking_id);
+  if (mains.length === 0) return { sent: 0, failed: 0 };
+  const { data: logged, error: logError } = await service
+    .from("email_log")
+    .select("booking_id, kind")
+    .in("booking_id", mains.map((b) => b.id))
+    .in("kind", [...REMINDER_KINDS]);
+  if (logError) throw new Error(`读取邮件记录失败：${logError.message}`);
+
+  let sent = 0;
+  let failed = 0;
+  for (const main of mains) {
+    // The order's items: the main order and the other cart items (add-ons and set parts share their item's dates)
+    const lines = [main, ...bookings.filter((b) => b.parent_booking_id === main.id && b.cart_item && !b.bundle_part)];
+    const due = dueReminders(
+      {
+        status: main.status,
+        fulfillment: main.fulfillment_method,
+        createdOn: todayIn(shop.timeZone, new Date(main.created_at)),
+        lines: lines.map((l) => ({ start: l.start_date as IsoDate, end: l.end_date as IsoDate, leadDays: l.lead_days, tailDays: l.tail_days })),
+        logged: logged.filter((e) => e.booking_id === main.id).map((e) => e.kind as ReminderKind),
+      },
+      today,
+      hour,
+    );
+    for (const kind of due) {
+      try {
+        if (await deliver(deliveryDeps(origin), main.id, kind, {})) sent += 1;
+        else failed += 1;
+      } catch (deliverError) {
+        // Not logged (e.g. another sweep logged it at the same moment): nothing was sent by this one
+        console.error(`[email] 提醒邮件 ${kind} 没有记录`, deliverError);
+        failed += 1;
+      }
+    }
+  }
+  return { sent, failed };
+}
+
 /** Logs and sends an order email (see delivery.ts); never throws, so the order flow goes on whatever happens */
 async function deliverOrderEmail(bookingId: string, kind: EmailKind, params: EmailParams, origin: string) {
   try {
@@ -202,6 +264,10 @@ async function buildOrderEmail(bookingId: string, kind: EmailKind, params: Email
       return awaitingAcceptanceEmail(order, { origin });
     case "order_declined":
       return orderDeclinedEmail(order, { origin, refundCents: Number(params.refundCents) });
+    case "pickup_reminder":
+      return pickupReminderEmail(order, { origin });
+    case "return_reminder":
+      return returnReminderEmail(order, { origin });
   }
 }
 

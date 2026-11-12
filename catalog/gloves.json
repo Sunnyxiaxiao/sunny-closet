@@ -196,5 +196,35 @@
     ],
     "description": "连指滑雪手套，手背是带银丝的黑色粗花呢，其余是深灰色防水面料，小香风又保暖。\n\n## 设计细节\n- 手背黑色粗花呢，夹着亮银丝\n- 掌心皮革拼接，握杖、抓板更稳\n- 手腕魔术贴可调松紧\n- 长袖口 + 防丢手腕挂绳",
     "descriptionEn": "Ski mittens with black tweed woven with silver threads on the back and dark grey waterproof fabric everywhere else — a little chic and very warm.\n\n## Design Details\n- Black tweed with sparkly silver threads on the back of the hand\n- Leather palm panels for a better grip on poles and your board\n- Adjustable hook-and-loop wrist strap\n- Long cuffs with an anti-loss wrist leash"
+  },
+  {
+    "slug": "chop-chop-smiley-fleece-mittens",
+    "brand": "Chop Chop",
+    "category": "gloves",
+    "sortOrder": 41,
+    "name": "笑脸毛绒连指手套",
+    "nameEn": "Smiley Fleece Mittens",
+    "items": [
+      {
+        "code": "GL017",
+        "size": "蓝 · 均码",
+        "image": 1
+      },
+      {
+        "code": "GL018",
+        "size": "黄 · 均码",
+        "image": 4
+      }
+    ],
+    "description": "奶白色羊羔毛连指手套，一只绣着大笑脸，一只是「CHOP CHOP」对话框，掌心是防水尼龙。有蓝色和黄色两种配色。均码。\n\n## 细节\n- FAN-TEX 防水透气内衬\n- 加长罗纹袖口，塞进雪服袖子里不漏风\n- 带防丢腕绳",
+    "descriptionEn": "Cream sherpa mittens: one with a big embroidered smiley, the other with a 'CHOP CHOP' speech bubble, and waterproof nylon palms. Comes in blue or yellow. One size.\n\n## Details\n- FAN-TEX waterproof, breathable insert\n- Long ribbed cuffs that tuck into your jacket sleeves\n- Wrist leash so you won't lose them",
+    "images": [
+      "images/chop-chop-smiley-fleece-mittens/1.jpg",
+      "images/chop-chop-smiley-fleece-mittens/2.jpg",
+      "images/chop-chop-smiley-fleece-mittens/3.jpg",
+      "images/chop-chop-smiley-fleece-mittens/4.jpg",
+      "images/chop-chop-smiley-fleece-mittens/5.jpg",
+      "images/chop-chop-smiley-fleece-mittens/6.jpg"
+    ]
   }
 ]

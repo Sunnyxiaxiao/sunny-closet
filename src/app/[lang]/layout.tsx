@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SnowBackground } from "@/components/snow-background";
 import { shop } from "@/config/shop";
-import { HTML_LANG, LOCALES, localePath } from "@/i18n/config";
+import { HTML_LANG, LOCALES } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { getMessages } from "@/messages";
 import "../globals.css";
@@ -24,9 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s · ${shop.name}`,
     },
     description: t.description,
-    alternates: {
-      languages: Object.fromEntries(LOCALES.map((l) => [HTML_LANG[l], localePath(l, "/")])),
-    },
+    // Each page sets its own canonical / hreflang / link preview (src/lib/seo.ts)
+    openGraph: { type: "website", siteName: shop.name, title: `${shop.name} · ${t.siteTitle}`, description: t.description },
   };
 }
 

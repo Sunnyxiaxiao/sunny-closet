@@ -6,7 +6,7 @@
 
 import { useSyncExternalStore } from "react";
 import { MAX_CART_LINES } from "@/lib/cart-limits";
-import type { IsoDate } from "@/lib/dates";
+import { isIsoDate, type IsoDate } from "@/lib/dates";
 
 export { MAX_CART_LINES };
 
@@ -35,8 +35,10 @@ function isLine(value: unknown): value is CartLine {
     typeof v?.id === "string" &&
     typeof v.styleId === "string" &&
     typeof v.size === "string" &&
-    typeof v.start === "string" &&
-    typeof v.end === "string" &&
+    // A saved date that isn't a real one (edited or damaged storage) would break the cart page
+    isIsoDate(v.start) &&
+    isIsoDate(v.end) &&
+    v.start <= v.end &&
     Array.isArray(v.addOnIds) &&
     v.addOnIds.every((id) => typeof id === "string") &&
     (v.addOnSizes === undefined ||

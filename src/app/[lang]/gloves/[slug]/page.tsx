@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ConditionNotes } from "@/components/condition-notes";
@@ -24,14 +24,21 @@ import { formatMoney } from "@/lib/money";
 import { compareSizes } from "@/lib/sizes";
 import { priceTiers } from "@/lib/pricing";
 import { rentalSearchParamsSchema } from "@/lib/validation/rental-query";
+import { pageSeo, productSummary } from "@/lib/seo";
 import { getMessages } from "@/messages";
 import { StyleReviews } from "@/components/style-reviews";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/gloves/[slug]">): Promise<Metadata> {
   const locale = await getLocale();
   const t = getMessages(locale).gloves;
-  const gloves = await getStyleBySlug((await params).slug, { kind: "gloves", locale });
-  return { title: gloves ? t.metaTitle(gloves.name) : t.title };
+  const { slug } = await params;
+  const gloves = await getStyleBySlug(slug, { kind: "gloves", locale });
+  if (!gloves) return { title: t.title };
+  const title = t.metaTitle(gloves.name);
+  return {
+    title,
+    ...pageSeo(locale, `/gloves/${slug}`, { title, description: productSummary(gloves.description), image: gloves.image_urls[0] }),
+  };
 }
 
 export default async function GlovesDetailPage({ params, searchParams }: PageProps<"/[lang]/gloves/[slug]">) {
@@ -190,6 +197,7 @@ async function GlovesDetail({
             maxRentalDays: settings.glovesMaxRentalDays,
             paddings: settings.paddings,
             initial,
+            productName: [gloves.brand, gloves.name].filter(Boolean).join(" "),
             locale,
           }}
         />

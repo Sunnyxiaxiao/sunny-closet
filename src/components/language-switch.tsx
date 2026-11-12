@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/storefront-link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { HTML_LANG, localePath, splitLocalePath, type Locale } from "@/i18n/config";

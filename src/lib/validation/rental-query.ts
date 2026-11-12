@@ -34,6 +34,7 @@ export function parseRentalSearch(
 /** /api/availability 的查询参数。不传 styleId 时返回所有款式的可租件数 */
 export const availabilityQuerySchema = z.object({
   styleId: z.uuid().optional(),
+  includeAddOns: z.enum(["1"]).optional(),
   start: z.string().refine(isIsoDate, "日期格式应为 YYYY-MM-DD"),
   end: z.string().refine(isIsoDate, "日期格式应为 YYYY-MM-DD"),
 });

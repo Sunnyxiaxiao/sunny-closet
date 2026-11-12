@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CrystalBadge, GlovesCard } from "@/components/gloves-card";
 import { HelmetGridSkeleton } from "@/components/helmet-cover-card";
-import { RentalFilterForm } from "@/components/rental-filter-form";
+import { DateQuickBar, RentalFilterForm } from "@/components/rental-filter-form";
 import { FilterSection } from "@/components/filter-chips";
 import { FilterPanel, ShopColumns } from "@/components/filter-panel";
 import type { Locale } from "@/i18n/config";
@@ -11,10 +11,13 @@ import { availableCounts, getAvailability, getSettings, getToday, listStyles, ty
 import { formatDateRange } from "@/lib/dates";
 import { isCrystal } from "@/lib/gloves";
 import { parseRentalSearch } from "@/lib/validation/rental-query";
+import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).gloves.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).gloves.title;
+  return { title, ...pageSeo(locale, "/gloves", { title }) };
 }
 
 export default async function GlovesPage({ searchParams }: PageProps<"/[lang]/gloves">) {
@@ -45,9 +48,11 @@ async function GlovesList({
     search.kind === "valid"
       ? availableCounts(await getAvailability({ start: search.start, end: search.end }))
       : null;
-  const visible = gloves.filter((g) => !ranged || (ranged.get(g.id) ?? 0) > 0);
-  const crystal = visible.filter(isCrystal);
-  const regular = visible.filter((g) => !isCrystal(g));
+  // 选了日期：这几天被订满的不隐藏，变灰排到最后；其余 Crystal 在前
+  const booked = new Set(ranged ? gloves.filter((g) => (ranged.get(g.id) ?? 0) === 0).map((g) => g.id) : []);
+  const visible = gloves.toSorted(
+    (a, b) => Number(booked.has(a.id)) - Number(booked.has(b.id)) || Number(isCrystal(b)) - Number(isCrystal(a)),
+  );
   const detailSuffix =
     search.kind === "valid" ? `?${new URLSearchParams({ start: search.start, end: search.end })}` : "";
 
@@ -80,7 +85,7 @@ async function GlovesList({
               {/* Crystal 和经典手套的价格说明放在筛选栏里，商品区一打开就是手套 */}
               <FilterSection title={t.pricing}>
                 <dl className="space-y-3 text-xs leading-relaxed text-neutral-600">
-                  {crystal.length > 0 && (
+                  {gloves.some(isCrystal) && (
                     <div>
                       <dt>
                         <CrystalBadge />
@@ -102,9 +107,16 @@ async function GlovesList({
           </div>
         }
       >
+        <DateQuickBar
+          action="/gloves"
+          today={today}
+          start={search.kind !== "none" ? search.start : undefined}
+          end={search.kind !== "none" ? search.end : undefined}
+          locale={locale}
+        />
         {search.kind === "valid" && (
           <p className="mx-2 mt-4 text-sm text-neutral-500 sm:mx-0 lg:mt-0 lg:mb-4">
-            {t.availableCount(formatDateRange(search.start, search.end, locale), visible.length)}
+            {t.availableCount(formatDateRange(search.start, search.end, locale), visible.length - booked.size)}
           </p>
         )}
         {search.kind === "invalid" && (
@@ -119,7 +131,7 @@ async function GlovesList({
             {t.empty}
           </p>
         ) : (
-          <GlovesGrid gloves={[...crystal, ...regular]} query={detailSuffix} locale={locale} />
+          <GlovesGrid gloves={visible} booked={booked} query={detailSuffix} locale={locale} />
         )}
       </ShopColumns>
     </>
@@ -128,10 +140,13 @@ async function GlovesList({
 
 function GlovesGrid({
   gloves,
+  booked,
   query,
   locale,
 }: {
   gloves: PublicStyle[];
+  /** 选的日期里被订满的款式 id */
+  booked: ReadonlySet<string>;
   query: string;
   locale: Locale;
 }) {
@@ -139,7 +154,7 @@ function GlovesGrid({
     <ul className="mt-5 grid grid-cols-2 gap-x-2 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:mt-0 xl:grid-cols-4">
       {gloves.map((g) => (
         <li key={g.id}>
-          <GlovesCard gloves={g} query={query} dark={isCrystal(g)} locale={locale} />
+          <GlovesCard gloves={g} unavailable={booked.has(g.id)} query={query} dark={isCrystal(g)} locale={locale} />
         </li>
       ))}
     </ul>

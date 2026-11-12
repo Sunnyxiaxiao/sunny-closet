@@ -15,10 +15,13 @@ import {
 } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { rentalPriceCents } from "@/lib/pricing";
+import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: getMessages(await getLocale()).mixMatch.title };
+  const locale = await getLocale();
+  const title = getMessages(locale).mixMatch.title;
+  return { title, ...pageSeo(locale, "/mix-and-match", { title }) };
 }
 
 /** Mix & Match：外套、雪裤单租，配一张单租 / 成套的价格对照表 */
