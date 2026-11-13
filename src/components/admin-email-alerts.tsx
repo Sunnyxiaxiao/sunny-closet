@@ -11,6 +11,7 @@ const KIND_LABEL: Record<EmailKind, string> = {
   acceptance_reminder: "接单提醒（给你）",
   pickup_reminder: "取件提醒（给顾客）",
   return_reminder: "归还提醒（给顾客）",
+  order_cancelled: "订单取消通知（给顾客）",
 };
 
 export interface UnsentEmail {

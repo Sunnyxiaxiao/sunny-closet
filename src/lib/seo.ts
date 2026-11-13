@@ -6,6 +6,9 @@ import { parseDescription } from "@/lib/description";
 const OG_LOCALE: Record<Locale, string> = { zh: "zh_CN", en: "en_US" };
 const MAX_DESCRIPTION = 160;
 
+/** Link preview for pages without a photo of their own (home, lists, info pages): 1200×630, in public/images */
+export const SHARE_IMAGE = { url: "/images/share.jpg", width: 1200, height: 630 };
+
 /**
  * Per-page search / sharing metadata: this page's own address in each language (hreflang) and its canonical URL,
  * plus the link preview (Open Graph) shown when the page is shared in iMessage, WeChat, Instagram and so on.
@@ -33,7 +36,7 @@ export function pageSeo(
       title,
       url,
       ...(description ? { description } : {}),
-      ...(image ? { images: [{ url: image }] } : {}),
+      images: [image ? { url: image } : SHARE_IMAGE],
     },
   };
 }

@@ -34,7 +34,8 @@ export type EmailKind =
   | "order_declined"
   | "acceptance_reminder"
   | "pickup_reminder"
-  | "return_reminder";
+  | "return_reminder"
+  | "order_cancelled";
 export type EmailLogStatus = "sending" | "sent" | "failed" | "dismissed";
 
 export type Database = {

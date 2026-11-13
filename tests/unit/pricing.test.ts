@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatMoney } from "@/lib/money";
-import { calculateQuote, priceTiers, rentalPriceCents } from "@/lib/pricing";
+import { calculateQuote, dailyStepCents, priceTiers, rentalPriceCents, summarizeTiers } from "@/lib/pricing";
 
 // 1 天 $49、2 天 $79、3 天 $99、4 天 $119、5 天及以上 $149
 const PRICES = [4900, 7900, 9900, 11900, 14900];
@@ -130,6 +130,40 @@ describe("priceTiers 展示用档位", () => {
 
   it("最长租期短于价目表时只列到最长租期", () => {
     expect(priceTiers(PRICES, 3)).toHaveLength(3);
+  });
+});
+
+describe("长租期的价格说明", () => {
+  // 套装：前 3 天 49 / 79 / 99，之后每天 +10，一直到 30 天
+  const SUIT_30 = [4900, 7900, ...Array.from({ length: 28 }, (_, i) => 9900 + i * 1000)];
+
+  it("档位不超过 10 个时全部列出", () => {
+    const tiers = priceTiers(SUIT_30, 10);
+    expect(summarizeTiers(tiers)).toEqual({ shown: tiers, longer: null });
+  });
+
+  it("30 天每天加价一样：列前 10 档，其余合成一句", () => {
+    const { shown, longer } = summarizeTiers(priceTiers(SUIT_30, 30));
+    expect(shown).toHaveLength(10);
+    expect(shown.at(-1)).toMatchObject({ maxDays: 10, cents: 16900 });
+    expect(longer).toEqual({ fromDays: 11, toDays: 30, stepCents: 1000 });
+  });
+
+  it("后面各天加价不一样时不给出每天加价", () => {
+    const uneven = [...SUIT_30.slice(0, 20), ...Array.from({ length: 10 }, (_, i) => 30000 + i * 500)];
+    expect(summarizeTiers(priceTiers(uneven, 30)).longer).toEqual({ fromDays: 11, toDays: 30, stepCents: null });
+  });
+
+  it("头盔套这类封顶的价目表：最后一档自动并到最长租期，不需要说明", () => {
+    const tiers = priceTiers([1500, 2000, 2000, 2500], 30);
+    expect(tiers.at(-1)).toEqual({ label: "4–30 天", maxDays: 30, cents: 2500 });
+    expect(summarizeTiers(tiers).longer).toBeNull();
+  });
+
+  it("dailyStepCents：每天固定加价、封顶不加价、加价不一致", () => {
+    expect(dailyStepCents(SUIT_30, 10, 30)).toBe(1000);
+    expect(dailyStepCents([3500, 5000, 6000], 10, 30)).toBe(0);
+    expect(dailyStepCents([1000, 2000, 2500, 4000], 2, 4)).toBeNull();
   });
 });
 

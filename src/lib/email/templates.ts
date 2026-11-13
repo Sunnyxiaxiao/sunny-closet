@@ -395,6 +395,27 @@ export function overdueConflictEmail({
   };
 }
 
+/** To the shop: a message left on the contact page. Replying goes straight to the visitor */
+export function contactMessageEmail(
+  { name, email, message, language }: { name: string; email: string; message: string; language: "zh" | "en" },
+  { to }: { to: string },
+): EmailMessage {
+  const { text, html } = render([
+    { kind: "p", text: "Someone left a message on the website. Reply to this email to answer them." },
+    {
+      kind: "rows",
+      rows: [
+        ["From", name],
+        ["Email", email],
+        ["Site language", language === "zh" ? "Chinese" : "English"],
+      ],
+    },
+    { kind: "p", text: message },
+  ]);
+  // Line breaks in a name would let a visitor add their own mail headers
+  return { to, replyTo: email, subject: `Website message from ${name.replace(/[\r\n]+/g, " ")}`, text, html };
+}
+
 /** To the customer: a short-notice shipping order (no rush) is paid, and the owner still has to accept it */
 export function awaitingAcceptanceEmail(order: OrderEmailData, { origin }: { origin: string }): EmailMessage {
   const { text, html } = render([
@@ -437,6 +458,35 @@ export function orderDeclinedEmail(
     { kind: "link", label: "Browse rentals", url: `${origin}${localePath("en", "/styles")}` },
   ]);
   return { to: order.customerEmail, replyTo: shop.contact.email, subject: `Booking ${order.bookingNo} cancelled: full refund`, text, html };
+}
+
+/**
+ * To the customer: the owner cancelled the order in admin. `refunded` = the payment already went back to the card;
+ * otherwise, for a paid order, the owner settles the refund and gets in touch
+ */
+export function orderCancelledEmail(
+  order: OrderEmailData,
+  { origin, refundCents, refunded }: { origin: string; refundCents: number; refunded: boolean },
+): EmailMessage {
+  const money =
+    refundCents <= 0
+      ? ""
+      : refunded
+        ? ` We've refunded ${formatMoney(refundCents)} to your card; it usually shows up within 5–10 business days.`
+        : " We'll be in touch about your refund; anything due goes back to your original payment method.";
+  const { text, html } = render([
+    { kind: "p", text: `Hi ${order.customerName},\n\nYour booking ${order.bookingNo} has been cancelled.${money}` },
+    { kind: "rows", rows: itemRows(order, "en") },
+    { kind: "p", text: `If this isn't what you expected, or you'd like to book other dates, we're happy to help. ${contactLine}` },
+    { kind: "link", label: "Browse rentals", url: `${origin}${localePath("en", "/styles")}` },
+  ]);
+  return {
+    to: order.customerEmail,
+    replyTo: shop.contact.email,
+    subject: `Booking ${order.bookingNo} cancelled${refundCents > 0 && refunded ? `: ${formatMoney(refundCents)} refunded` : ""}`,
+    text,
+    html,
+  };
 }
 
 /** To the owner: a short-notice shipping order is still waiting to be accepted */

@@ -134,7 +134,7 @@ export function AdminOrderPayment({
         </p>
       )}
       {paidCents !== null && paymentMethod === "card" && (
-        <p className="mt-2 text-xs text-neutral-500">退款请在 Stripe 后台的 Payments 里操作。</p>
+        <p className="mt-2 text-xs text-neutral-500">取消订单时可以直接全额退款；其他退款请在 Stripe 后台的 Transactions 里操作。</p>
       )}
     </div>
   );

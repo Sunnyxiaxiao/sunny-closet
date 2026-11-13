@@ -105,6 +105,44 @@
     "replacementValue": 330
   },
   {
+    "slug": "isee-migga-shadow-barbie-cross-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "暗影芭比十字滑雪套装",
+    "nameEn": "Shadow Barbie Cross Ski Suit",
+    "dailyPrice": 49,
+    "sortOrder": 35,
+    "sourceUrl": "https://iseemigga.com/products/shadow-barbie-cross-sui-zuan",
+    "items": [
+      {
+        "code": "SC075",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_35ed345a-acf1-43e2-9859-a18104be9f7b.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_6e18b139-1455-4756-a9ff-0c9f141b9beb.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_0a39e322-af7c-4985-9397-de8717803681.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_2002d8f3-30a5-4c9e-9e03-99d98d01b912.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_4ea96836-1a5d-4e76-aa7a-84f5a023bfa0.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_a57c6286-b81b-4f81-92fc-15c34545d8c5.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_75a76c95-e3da-4769-bd14-84d42a7840e1.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_308460f9-2e7c-4990-8207-c6abe01009af.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/f23f9b7652549bbd07727fb60f5dab22.jpg",
+      "images/isee-size-chart/1.jpg",
+      "images/isee-size-chart/2.jpg",
+      "images/isee-quality-report/1.jpg"
+    ],
+    "template": "isee-migga",
+    "description": "官方款名：Shadow Barbie Cross Diamond Ski Suit（十字系列）\n芭比粉渐变到暗影黑，全身点缀十字图案，上衣 + 雪裤一整套。尺码 M。",
+    "descriptionEn": "Official name: Shadow Barbie Cross Diamond Ski Suit (Cross series)\nBarbie pink fading into shadow black, dotted with cross motifs all over. Jacket + pants set. Size M.",
+    "tags": [
+      "crystal",
+      "series:isee-cross"
+    ],
+    "replacementValue": 330
+  },
+  {
     "slug": "mystery-of-the-rose-ski-suit",
     "brand": "ISEE MIGGA",
     "category": "suit",
@@ -978,7 +1016,7 @@
     "category": "suit",
     "name": "粉色立体爱心滑雪套装",
     "nameEn": "Pink 3D Heart Ski Suit",
-    "dailyPrice": 49,
+    "dailyPrice": 39,
     "sortOrder": 86,
     "template": "isee-migga",
     "items": [
@@ -988,16 +1026,22 @@
       }
     ],
     "images": [
-      "images/isee-migga-pink-3d-heart-ski-suit/1.jpg",
-      "images/isee-migga-pink-3d-heart-ski-suit/2.jpg",
-      "images/isee-migga-pink-3d-heart-ski-suit/3.jpg",
-      "images/isee-migga-pink-3d-heart-ski-suit/4.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-1_77dfebf7-b970-44b1-800c-df46d28bbb5e.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-2_0db4147d-111a-490d-891e-3d3bf6cd292d.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-3_d515797a-0c52-4733-a7cb-8da151bcfcf5.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-4_c9d1d76e-005c-40a8-bfd3-6baa4f851eba.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-5_5e169ed3-1f60-4299-9e31-edd9e32beb6a.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-6_6ed73b1b-975f-405c-bdfd-fc241d372e19.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/930-7_7f1bb645-d9d6-4311-a36f-a70785d10764.jpg",
+      "https://cdn.shopify.com/s/files/1/0629/5322/6338/files/Set_00ff68cc-4b52-4533-b3cc-98a8ca292b0e.jpg",
       "images/isee-size-chart/1.jpg",
       "images/isee-size-chart/2.jpg",
       "images/isee-quality-report/1.jpg"
     ],
     "description": "粉色连帽滑雪套装：上衣是饱和的芭比粉，雪裤是淡淡的樱花粉，白色拉链和 ISEE MIGGA 字母点缀，整套甜而不腻。尺码 S。",
-    "descriptionEn": "A hooded ski suit in two shades of pink: a bright Barbie-pink jacket over pale cherry-blossom pants, finished with white zippers and ISEE MIGGA lettering. Sweet without being too much. Size S."
+    "descriptionEn": "A hooded ski suit in two shades of pink: a bright Barbie-pink jacket over pale cherry-blossom pants, finished with white zippers and ISEE MIGGA lettering. Sweet without being too much. Size S.",
+    "sourceUrl": "https://iseemigga.com/products/gradient-pink-glowing-heart-ski-suit",
+    "replacementValue": 330
   },
   {
     "slug": "isee-migga-barbie-mecha-cropped-jacket",

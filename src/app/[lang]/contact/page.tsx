@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ContactForm } from "@/components/contact-form";
 import { shop } from "@/config/shop";
 import { getLocale } from "@/i18n/server";
 import { pageSeo } from "@/lib/seo";
@@ -11,7 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ContactPage() {
-  const t = getMessages(await getLocale()).contact;
+  const locale = await getLocale();
+  const t = getMessages(locale).contact;
   const items = [
     { label: t.email, value: shop.contact.email, href: `mailto:${shop.contact.email}` },
     {
@@ -45,6 +47,13 @@ export default async function ContactPage() {
           </div>
         ))}
       </dl>
+      <section className="mt-12">
+        <h2 className="text-xl font-black">{t.formTitle}</h2>
+        <p className="mt-2 text-sm text-neutral-600">{t.formIntro}</p>
+        <div className="mt-6">
+          <ContactForm locale={locale} />
+        </div>
+      </section>
     </div>
   );
 }

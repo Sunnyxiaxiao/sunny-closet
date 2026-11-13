@@ -6,6 +6,7 @@ import { SnowBackground } from "@/components/snow-background";
 import { shop } from "@/config/shop";
 import { HTML_LANG, LOCALES } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
+import { SHARE_IMAGE } from "@/lib/seo";
 import { getMessages } from "@/messages";
 import "../globals.css";
 
@@ -25,7 +26,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: t.description,
     // Each page sets its own canonical / hreflang / link preview (src/lib/seo.ts)
-    openGraph: { type: "website", siteName: shop.name, title: `${shop.name} · ${t.siteTitle}`, description: t.description },
+    openGraph: {
+      type: "website",
+      siteName: shop.name,
+      title: `${shop.name} · ${t.siteTitle}`,
+      description: t.description,
+      images: [SHARE_IMAGE],
+    },
   };
 }
 

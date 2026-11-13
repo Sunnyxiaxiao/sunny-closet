@@ -17,10 +17,10 @@ describe("pageSeo", () => {
     });
   });
 
-  it("adds the description and image to the link preview only when given", () => {
+  it("uses the page's own description and photo when given, the shop's share image otherwise", () => {
     const plain = pageSeo("en", "/terms", { title: "Terms" });
     expect(plain.description).toBeUndefined();
-    expect(plain.openGraph).not.toHaveProperty("images");
+    expect(plain.openGraph).toMatchObject({ images: [{ url: "/images/share.jpg", width: 1200, height: 630 }] });
 
     const product = pageSeo("en", "/styles/a", { title: "A", description: "Nice", image: "https://img.example/a.jpg" });
     expect(product.description).toBe("Nice");

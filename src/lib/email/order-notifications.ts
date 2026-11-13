@@ -18,6 +18,7 @@ import {
   acceptanceReminderEmail,
   awaitingAcceptanceEmail,
   newOrderEmail,
+  orderCancelledEmail,
   orderDeclinedEmail,
   orderConfirmedEmail,
   overdueConflictEmail,
@@ -154,6 +155,11 @@ export async function notifyOrderDeclined(bookingId: string, refundCents: number
   await deliverOrderEmail(bookingId, "order_declined", { refundCents }, origin);
 }
 
+/** The owner cancelled an order in admin: tell the customer, with what happens to the payment (if there was one) */
+export async function notifyOrderCancelled(bookingId: string, refund: { refundCents: number; refunded: boolean }, origin: string) {
+  await deliverOrderEmail(bookingId, "order_cancelled", refund, origin);
+}
+
 /** Reminds the owner that a paid short-notice shipping order is still waiting to be accepted */
 export async function notifyAcceptanceReminder(bookingId: string, deadline: Date, origin: string) {
   await deliverOrderEmail(bookingId, "acceptance_reminder", { deadline: deadline.toISOString() }, origin);
@@ -264,6 +270,8 @@ async function buildOrderEmail(bookingId: string, kind: EmailKind, params: Email
       return awaitingAcceptanceEmail(order, { origin });
     case "order_declined":
       return orderDeclinedEmail(order, { origin, refundCents: Number(params.refundCents) });
+    case "order_cancelled":
+      return orderCancelledEmail(order, { origin, refundCents: Number(params.refundCents) || 0, refunded: params.refunded === true });
     case "pickup_reminder":
       return pickupReminderEmail(order, { origin });
     case "return_reminder":

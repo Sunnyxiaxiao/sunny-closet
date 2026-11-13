@@ -93,3 +93,43 @@ export function priceTiers(prices: readonly number[], maxRentalDays: number, loc
     cents,
   }));
 }
+
+/** Most tiers shown one by one; a longer price table is summarized after this many (see summarizeTiers) */
+export const MAX_SHOWN_TIERS = 10;
+
+export interface LongerStays {
+  fromDays: number;
+  toDays: number;
+  /** Price added per extra day when it's the same every day; null when the steps differ */
+  stepCents: number | null;
+}
+
+/** The constant price step per extra day from `afterDay` to `maxDays` (0 = flat), or null when the steps differ */
+export function dailyStepCents(prices: readonly number[], afterDay: number, maxDays: number): number | null {
+  const step = rentalPriceCents(prices, afterDay + 1) - rentalPriceCents(prices, afterDay);
+  for (let day = afterDay + 1; day < maxDays; day += 1) {
+    if (rentalPriceCents(prices, day + 1) - rentalPriceCents(prices, day) !== step) return null;
+  }
+  return step;
+}
+
+/**
+ * A long price table (say 30 days, each a little more than the last) can't be shown tier by tier:
+ * keep the first `limit` tiers and describe the rest in one line ("11–30 days: +$10 per extra day").
+ */
+export function summarizeTiers(
+  tiers: readonly PriceTier[],
+  limit = MAX_SHOWN_TIERS,
+): { shown: PriceTier[]; longer: LongerStays | null } {
+  if (tiers.length <= limit) return { shown: [...tiers], longer: null };
+  const shown = tiers.slice(0, limit);
+  const rest = tiers.slice(limit - 1);
+  const step = rest[1].cents - rest[0].cents;
+  const steady = rest.every(
+    (tier, i) => i === 0 || (tier.maxDays - rest[i - 1].maxDays === 1 && tier.cents - rest[i - 1].cents === step),
+  );
+  return {
+    shown,
+    longer: { fromDays: shown[limit - 1].maxDays + 1, toDays: tiers[tiers.length - 1].maxDays, stepCents: steady ? step : null },
+  };
+}

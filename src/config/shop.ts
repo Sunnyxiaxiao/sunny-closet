@@ -40,11 +40,11 @@ export const shop = {
   },
   /**
    * 顾客的预订被你“确认”之后（付款备注的提示文字在 messages 的 bookingPage.paymentNote），会在预订详情页看到这里的付款方式。
-   * 上线前请改成你自己的 Zelle 邮箱或手机号、Venmo 用户名（中英文页面都显示这里的值）。
+   * Zelle 手机号、Venmo 用户名（中英文页面都显示这里的值）。
    */
   payment: {
-    zelle: "zelle@example.com",
-    venmo: "@your-venmo",
+    zelle: "857-310-6276",
+    venmo: "@Yu-Zou-2",
     /** 到店自取、选“当面付租金 + 押金”时，每单当面收的押金（分），归还后当面退 */
     inPersonDepositCents: 20000,
   },

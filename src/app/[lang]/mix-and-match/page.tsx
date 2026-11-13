@@ -14,7 +14,7 @@ import {
   type SizeAvailability,
 } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
-import { rentalPriceCents } from "@/lib/pricing";
+import { MAX_SHOWN_TIERS, dailyStepCents, rentalPriceCents } from "@/lib/pricing";
 import { pageSeo } from "@/lib/seo";
 import { getMessages } from "@/messages";
 
@@ -58,8 +58,15 @@ async function MixAndMatch({ locale }: { locale: Locale }) {
 
 function PriceTable({ settings, locale }: { settings: ShopSettings; locale: Locale }) {
   const t = getMessages(locale).mixMatch;
-  const days = Array.from({ length: settings.maxRentalDays }, (_, i) => i + 1);
+  // 逐天列到第 10 天；更长的租期合成一行（“每多一天 +$x”，各天加价不一样时显示价格范围）
+  const listed = Math.min(settings.maxRentalDays, MAX_SHOWN_TIERS);
+  const days = Array.from({ length: listed }, (_, i) => i + 1);
   const money = (prices: number[], day: number) => formatMoney(rentalPriceCents(prices, day), { whole: true });
+  const longer = (prices: number[]) => {
+    const step = dailyStepCents(prices, listed, settings.maxRentalDays);
+    if (step === null) return `${money(prices, listed + 1)}–${money(prices, settings.maxRentalDays)}`;
+    return step === 0 ? money(prices, listed) : t.perExtraDay(formatMoney(step, { whole: true }));
+  };
   return (
     <section className="mx-2 mt-6 sm:mx-0">
       <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">{t.tableTitle}</h2>
@@ -81,6 +88,14 @@ function PriceTable({ settings, locale }: { settings: ShopSettings; locale: Loca
               <td className="px-2 py-2 text-neutral-500">{money(settings.rentalPricesCents, day)}</td>
             </tr>
           ))}
+          {settings.maxRentalDays > listed && (
+            <tr>
+              <td className="px-2 py-2 text-left text-neutral-500">{t.dayRange(listed + 1, settings.maxRentalDays)}</td>
+              <td className="px-2 py-2 font-semibold">{longer(settings.jacketPricesCents)}</td>
+              <td className="px-2 py-2 font-semibold">{longer(settings.pantsPricesCents)}</td>
+              <td className="px-2 py-2 text-neutral-500">{longer(settings.rentalPricesCents)}</td>
+            </tr>
+          )}
         </tbody>
       </table>
       <p className="mt-2 text-xs text-neutral-500">{t.tableNote}</p>

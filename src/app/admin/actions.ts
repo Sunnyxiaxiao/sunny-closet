@@ -6,15 +6,17 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
+import type { CancelOrderState } from "@/lib/admin/cancel-order-state";
 import type { CardChargeState } from "@/lib/admin/card-charge-state";
 import type { LoginState } from "@/lib/admin/login-state";
 import type { ReturnDateState } from "@/lib/admin/return-date-state";
 import { parseDollarsToCents } from "@/lib/booking/card-payment";
 import { acceptOrder, declineOrder } from "@/lib/booking/acceptance-server";
 import { canTransition, isBookingStatus } from "@/lib/booking/status";
-import { notifyOrderConfirmed, resendEmail } from "@/lib/email/order-notifications";
+import { notifyOrderCancelled, notifyOrderConfirmed, resendEmail } from "@/lib/email/order-notifications";
 import { publicOrigin } from "@/lib/site-url";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
+import { cancelOrder, type CancelRefundMode } from "@/lib/payments/cancel-order";
 import { chargeCard, retryCharge, type ChargeDeps, type ChargeTarget } from "@/lib/payments/card-charge";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -72,10 +74,12 @@ export async function updateBookingStatus(formData: FormData) {
   if (readError) throw new Error(`读取订单失败：${readError.message}`);
 
   // Order missing or the page is stale (status already changed): don't update; refresh to show the latest status.
-  // Short-notice orders waiting to be accepted go through acceptShortNotice / declineShortNotice (a decline owes a refund)
+  // Short-notice orders waiting to be accepted go through acceptShortNotice / declineShortNotice (a decline owes a refund),
+  // and cancelling goes through cancelBooking (a paid order owes a refund too)
   if (
     !current ||
     current.acceptance_status === "awaiting" ||
+    nextStatus === "cancelled" ||
     !canTransition(current.status, nextStatus, current.payment_method)
   ) {
     revalidatePath("/admin");
@@ -98,6 +102,80 @@ export async function updateBookingStatus(formData: FormData) {
   }
 
   revalidatePath("/admin");
+}
+
+const cancelSchema = z.object({
+  bookingId: z.uuid(),
+  refund: z.enum(["full", "later"]),
+});
+
+/**
+ * Cancels an order (rules: src/lib/payments/cancel-order.ts). A paid order is cancelled with its refund: "full" refunds the
+ * payment through Stripe right away, "later" leaves a refund due for the owner to settle. The customer gets a cancellation email.
+ * Written with the service key: admins can only update status and notes directly.
+ */
+export async function cancelBooking(_previous: CancelOrderState, formData: FormData): Promise<CancelOrderState> {
+  await requireAdmin();
+  const parsed = cancelSchema.safeParse({ bookingId: formData.get("bookingId"), refund: formData.get("refund") });
+  if (!parsed.success) return { message: "找不到这个订单" };
+  const mode: CancelRefundMode = parsed.data.refund;
+
+  const service = createSupabaseServiceClient();
+  const { data: booking, error } = await service
+    .from("bookings")
+    .select("id, status, parent_booking_id, acceptance_status, paid_cents, stripe_payment_intent_id, refund_status")
+    .eq("id", parsed.data.bookingId)
+    .maybeSingle();
+  if (error) throw new Error(`读取订单失败：${error.message}`);
+  // Short-notice orders waiting to be accepted are declined instead (declineShortNotice)
+  if (!booking || (booking.acceptance_status === "awaiting" && booking.status === "pending")) {
+    revalidatePath("/admin");
+    return { message: "这单的状态已经变了，请刷新页面" };
+  }
+  if (mode === "full" && !stripeEnabled()) return { message: "还没有配置 Stripe，不能自动退款" };
+
+  const origin = await publicOrigin();
+  const result = await cancelOrder(
+    {
+      async cancel(bookingId, fromStatus, refundDueCents) {
+        const { data, error: cancelError } = await service
+          .from("bookings")
+          .update({
+            status: "cancelled",
+            ...(refundDueCents > 0 && { refund_status: "due" as const, refund_cents: refundDueCents }),
+          })
+          .eq("id", bookingId)
+          .eq("status", fromStatus)
+          .is("parent_booking_id", null)
+          .select("id");
+        if (cancelError) throw new Error(`取消订单失败：${cancelError.message}`);
+        return data.length > 0;
+      },
+      async refund(paymentIntentId, cents, idempotencyKey) {
+        await getStripe().refunds.create({ payment_intent: paymentIntentId, amount: cents }, { idempotencyKey });
+      },
+      async markRefunded(bookingId) {
+        const { error: refundError } = await service
+          .from("bookings")
+          .update({ refund_status: "refunded", refunded_at: new Date().toISOString() })
+          .eq("id", bookingId)
+          .eq("refund_status", "due");
+        if (refundError) throw new Error(`标记已退款失败：${refundError.message}`);
+      },
+      onCancelled: (bookingId, refund) => after(() => notifyOrderCancelled(bookingId, refund, origin)),
+    },
+    {
+      id: booking.id,
+      status: booking.status,
+      isChild: booking.parent_booking_id !== null,
+      paidCents: booking.paid_cents,
+      paymentIntentId: booking.stripe_payment_intent_id,
+      refundStatus: booking.refund_status,
+    },
+    mode,
+  );
+  revalidatePath("/admin");
+  return result;
 }
 
 const adminNoteSchema = z.object({

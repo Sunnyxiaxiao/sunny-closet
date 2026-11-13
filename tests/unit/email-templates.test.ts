@@ -183,6 +183,22 @@ describe("邮寄急单", () => {
     expect(email.subject).toBe("Booking SC-ABCD2345 cancelled: full refund");
     expect(email.text).toContain("full refund of $109.00");
   });
+
+  it("后台取消：已退款写明金额，待处理的写会联系，没付款的不提退款", async () => {
+    const { orderCancelledEmail } = await import("@/lib/email/templates");
+    const refunded = orderCancelledEmail(paid, { origin: "https://x.test", refundCents: 10900, refunded: true });
+    expect(refunded.to).toBe("amy@example.com");
+    expect(refunded.subject).toBe("Booking SC-ABCD2345 cancelled: $109.00 refunded");
+    expect(refunded.text).toContain("We've refunded $109.00 to your card");
+
+    const later = orderCancelledEmail(paid, { origin: "https://x.test", refundCents: 10900, refunded: false });
+    expect(later.subject).toBe("Booking SC-ABCD2345 cancelled");
+    expect(later.text).toContain("We'll be in touch about your refund");
+
+    const unpaid = orderCancelledEmail(order, { origin: "https://x.test", refundCents: 0, refunded: false });
+    expect(unpaid.text).toContain("has been cancelled.");
+    expect(unpaid.text).not.toContain("refund");
+  });
 });
 
 describe("提醒邮件", () => {

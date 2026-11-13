@@ -39,15 +39,28 @@ export type PublicStyle = Pick<
   | "bundle_style_ids"
 >;
 
+/**
+ * How long the public catalog is reused before it's read again. Admin edits refresh it at once (updateTag);
+ * the wait only applies to changes made outside the admin (import script, SQL) or seen by another server instance.
+ * Every read downloads the whole catalog from Supabase, which counts against the plan's egress quota.
+ */
+const CATALOG_CACHE = { stale: 0, revalidate: 300, expire: 900 } as const;
+
+/** Everything lists and cards need. Descriptions are left out: they are half of the catalog's size and only product pages show them */
 const STYLE_COLUMNS =
-  "id, slug, brand, category, name, description, daily_price_cents, deposit_cents, image_urls, source_url, tier, tags, addon_price_cents, replacement_value_cents, rental_prices_cents, variant_images, bundle_style_ids, name_en, description_en";
+  "id, slug, brand, category, name, daily_price_cents, deposit_cents, image_urls, source_url, tier, tags, addon_price_cents, replacement_value_cents, rental_prices_cents, variant_images, bundle_style_ids, name_en";
 
-type StyleRowWithEnglish = PublicStyle & Pick<StyleRow, "name_en" | "description_en">;
+type ListedStyleRow = Omit<PublicStyle, "description"> & Pick<StyleRow, "name_en">;
+type StyleDescriptions = Pick<StyleRow, "description" | "description_en">;
 
-/** English pages use English names and descriptions (falling back to Chinese when missing) */
-function localize({ name_en, description_en, ...style }: StyleRowWithEnglish, locale: Locale): PublicStyle {
-  if (locale !== "en") return style;
-  return { ...style, name: name_en || style.name, description: description_en || style.description };
+/**
+ * English pages use English names and descriptions (falling back to Chinese when missing).
+ * Listed styles carry no description (pass none); a product page passes the one it read with styleDescriptions.
+ */
+function localize({ name_en, ...style }: ListedStyleRow, locale: Locale, text?: StyleDescriptions): PublicStyle {
+  const description = text?.description ?? "";
+  if (locale !== "en") return { ...style, description };
+  return { ...style, name: name_en || style.name, description: text?.description_en || description };
 }
 
 /** Styles come in three kinds: outfits (set / one-piece / jacket / pants), helmet covers, gloves */
@@ -168,7 +181,8 @@ async function settingsRow() {
 }
 
 /**
- * Active styles. Lists outfits by default; pass kind: "helmet_cover" for helmet covers or kind: "gloves" for gloves. Names and descriptions follow locale.
+ * Active styles. Lists outfits by default; pass kind: "helmet_cover" for helmet covers or kind: "gloves" for gloves. Names follow locale;
+ * descriptions are empty here (only getStyleBySlug reads them).
  * "Top + black snow pants" sets aren't listed on their own (they're an option on the top's page); pass withPantsOptions: true to include them
  */
 export async function listStyles({
@@ -195,19 +209,30 @@ const styleBySlug = cache(async (slug: string, kind: StyleKind, locale: Locale):
   await connection();
   const data = (await activeStyleRows()).find((row) => row.slug === slug);
   if (!data || styleKind(data.category) !== kind) return null;
-  return localize(data, locale);
+  return localize(data, locale, await styleDescriptions(data.id));
 });
 
 /** Shared by all three catalog categories and product metadata, never used for order authorization. */
-async function activeStyleRows(): Promise<StyleRowWithEnglish[]> {
+async function activeStyleRows(): Promise<ListedStyleRow[]> {
   "use cache";
-  cacheLife({ stale: 0, revalidate: 60, expire: 300 });
+  cacheLife(CATALOG_CACHE);
   cacheTag("storefront-catalog");
   const { data, error } = await createSupabasePublicClient()
     .from("styles").select(STYLE_COLUMNS).eq("is_active", true)
     .order("sort_order").order("name");
   if (error) throw new Error(`读取款式失败：${error.message}`);
   return data;
+}
+
+/** One product's descriptions, read when its page is opened (cached like the catalog) */
+async function styleDescriptions(id: string): Promise<StyleDescriptions> {
+  "use cache";
+  cacheLife(CATALOG_CACHE);
+  cacheTag("storefront-catalog");
+  const { data, error } = await createSupabasePublicClient()
+    .from("styles").select("description, description_en").eq("id", id).maybeSingle();
+  if (error) throw new Error(`读取款式介绍失败：${error.message}`);
+  return data ?? { description: "", description_en: "" };
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   saveAdminNote,
   updateBookingStatus,
 } from "@/app/admin/actions";
+import { AdminCancelOrder } from "@/components/admin-cancel-order";
 import { AdminOrderPayment } from "@/components/admin-order-payment";
 import { AdminOverdue } from "@/components/admin-overdue";
 import { shop } from "@/config/shop";
@@ -16,6 +17,7 @@ import { overdueInfo } from "@/lib/booking/overdue";
 import { handoverText } from "@/lib/booking/schedule";
 import { formatDateZh, type IsoDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { refundOwedCents } from "@/lib/payments/cancel-order";
 import type { BookingRow, BookingStatus, CardChargeRow, ConditionSnapshot } from "@/lib/supabase/database.types";
 import { messages } from "@/messages/zh-CN";
 
@@ -231,13 +233,16 @@ export function AdminOrderCard({
             <>
               <p>
                 <span className="font-semibold">待退款 {formatMoney(booking.refund_cents)}</span>
-                ：{booking.acceptance_status === "declined" ? "急单已拒单" : "顾客在订单取消后、或重复付了款"}
-                。请到 Stripe 后台的 Payments 里退款，退完再点右边的按钮（Stripe 回调配好后会自动标记）。
+                ：{booking.acceptance_status === "declined" ? "急单已拒单" : "订单已取消，或顾客重复付了款"}
+                。
+                {booking.stripe_payment_intent_id
+                  ? "请到 Stripe 后台的 Transactions 里退款，全额退完会自动标记；只退一部分的话，退完点右边的按钮。"
+                  : "这笔钱是当面收的，请当面或转账退回，退完点右边的按钮。"}
               </p>
               <form action={markRefunded}>
                 <input type="hidden" name="bookingId" value={booking.id} />
                 <button type="submit" className="h-9 rounded-full bg-red-700 px-4 text-xs font-bold text-white hover:bg-red-800">
-                  已在 Stripe 退款
+                  已退款
                 </button>
               </form>
             </>
@@ -279,23 +284,33 @@ export function AdminOrderCard({
 
       {actions.length > 0 && (
         <div className="mt-5 flex flex-wrap gap-2">
-          {actions.map((next) => (
-            <form key={next} action={updateBookingStatus}>
-              <input type="hidden" name="bookingId" value={booking.id} />
-              <input type="hidden" name="nextStatus" value={next} />
-              <button
-                type="submit"
-                className={[
-                  "h-10 rounded-full px-5 text-sm font-bold",
-                  DESTRUCTIVE.has(next)
-                    ? "border border-red-300 text-red-700 hover:bg-red-50"
-                    : "bg-neutral-900 text-white hover:bg-neutral-700",
-                ].join(" ")}
-              >
-                {t.actions[next]}
-              </button>
-            </form>
-          ))}
+          {actions.map((next) =>
+            next === "cancelled" ? (
+              <AdminCancelOrder
+                key={next}
+                bookingId={booking.id}
+                label={t.actions.cancelled}
+                owedCents={refundOwedCents({ paidCents: booking.paid_cents, refundStatus: booking.refund_status })}
+                canRefundOnline={cardCharges !== undefined && Boolean(booking.stripe_payment_intent_id)}
+              />
+            ) : (
+              <form key={next} action={updateBookingStatus}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="nextStatus" value={next} />
+                <button
+                  type="submit"
+                  className={[
+                    "h-10 rounded-full px-5 text-sm font-bold",
+                    DESTRUCTIVE.has(next)
+                      ? "border border-red-300 text-red-700 hover:bg-red-50"
+                      : "bg-neutral-900 text-white hover:bg-neutral-700",
+                  ].join(" ")}
+                >
+                  {t.actions[next]}
+                </button>
+              </form>
+            ),
+          )}
         </div>
       )}
 
