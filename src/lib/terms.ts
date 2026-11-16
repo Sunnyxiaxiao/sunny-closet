@@ -17,6 +17,12 @@ export interface TermsSection {
   blocks: TermsBlock[];
 }
 
+/** One group of questions on the FAQ page (/faq); the answers quote the same numbers as the terms */
+export interface FaqGroup {
+  title: string;
+  items: { q: string; a: TermsBlock[] }[];
+}
+
 export interface TermsArgs {
   /** Shortest shipped rental (admin setting) */
   shippingMinDays: number;
@@ -24,8 +30,6 @@ export interface TermsArgs {
   freeSubtotal: number;
   fee: number;
   farFee: number;
-  /** What a free-shipping order to a far state pays */
-  farFreeFee: number;
   deposit: number;
   aheadDays: number;
   rushFee: number;
@@ -45,7 +49,6 @@ export function termsArgs(shippingMinDays: number): TermsArgs {
     freeSubtotal: s.freeSubtotalCents / 100,
     fee: s.feeCents / 100,
     farFee: s.farFeeCents / 100,
-    farFreeFee: s.farFreeFeeCents / 100,
     deposit: shop.payment.inPersonDepositCents / 100,
     aheadDays: s.orderAheadDays,
     rushFee: s.rushFeeCents / 100,

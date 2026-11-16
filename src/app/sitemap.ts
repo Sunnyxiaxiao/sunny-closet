@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/gloves",
     "/mix-and-match",
     "/rental-info",
+    "/faq",
     "/terms",
     "/story",
     "/contact",

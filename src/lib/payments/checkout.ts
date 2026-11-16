@@ -189,6 +189,8 @@ async function createSession(deps: CheckoutDeps, order: PayableOrder, attempt: A
     // Cards only (wallets like Apple Pay included): they can be charged again later without the customer present,
     // unlike bank debits or buy-now-pay-later
     allowed_payment_method_types: ["card" as const],
+    // Hide Link: it offers saved bank accounts (with Stripe's own cash-back promotion), which aren't cards
+    wallet_options: { link: { display: "never" as const } },
     locale,
     metadata,
     custom_text: { submit: { message: page.submitMessage } },

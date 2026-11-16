@@ -1,15 +1,15 @@
 import { shop } from "@/config/shop";
-import type { TermsArgs, TermsSection } from "@/lib/terms";
+import type { FaqGroup, TermsArgs, TermsSection } from "@/lib/terms";
 import type { Messages } from "./zh-CN";
 
 // Shared by How It Works and the terms so fit-return deductions stay consistent.
-const cancellationShippingPolicy = "Before an order ships, any shipping charges paid, including shipping surcharges and rush fees, are refunded in full when you cancel; the rental-fee refund follows the cancellation schedule. After shipment, shipping charges are not refunded for cancellation. Delivery delays, eligible fit returns and shop errors are handled under their separate policies.";
+const cancellationShippingPolicy = "Before an order ships, any shipping charges paid, including rush fees, are refunded in full when you cancel; the rental-fee refund follows the cancellation schedule. After shipment, shipping charges are not refunded for cancellation. Delivery delays, eligible fit returns and shop errors are handled under their separate policies.";
 
 const deliveryDelayPolicy = "If a delivery delay affects your rental, please contact us promptly so we can review the tracking and arrange next steps. If the delay means you cannot use the items at all during your booked rental period, we can refund the rental fees and any shipping charges paid in full, without the $15 fit-return deduction, and arrange for the unused items to be returned. If you can still use the items for the remaining days, we will agree a proportional rental-fee refund with you based on the rental days actually missed; shipping charges already paid are not refunded.";
 
 const fitReturnPolicy = [
   `For shipped orders, if the fit isn't right, please contact us at ${shop.contact.email} and hand the return to USPS within 24 hours of delivery. A brief indoor try-on is fine; items must not have been used and must be returned in their original condition. Use the prepaid return label and keep the USPS acceptance receipt.`,
-  "Once the returned items have been checked, we refund their rental fees to the original payment method, rather than issuing store credit. If no shipping fee was charged on your order, we deduct $15 from the refund, once per order and never more than the rental fees being refunded. If shipping was charged (including any shipping surcharge or rush fee), that charge is not refunded and we do not deduct an additional $15. The same policy applies to all states we ship to.",
+  "Once the returned items have been checked, we refund their rental fees to the original payment method, rather than issuing store credit. If no shipping fee was charged on your order, we deduct $15 from the refund, once per order and never more than the rental fees being refunded. If shipping was charged (including any rush fee), that charge is not refunded and we do not deduct an additional $15. The same policy applies to all states we ship to.",
   "If we sent the wrong item or size, or there is an undisclosed issue that affects use, please contact us within 24 hours of delivery with photos. We cover the costs of resolving our error; the fit-return shipping deduction does not apply. If sizing information appears incorrect, send us a photo of the size label and the relevant measurements so we can check it with you.",
 ];
 
@@ -295,8 +295,8 @@ export const messages: Messages = {
     pickupMin: "In-store pickup",
     shippingMin: "Shipping",
     minDaysUnit: "day minimum",
-    shippingPolicy: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number, farStates: string) =>
-      `Shipping within the 48 contiguous US states (plus DC) only. Shipped rentals have a ${minDays}-day minimum. Shipping is free when rentals and add-ons reach $${free}, or when your order makes a full look (top, pants, helmet cover and gloves); free-shipping orders to these states pay $${farFree}: ${farStates}. Otherwise shipping is $${fee} ($${far} to those states). Local pickup in Ithaca starts at 1 day. Please book about ${ahead} days ahead for shipping.`,
+    shippingPolicy: (minDays: number, ahead: number, free: number, fee: number, far: number, farStates: string) =>
+      `Shipping within the 48 contiguous US states (plus DC) only. Shipped rentals have a ${minDays}-day minimum. Shipping is free when rentals and add-ons reach $${free}, or when your order makes a full look (top, pants, helmet cover and gloves). Otherwise shipping is $${fee}, or $${far} to these states: ${farStates}. Local pickup in Ithaca starts at 1 day. Please book about ${ahead} days ahead for shipping.`,
     replacementValue: "Replacement value: ",
     deposit: "Deposit",
     size: "Size",
@@ -569,8 +569,6 @@ export const messages: Messages = {
     freeShipping: "Free",
     freeShippingHint: (free: string) => `Free shipping with ${free}+ in rentals and add-ons`,
     fullLookTip: "Tip: a full look (top, pants, helmet cover & gloves) qualifies for free shipping",
-    shippingExtras: (fee: string) => `Qualifying orders to surcharge states still pay ${fee}. Rush fees, if selected, are extra.`,
-    farFreeShipping: (fee: string) => `${fee} (free shipping, far-state surcharge)`,
     total: "Total",
     continueShopping: "Keep Shopping",
   },
@@ -590,7 +588,7 @@ export const messages: Messages = {
       confirmed: "Your dates are reserved. Please pay using the details below and we'll arrange pickup with you.",
       rejected: "Sorry, we can't take this booking. Try different dates or another item, or get in touch.",
       picked_up:
-        "For in-store pickup, return by noon the day after your last ski day. For shipping, drop the package off by the day after.",
+        "For in-store pickup, return by noon the day after your last ski day. For shipping, drop the package off at USPS by the day after, or the next day USPS is open if that's a Sunday or a USPS holiday.",
       returned: "We've received your outfit. Thanks for taking good care of it!",
       cancelled: "If you didn't mean to cancel, please contact us.",
     },
@@ -663,7 +661,7 @@ export const messages: Messages = {
     addOnItem: (name: string) => `Add-on: ${name}`,
     shippingItem: "Shipping",
     authorization:
-      "I authorize Sunny Closet to charge this card later only for late returns, extra cleaning, repairs, or the replacement value shown when booking for an item that is lost or cannot be repaired, as set out in the Rental Terms. You'll send me photos and an itemized list before any charge.",
+      "I authorize Sunny Closet to charge this card later only for late returns, extra cleaning, repairs, or the replacement value shown when booking (or, if none is listed, the market replacement price) for an item that is lost or cannot be repaired, as set out in the Rental Terms. You'll send me photos and an itemized list before any charge.",
   },
   rentalInfo: {
     title: "How It Works",
@@ -676,7 +674,7 @@ export const messages: Messages = {
       },
       {
         title: "Shipping",
-        body: "We ship early so your outfit arrives before your first ski day — transit and early-arrival days aren't charged. When you're done, drop the package off at USPS with the prepaid return label by the end of the day after your last ski day. Return transit isn't charged either.",
+        body: "We ship early so your outfit arrives before your first ski day — transit and early-arrival days aren't charged. When you're done, drop the package off at USPS with the prepaid return label by the end of the day after your last ski day. If that day is a Sunday or a USPS holiday, drop it off on the next day USPS is open. Return transit isn't charged either.",
       },
     ],
     exampleTitle: "Example: skiing Saturday and Sunday?",
@@ -689,12 +687,12 @@ export const messages: Messages = {
     exampleResult: "You pay for 2 days.",
     termsLink: "Read the full rental terms",
     shippingTitle: "Shipping & pickup",
-    shippingRules: (minDays: number, ahead: number, free: number, fee: number, far: number, farFree: number, farStates: string) => [
+    shippingRules: (minDays: number, ahead: number, free: number, fee: number, far: number, farStates: string) => [
       "We ship to the 48 contiguous US states (plus Washington, DC) only. No shipping to Alaska, Hawaii or overseas.",
       `Shipped rentals start at ${minDays} days.`,
       `Free shipping when rentals and add-ons reach $${free} (deposit not included), or when your order makes a full look: a top, pants, a helmet cover and gloves (a set, a one-piece or your own mix all count).`,
       `Otherwise there's one shipping fee per order: $${fee} to the Northeast, Midwest and most other states, or $${far} to some western and southern states (e.g. California, Washington, Texas, Florida).`,
-      `Qualifying orders to ${farStates} pay $${farFree} toward shipping.`,
+      `The states that pay $${far}: ${farStates}.`,
       "Local pickup in Ithaca starts at 1 day.",
       "Everything in a shipped order goes out in one package, so all items need the same ski days.",
       `Please book about ${ahead} days ahead for shipping.`,
@@ -714,7 +712,7 @@ export const messages: Messages = {
       },
       {
         title: "Pickup & return",
-        body: "Local pickup is in Ithaca, NY: pick up from the evening before your first ski day and return by noon the day after your last. Shipped orders: drop the package at USPS with the prepaid return label by the end of the day after your last ski day.",
+        body: "Local pickup is in Ithaca, NY: pick up from the evening before your first ski day and return by noon the day after your last. Shipped orders: drop the package at USPS with the prepaid return label by the end of the day after your last ski day. If that day is a Sunday or a USPS holiday, drop it off on the next day USPS is open.",
       },
       {
         title: "Cleaning & hygiene",
@@ -722,17 +720,17 @@ export const messages: Messages = {
       },
       {
         title: "Cancellations & changes",
-        body: "Cancel 7 or more days before your first ski day for a full refund; at least 48 hours but less than 7 days before for a 50% refund or full credit for another booking this season. Within 48 hours, or once the order has shipped, the rental isn't refunded for cancellation. Delivery delays, eligible fit returns and shop errors are handled separately below and in the Rental Terms. Need more days? Contact us before your return date." + " " + cancellationShippingPolicy,
+        body: "Cancel 7 or more days before your first ski day for a full refund; at least 48 hours but less than 7 days before for a 50% refund or full credit for another booking this season. Within 48 hours, or once the order has shipped, the rental isn't refunded for cancellation. Delivery delays, eligible fit returns and shop errors are handled separately below and in the Rental Terms. Days are counted back from 12:00 AM on your first ski day, Ithaca (Eastern) time, and a cancellation counts from when we receive your email or text. Need more days? Contact us before your return date." + " " + cancellationShippingPolicy,
       },
       {
         title: "Damage & loss",
-        body: "Normal wear is free. Extra cleaning is $20–$40, repairable damage is the repair cost (up to $100), and for items that are lost or cannot be repaired, the replacement value shown when booking applies. Late returns are $25 per set or one-piece, $20 per single jacket or pants and $10 per accessory for each day late. Flaws disclosed in an item's condition notes aren't charged. We send photos and an itemized list before charging your card on file or deducting from your deposit.",
+        body: "Normal wear is free. Extra cleaning is $20–$40, repairable damage is the repair cost (up to $100), and for items that are lost or cannot be repaired, the replacement value shown when booking applies; if none is listed, we charge what a new one of the same or an equivalent item costs to buy at the time. Late returns are $25 per set or one-piece, $20 per single jacket or pants and $10 per accessory for each day late. Flaws disclosed in an item's condition notes aren't charged. We send photos and an itemized list before charging your card on file or deducting from your deposit.",
       },
     ],
   },
   terms: {
     title: "Rental Terms",
-    updated: "Last updated: November 7, 2026",
+    updated: "Last updated: November 16, 2026",
     intro:
       "These terms apply to every rental from Sunny Closet (sssunnycloset.com). \"We\" and \"us\" mean Sunny Closet; \"you\" means the person who places the booking. By placing a booking, you agree to these terms.",
     sections: (a: TermsArgs): TermsSection[] => [
@@ -773,8 +771,8 @@ export const messages: Messages = {
           {
             list: [
               "Shipping: we ship with USPS to the 48 contiguous United States and Washington, D.C., and include a prepaid return label.",
-              `Shipping is free both ways when rentals and add-ons reach $${a.freeSubtotal}, or when your order makes a full look (a top, pants, a helmet cover and gloves); qualifying orders to ${a.farStates} pay $${a.farFreeFee}. Otherwise there is one shipping fee per order, $${a.fee} or $${a.farFee} depending on the state, shown at checkout.`,
-              `Shipping less than ${a.aheadDays} days before your first rental day: if the dates can still be shipped, choose rush shipping (an extra $${a.rushFee}, or $${a.rushFarFee} to surcharge states, including on qualifying free-shipping orders), or pay and wait for owner approval. For the approval option, payment does not confirm the booking. We accept or decline within ${a.acceptanceHours} hours; an unanswered order is declined automatically and a full refund is due.`,
+              `Shipping is free both ways when rentals and add-ons reach $${a.freeSubtotal}, or when your order makes a full look (a top, pants, a helmet cover and gloves). Otherwise there is one shipping fee per order, shown at checkout: $${a.fee}, or $${a.farFee} to ${a.farStates}.`,
+              `Shipping less than ${a.aheadDays} days before your first rental day: if the dates can still be shipped, choose rush shipping (an extra $${a.rushFee}, or $${a.rushFarFee} to the states listed above, including on qualifying free-shipping orders), or pay and wait for owner approval. For the approval option, payment does not confirm the booking. We accept or decline within ${a.acceptanceHours} hours; an unanswered order is declined automatically and a full refund is due.`,
               "Local pickup: available in Ithaca, NY. You are welcome to try items on at pickup.",
               deliveryDelayPolicy,
             ],
@@ -804,7 +802,7 @@ export const messages: Messages = {
         blocks: [
           {
             list: [
-              "Shipped orders: pack the items in the mailer, attach the prepaid return label and drop it at USPS by the end of the day after your last rental day. The USPS acceptance scan counts as your return time.",
+              "Shipped orders: pack the items in the mailer, attach the prepaid return label and drop it at USPS by the end of the day after your last rental day. If that day is a Sunday or a USPS holiday, drop it off on the next day USPS is open. The USPS acceptance scan counts as your return time.",
               "Local pickup: return the items by noon the day after your last rental day, at the place we agreed.",
               "Empty all pockets before returning. We will hold any personal items we find for 14 days.",
             ],
@@ -834,7 +832,7 @@ export const messages: Messages = {
                 ["Normal wear: light pilling, small marks that come out in a normal wash, snow and water marks", "Free"],
                 ["Extra cleaning: heavy mud, makeup, food, wine, smoke odor, pet hair", "$20–$40"],
                 ["Repairable damage: broken zipper or snap, small tear", "Actual repair cost, up to $100"],
-                ["Not repairable, lost or stolen", "The replacement value shown when booking"],
+                ["Not repairable, lost or stolen", "The replacement value shown when booking; if none is listed, the market replacement price"],
               ],
             },
           },
@@ -842,6 +840,7 @@ export const messages: Messages = {
             list: [
               "Normal wear is part of renting. Any flaws already noted before your booking are not charged.",
               "Replacement values reflect the cost of sourcing a new replacement and are shown before booking. We will explain any proposed charge before charging your card or deducting from your deposit.",
+              "For an item with no replacement value listed on its page, we charge the market replacement price: what a new one of the same or an equivalent item costs to buy at the time.",
               "Before charging anything, we will send you photos and an itemized list.",
               "If you saved a card, we charge it after sending you the itemized list. If you paid a deposit, charges come out of the deposit first, and any amount above it is due within 7 days.",
               "If you pay the full replacement value for an item that is still available to return, it is yours to keep.",
@@ -868,6 +867,13 @@ export const messages: Messages = {
                 ["Less than 48 hours before, or after the order has shipped", "No refund", "Full refund once the items are returned"],
               ],
             },
+          },
+          {
+            list: [
+              "Times are counted back from 12:00 AM on your first rental day, Ithaca (Eastern) time.",
+              "A cancellation counts from when we receive your email or text.",
+              "Example for a first rental day of December 20: contact us by 11:59 PM on December 12 for a full refund; from 12:00 AM on December 13 through 11:59 PM on December 17 for a 50% refund or credit; from 12:00 AM on December 18 there is no refund.",
+            ],
           },
           "Once an order has shipped, the cancellation no-refund rule applies regardless of how many days remain. Delivery delays under section 4 and eligible returns or issues under section 5 are handled separately under those sections. If we must cancel because an item is unavailable or damaged, you will receive a full refund. Rental refunds go back to the card you paid with, or the way you paid in person.",
         ],
@@ -899,6 +905,181 @@ export const messages: Messages = {
       {
         title: "Changes",
         blocks: ["We may update these terms. The version posted on our website when you book applies to your rental."],
+      },
+    ],
+  },
+  faq: {
+    title: "FAQ",
+    heading: "Frequently Asked Questions",
+    moreTitle: "Still have questions?",
+    moreBody: "We're happy to help. Email or text us and we usually reply the same day.",
+    contactLink: "Contact us",
+    termsLink: "Read the full rental terms",
+    groups: (a: TermsArgs): FaqGroup[] => [
+      {
+        title: "Booking & rentals",
+        items: [
+          {
+            q: "How does Sunny Closet work?",
+            a: [
+              "Pick an outfit you love, choose your ski days and book online. We ship it so it arrives before your first ski day, or you pick it up in Ithaca, NY. After your last ski day, send it back with the prepaid return label in the package.",
+            ],
+          },
+          {
+            q: "Do shipping days count toward my rental?",
+            a: ["No. You pay only for your ski days, from your first ski day to your last. Transit days and early-arrival days are free."],
+          },
+          {
+            q: "Is there a minimum rental period?",
+            a: [`Shipped rentals start at ${a.shippingMinDays} ski days. Local pickup in Ithaca starts at 1 day.`],
+          },
+          {
+            q: "Will I receive the exact outfit I choose?",
+            a: ["Yes. The style and size you book is what you receive. We don't send substitutes."],
+          },
+          {
+            q: "How early should I book?",
+            a: [
+              `For shipping, please book about ${a.aheadDays} days before your first ski day. If your trip is closer than that and the dates can still be shipped, checkout offers rush shipping (an extra $${a.rushFee}, or $${a.rushFarFee} to some western and southern states), or you can pay and we confirm within ${a.acceptanceHours} hours whether it can reach you in time. If it can't, you get a full refund.`,
+            ],
+          },
+          {
+            q: "Can I rent just a jacket or pants?",
+            a: ["Yes. Rent a complete set, or pair single jackets and pants on the Mix & Match page, depending on what's available for your dates."],
+          },
+        ],
+      },
+      {
+        title: "Shipping & local pickup",
+        items: [
+          {
+            q: "Where do you ship?",
+            a: ["We ship with USPS to the 48 contiguous U.S. states and Washington, D.C. We don't ship to Alaska, Hawaii or overseas yet."],
+          },
+          {
+            q: "How much is shipping?",
+            a: [
+              "Round-trip shipping is free when either of these applies:",
+              {
+                list: [
+                  `Your rentals and add-ons reach $${a.freeSubtotal}.`,
+                  "Your order makes a full look: a top, pants, a helmet cover and gloves (a set, a one-piece or your own mix all count).",
+                ],
+              },
+              `Otherwise there's one shipping fee per order: $${a.fee} to most states, or $${a.farFee} to some western and southern states. Your shipping fee is shown at checkout.`,
+            ],
+          },
+          {
+            q: "Can I pick up my rental in Ithaca?",
+            a: [
+              "Yes. Pick up from the evening before your first ski day and return by noon the day after your last. You're welcome to try items on at pickup. We send the pickup details once your booking is confirmed.",
+            ],
+          },
+          {
+            q: "What if my package arrives too late?",
+            a: [
+              "Contact us right away so we can check the tracking together. If the delay means you can't use the outfit at all during your booked days, we refund the rental and any shipping you paid in full, and arrange for the unworn outfit to come back. If you can still use it for the remaining days, we agree a partial refund for the days you missed.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Outfits & sizing",
+        items: [
+          {
+            q: "What condition are the outfits in?",
+            a: [
+              "Every piece is guaranteed fully functional, and is professionally cleaned and sanitized after each return. If a piece has a minor flaw, it's described on its page and you confirm it before you book.",
+            ],
+          },
+          {
+            q: "Are these real ski outfits?",
+            a: [
+              "Yes. They come from ski and snowboard apparel brands and are made for the mountain: waterproof, windproof and warm. Each product page lists the fabric and features.",
+            ],
+          },
+          {
+            q: "How do I choose the right size?",
+            a: [
+              "Check the size details and measurements on each product page. Brands fit differently, so if you're unsure, message us your height and weight and the outfit you like, and we'll help.",
+            ],
+          },
+          {
+            q: "What if my outfit doesn't fit?",
+            a: [
+              `For shipped orders, contact us at ${a.email} and hand the return to USPS within 24 hours of delivery. A brief indoor try-on is fine, but the items must be unworn outdoors. Once we've checked them, we refund the rental to your original payment method. If your order shipped free, we deduct $15 for shipping; if you paid for shipping, that fee isn't refunded and nothing more is deducted.`,
+              "If we sent the wrong item or size, or there's an issue we didn't disclose, contact us within 24 hours of delivery with photos. We cover the cost of putting it right.",
+            ],
+          },
+          {
+            q: "Are gloves and helmet covers included?",
+            a: [
+              "Each product page lists what's included. Gloves and helmet covers can be added to an outfit when you book, or rented on their own.",
+            ],
+          },
+        ],
+      },
+      {
+        title: "Returns & care",
+        items: [
+          {
+            q: "When do I need to return my rental?",
+            a: [
+              "Shipped orders: drop the package at USPS by the end of the day after your last ski day. If that day is a Sunday or a USPS holiday, drop it off on the next day USPS is open. The USPS acceptance scan counts as your return time, so keep your receipt. Local pickup: return by noon the day after your last ski day.",
+            ],
+          },
+          {
+            q: "How do I return my rental?",
+            a: ["Pack everything you rented in the mailer, attach the prepaid return label that came with your order and drop it at USPS."],
+          },
+          {
+            q: "Do I need to wash the outfit before returning it?",
+            a: ["No, and please don't wash it yourself. We clean every piece professionally. Just let it dry before packing and check the pockets."],
+          },
+          {
+            q: "What if I accidentally damage something?",
+            a: [
+              "Normal wear is part of skiing and is free: light pilling, small marks, snow and water marks. Beyond that, extra cleaning is $20–$40, repairable damage is the actual repair cost (up to $100), and an item that is lost or can't be repaired is charged at the replacement value shown when booking. We send you photos and an itemized list before charging anything.",
+            ],
+          },
+          {
+            q: "What happens if I return my rental late?",
+            a: [
+              `Late fees are per day late: $${a.lateSet} per set or one-piece, $${a.latePiece} per single jacket or pants, and $${a.lateAccessory} per accessory. If you need more time, contact us before your return date and we'll extend the rental at regular prices if the item isn't booked by someone else. USPS delays after an on-time drop-off don't count as late.`,
+            ],
+          },
+        ],
+      },
+      {
+        title: "Payments & cancellations",
+        items: [
+          {
+            q: "What is your cancellation policy?",
+            a: [
+              "Email or text us to cancel. The rental refund depends on when we hear from you:",
+              {
+                list: [
+                  "7 or more days before your first ski day: full refund.",
+                  "At least 48 hours but less than 7 days before: 50% refund, or full credit for another booking this season.",
+                  "Less than 48 hours before, or after the order has shipped: no refund.",
+                ],
+              },
+              "If we can't fulfill your order, you get a full refund.",
+            ],
+          },
+          {
+            q: "Do I need to pay a security deposit?",
+            a: [
+              `Not when a card is on file. Paying online saves your card securely with Stripe, and it's only charged for late returns, extra cleaning, repairs or loss under the Rental Terms. For local pickup you can instead pay a $${a.deposit} deposit in person, returned after the return is checked.`,
+            ],
+          },
+          {
+            q: "What payment methods do you accept?",
+            a: [
+              "Cards online through Stripe; we never see your full card number. For local pickup you can also pay the rental in person by cash, Zelle or Venmo.",
+            ],
+          },
+        ],
       },
     ],
   },

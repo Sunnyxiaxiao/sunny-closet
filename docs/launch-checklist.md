@@ -36,7 +36,28 @@ Working style: research direct competitors' official policies before proposing a
 - Measured November 13, 28.6 hours after the deploy: `styles` reads +373 and `settings` reads +376 (about 310 a day, down from about 6,800 a day), all `anon` API requests +2,460.
 - Follow-up: re-read those two counters after a few days to measure the new rate; confirm the egress breakdown by service in the Supabase dashboard. If a click feels slow (about 1 s measured server response), add prefetch on hover / touch only.
 
-### Waiting for the next deploy (batch these; Sunny wants several changes per deploy)
+### November 13 production deploy
+
+- Commit `3a275d0`, Netlify deploy `6af6c62151f73b1d4dd8c0b8`. Everything listed under the next heading is now live.
+- After the deploy, in the database: `max_rental_days` 30; suit, jacket, pants and the three Crystal tables extended to 30 tiers as decided (day 30: $369 / $205 / $190 / $389 / $246 / $228); the heart suit's own table extended to 30 tiers (suit minus $10, day 30 = $359). Gloves and helmet covers unchanged.
+- Checked on the live site: product page shows "11–30 days: +$10 per extra day", Mix & Match shows the "11–30 days" row, the contact form renders, the home page's og:image is /images/share.jpg. Not done: sending a contact-form message on production; cancelling a real paid order with the new button.
+
+### November 15–16 database changes (live, no deploy needed; catalog files uncommitted)
+
+- Cancellation cutoff: Claude proposed 00:00 America/New_York on the first ski day, cancellation time = when the email / text is received, shipped status takes precedence. Sunny has NOT answered yet; terms are unchanged.
+- `diamond-black-warrior-ski-suit`: added SC076 (M) with a condition note (pants worn at knees and seat; a plain black pair ships with it). No close-up photos yet.
+- New style `blue-3d-luminous-cloud-ski-suit` (SC077, M, $49, replacement $330). Sunny has not received the piece: the Chinese name and description omit "luminous" and bib straps until she checks it; the English name still says Luminous.
+- Replacement values filled for the 11 suits added November 7 (ISEE MIGGA $330, others $300). SC001's condition note got its English text.
+- November 16, uncommitted and NOT deployed: cancellation cutoff approved by Sunny and written into the terms and rental info in both languages (00:00 America/New_York on the first rental day; counted from when the email / text is received; worked example). Items with no listed replacement value are charged at the market replacement price (terms, rental info and the card-on-file consent text). 467 tests and typecheck pass.
+- November 16 local click-through (headless Chrome, shared database, Stripe sandbox): every main page loads on phone and desktop in both languages with no overflow, broken images or script errors; gloves add-on selection (color / size, price, cart line); pickup + $200 cash deposit order (SC-Y94JYMF3); pickup + card on file through Stripe setup with the test card (SC-G5DYLP8R, confirmed, card saved); condition acknowledgment and snapshot stored; `new_order` / `order_confirmed` emails sent for both; the order link opened in another browser shows only "sign in to view". Both test orders were then set to cancelled in the database. One contact-form message was sent on production (page said sent; inbox not checked).
+- Not tested: signup confirmation and password-reset emails on production (need Sunny's inbox); shipping checkout; a real-money pickup order. Test note: a background headless tab never reveals streamed content (no animation frames), which looks like a cart stuck on "loading"; keep the test tab focused.
+- November 16, uncommitted and NOT deployed: new `/faq` page in both languages (23 questions, linked from the footer and the bottom of rental info, in the sitemap). Sunny's draft contradicted the current rules (14-day cancellation, $25 far shipping, size exchange, goggles, "some pieces have been worn", three TO CONFIRM placeholders), so the answers were rewritten from the terms and quote `termsArgs`. She has not reviewed the rewritten copy. Checked locally by fetching the HTML only, not in a browser.
+- November 16 decisions by Sunny, all in this deploy: (1) free shipping is fully free, no far-state top-up (`farFreeFeeCents` removed; rush fees unchanged); (2) shipped returns due on a Sunday or USPS holiday move to the next day USPS is open (terms, rental info, FAQ, order page text; `uspsOpenOnOrAfter` in src/lib/dates.ts shifts the "send back by" date; availability buffers unchanged); (3) FAQ copy approved as rewritten; (4) Stripe pages hide Link (`wallet_options.link.display: "never"`): the "bank, $5 back" option was Stripe's own Link promotion, not ours. Checked in the sandbox: the card-saving page shows only Card and Apple Pay.
+- Next.js upgraded 16.4.2 → 16.4.6 (advisory GHSA-mfr8-8qww-v76h, moderate). Typecheck, lint and 468 tests pass; nine pages loaded in headless Chrome on the new version.
+- Reminder owed to Sunny: rotate the Supabase service secret (she asked to be reminded later).
+- Order SC-Q9K6RPPM shows refunded ($10, November 13 08:06 UTC). Whether the webhook or a manual edit set it was not checked.
+
+### Deployed November 13 (was: waiting for the next deploy)
 
 - Decided November 11: maximum rental 30 days. Suits +$10 per day after day 10 (day 30 = $369), jackets and pants +$5 per day (day 30 = $205 / $190), Crystal suits +$10 per day (day 30 = $389); helmet covers and gloves unchanged.
 - Order matters: the display code (first 10 tiers plus an "11–30 days: +$10 per extra day" line; uncommitted, tests pass, not viewed in a browser at 30 days) must be deployed BEFORE `settings.max_rental_days` and the price tables are changed, or the live product page shows 30 price cells. Settings are still 10 days.
@@ -65,8 +86,8 @@ Working style: research direct competitors' official policies before proposing a
 - [ ] Decide separate jacket / pants and accessory replacement values; no new amounts have been assigned to these categories.
 - [x] Fit returns: contact and hand back to USPS within 24 hours of delivery, indoor try-on only / otherwise unused and original condition; refund rental fees to the original payment method, not credit. Orders charged no shipping deduct $15 once (capped at the refunded rental fees). Orders charged shipping retain that charge without another $15 deduction, including far-state returns. Shop errors do not incur the fit-return deduction.
 - [x] Ordinary cancellations: refund all paid shipping charges (including surcharges / rush fees) before shipment; apply the existing rental-fee cancellation schedule separately. After shipment, shipping is nonrefundable for cancellation. Fit returns and shop errors retain their separate rules.
-- [ ] Clarify which local payment methods are actually available. Zelle and Venmo handles in shop config are still placeholders; do not present them as real payment details.
-- [ ] Verify the applicable sales-tax setup before accepting live orders.
+- [x] Clarify which local payment methods are actually available. Real Zelle / Venmo handles went live with the November 13 deploy.
+- [x] Sales tax: Sunny decided (November 15) the site does not collect it. Her decision, not a verified reading of New York rules for clothing rental; she was advised to confirm with an accountant once income is steady.
 
 ## Customer-facing consistency
 
@@ -105,7 +126,7 @@ Working style: research direct competitors' official policies before proposing a
 
 ## Operational policy reference
 
-Prices are maintained in the admin dashboard / production settings. Shipping is computed by src/lib/shipping.ts and src/config/shop.ts: $99 rental-plus-add-ons or a full look qualifies for the shipping discount; near states pay $0 when qualified / $15 otherwise, and surcharge states pay $15 when qualified / $30 otherwise. Optional rush shipping adds $15 / $25 respectively. Deposits never count toward the threshold. Pickup has a one-day minimum; shipped rentals have a two-day minimum under the current settings.
+Prices are maintained in the admin dashboard / production settings. Shipping is computed by src/lib/shipping.ts and src/config/shop.ts: $99 rental-plus-add-ons or a full look qualifies for the shipping discount; qualified orders ship free to every state (Sunny's decision, November 16; the $15 far-state top-up was removed); otherwise near states pay $15 and far states $30. Optional rush shipping adds $15 / $25 respectively. Deposits never count toward the threshold. Pickup has a one-day minimum; shipped rentals have a two-day minimum under the current settings.
 
 Do not change production prices or unresolved business policies merely to make a document agree with an older conversation.
 

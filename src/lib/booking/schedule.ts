@@ -1,12 +1,13 @@
 /**
  * Pickup / return timing text (pure functions). Only ski days are billed; pickup, return and transit time around them is free:
  * - Local pickup: available from the evening before the first ski day, returned by noon the day after the last ski day
- * - Shipping: sent early enough to arrive before the first ski day; hand the package to the carrier by the day after the last ski day
+ * - Shipping: sent early enough to arrive before the first ski day; hand the package to the carrier by the day after the last ski day,
+ *   or the next day USPS is open when that day is a Sunday or a USPS holiday
  */
 
 import type { FulfillmentMethod } from "@/config/shop";
 import type { Padding, RentalRange } from "@/lib/booking/rules";
-import { addDays, formatShortDate } from "@/lib/dates";
+import { addDays, formatShortDate, uspsOpenOnOrAfter } from "@/lib/dates";
 import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/messages";
 
@@ -35,7 +36,7 @@ export function handoverText(
   const t = getMessages(locale).handover;
   const { out, back } = handover(range, padding);
   const date = (d: string) => formatShortDate(d, locale);
-  if (method === "shipping") return t.shipping(date(out), date(back));
+  if (method === "shipping") return t.shipping(date(out), date(uspsOpenOnOrAfter(back)));
   const pickup = padding.leadDays > 0 ? t.pickupFromEvening(date(out)) : t.pickupOn(date(out));
   const ret = padding.tailDays > 0 ? t.returnByNoon(date(back)) : t.returnOn(date(back));
   return `${pickup}${t.join}${ret}`;

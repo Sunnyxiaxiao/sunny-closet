@@ -24,7 +24,8 @@
       "images/nobaday-mountain-sunset-print-snow-suit/6.jpg",
       "images/nobaday-mountain-sunset-print-snow-suit/7.jpg",
       "images/nobaday-mountain-sunset-print-snow-suit/8.jpg"
-    ]
+    ],
+    "replacementValue": 300
   },
   {
     "slug": "nobaday-juicy-candy-checkerboard-snow-suit",
@@ -50,6 +51,7 @@
       "images/nobaday-juicy-candy-checkerboard-snow-suit/5.jpg",
       "images/nobaday-juicy-candy-checkerboard-snow-suit/6.jpg",
       "images/nobaday-juicy-candy-checkerboard-snow-suit/7.jpg"
-    ]
+    ],
+    "replacementValue": 300
   }
 ]

@@ -105,7 +105,8 @@
       "images/chop-chop-white-emoji-print-snow-suit/10.jpg",
       "images/chop-chop-white-emoji-print-snow-suit/11.jpg",
       "images/chop-chop-white-emoji-print-snow-suit/12.jpg"
-    ]
+    ],
+    "replacementValue": 300
   },
   {
     "slug": "chop-chop-pink-sherpa-cargo-snow-suit",
@@ -132,7 +133,8 @@
       "images/chop-chop-pink-sherpa-cargo-snow-suit/6.jpg",
       "images/chop-chop-pink-sherpa-cargo-snow-suit/7.jpg",
       "images/chop-chop-pink-sherpa-cargo-snow-suit/8.jpg"
-    ]
+    ],
+    "replacementValue": 300
   },
   {
     "slug": "chop-chop-tie-dye-denim-snow-suit",
@@ -163,6 +165,7 @@
       "images/chop-chop-tie-dye-denim-snow-suit/10.jpg",
       "images/chop-chop-tie-dye-denim-snow-suit/11.jpg",
       "images/chop-chop-tie-dye-denim-snow-suit/12.jpg"
-    ]
+    ],
+    "replacementValue": 300
   }
 ]

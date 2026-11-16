@@ -136,7 +136,8 @@
       "images/swagli-pink-black-ribbon-butterfly-snow-suit/3.jpg",
       "images/swagli-pink-black-ribbon-butterfly-snow-suit/4.jpg",
       "images/swagli-pink-black-ribbon-butterfly-snow-suit/5.jpg"
-    ]
+    ],
+    "replacementValue": 300
   },
   {
     "slug": "swagli-plaid-bow-bear-snow-suit",
@@ -171,6 +172,7 @@
       "images/swagli-plaid-bow-bear-snow-suit/14.jpg",
       "images/swagli-plaid-bow-bear-snow-suit/15.jpg",
       "images/swagli-plaid-bow-bear-snow-suit/16.jpg"
-    ]
+    ],
+    "replacementValue": 300
   }
 ]

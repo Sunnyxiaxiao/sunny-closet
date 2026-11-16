@@ -483,6 +483,10 @@
       {
         "code": "SC029",
         "size": "S"
+      },
+      {
+        "code": "SC076",
+        "size": "M"
       }
     ],
     "images": [
@@ -498,8 +502,8 @@
       "images/isee-size-chart/2.jpg",
       "images/isee-quality-report/1.jpg"
     ],
-    "description": "官方款名：Diamond Black Warrior Ski Suit\n全黑滑雪套装，点缀亮钻，胸前和裤腿白色 ISEE MIGGA 字样，酷又耐看，怎么搭都不出错。尺码 S。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 裤脚带拉链，方便穿脱雪鞋",
-    "descriptionEn": "Official name: Diamond Black Warrior Ski Suit\nAll-black ski suit finished with rhinestones and white ISEE MIGGA logos on the chest and leg. Cool, timeless and easy to style. Size S.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Underarm and inner-thigh vents to cool down fast\n- Drawcord adjusters throughout for a custom fit\n- Extended cuffs keep snow out; adjustable hook-and-loop cuffs fit easily over gloves\n- Two roomy side pockets, plus a ski pass pocket on the inner arm — just raise your arm to scan\n- Inner mesh pocket on the jacket for your goggles\n- Snow skirts at the jacket hem and pant cuffs\n- Zippered pant cuffs make it easy to get on over ski boots",
+    "description": "官方款名：Diamond Black Warrior Ski Suit\n全黑滑雪套装，点缀亮钻，胸前和裤腿白色 ISEE MIGGA 字样，酷又耐看，怎么搭都不出错。尺码 S、M。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 裤脚带拉链，方便穿脱雪鞋",
+    "descriptionEn": "Official name: Diamond Black Warrior Ski Suit\nAll-black ski suit finished with rhinestones and white ISEE MIGGA logos on the chest and leg. Cool, timeless and easy to style. Sizes S and M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Underarm and inner-thigh vents to cool down fast\n- Drawcord adjusters throughout for a custom fit\n- Extended cuffs keep snow out; adjustable hook-and-loop cuffs fit easily over gloves\n- Two roomy side pockets, plus a ski pass pocket on the inner arm — just raise your arm to scan\n- Inner mesh pocket on the jacket for your goggles\n- Snow skirts at the jacket hem and pant cuffs\n- Zippered pant cuffs make it easy to get on over ski boots",
     "tags": [
       "crystal"
     ],
@@ -1093,6 +1097,39 @@
       "images/isee-size-chart/1.jpg",
       "images/isee-size-chart/2.jpg",
       "images/isee-quality-report/1.jpg"
-    ]
+    ],
+    "replacementValue": 330
+  },
+  {
+    "slug": "blue-3d-luminous-cloud-ski-suit",
+    "brand": "ISEE MIGGA",
+    "category": "suit",
+    "name": "蓝色立体云朵滑雪套装",
+    "nameEn": "Blue 3D Luminous Cloud Ski Suit",
+    "dailyPrice": 49,
+    "sortOrder": 1030,
+    "sourceUrl": "https://iseemigga.com/products/blue-3d-luminous-cloud-ski-suit",
+    "items": [
+      {
+        "code": "SC077",
+        "size": "M"
+      }
+    ],
+    "images": [
+      "images/blue-3d-luminous-cloud-ski-suit/1.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/2.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/3.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/4.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/5.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/6.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/7.webp",
+      "images/blue-3d-luminous-cloud-ski-suit/8.webp",
+      "images/isee-size-chart/1.jpg",
+      "images/isee-size-chart/2.jpg",
+      "images/isee-quality-report/1.jpg"
+    ],
+    "description": "官方款名：Blue 3D Luminous Cloud Ski Suit\n天蓝色滑雪套装，上衣和裤子上缀满白色立体毛绒云朵，白色拉链，胸前和裤腿黑色 ISEE MIGGA 字样，像把一片晴空穿在身上。\n尺码 M。\n\n## 面料与科技\n- 防水指数 ＞20000mmH₂O（实测，GB/T 4744-2013）\n- 防水等级 4–5 级（实测，GB/T 4745-2012）\n- 透湿量 ＞15000 g/m²·24h（实测，JIS L1099-2021）\n- 色牢度 4–5 级（实测，GB/T 5713-2013）\n- 三层复合面料：外层高密度，防泼水、防油污、耐磨；中层防水透气膜；内层亲肤抓绒\n- 全身接缝 18mm 宽压胶，雪水不易渗入，同时防风\n- 内里抓绒轻薄保暖，官方标称 -30℃ 锁温\n\n## 设计细节\n- 腋下和大腿内侧有透气拉链，热了可以快速散热\n- 全身抽绳调节扣，可按身形调整松紧\n- 加长袖口防风雪倒灌，袖口魔术贴可调，方便戴手套\n- 两侧大容量口袋；手臂内侧雪卡袋，抬手就能刷卡\n- 上衣内侧网袋，可以放雪镜\n- 衣摆和裤脚都有防雪裙\n- 裤脚带拉链，方便穿脱雪鞋",
+    "descriptionEn": "Official name: Blue 3D Luminous Cloud Ski Suit\nA sky-blue ski suit covered in fluffy white 3D clouds, with white zippers and black ISEE MIGGA logos on the jacket and leg. Like wearing a clear sky.\nSize M.\n\n## Fabric & Tech\n- Waterproof rating >20,000 mmH₂O (lab tested, GB/T 4744-2013)\n- Water resistance grade 4–5 (lab tested, GB/T 4745-2012)\n- Breathability >15,000 g/m²/24h (lab tested, JIS L1099-2021)\n- Colorfastness grade 4–5 (lab tested, GB/T 5713-2013)\n- 3-layer fabric: dense shell that resists water, oil and abrasion; waterproof breathable membrane; soft fleece lining\n- All seams sealed with 18 mm tape to keep out snowmelt and wind\n- Light, warm fleece lining, rated by the brand to −30°C (−22°F)\n\n## Design Details\n- Underarm and inner-thigh vents to cool down fast\n- Drawcord adjusters throughout for a custom fit\n- Extended cuffs keep snow out; adjustable hook-and-loop cuffs fit easily over gloves\n- Two roomy side pockets, plus a ski pass pocket on the inner arm — just raise your arm to scan\n- Inner mesh pocket on the jacket for your goggles\n- Snow skirts at the jacket hem and pant cuffs\n- Zippered pant cuffs make it easy to get on over ski boots",
+    "replacementValue": 330
   }
 ]

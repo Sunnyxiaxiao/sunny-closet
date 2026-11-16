@@ -40,7 +40,8 @@
       "images/red-peony-floral-snow-suit/2.jpg",
       "images/red-peony-floral-snow-suit/3.jpg",
       "images/red-peony-floral-snow-suit/4.jpg"
-    ]
+    ],
+    "replacementValue": 300
   },
   {
     "slug": "blue-star-sherpa-snow-suit",
@@ -67,6 +68,7 @@
       "images/blue-star-sherpa-snow-suit/6.jpg",
       "images/blue-star-sherpa-snow-suit/7.jpg",
       "images/blue-star-sherpa-snow-suit/8.jpg"
-    ]
+    ],
+    "replacementValue": 300
   }
 ]

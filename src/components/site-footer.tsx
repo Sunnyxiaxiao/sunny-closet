@@ -67,6 +67,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                 </li>
               ))}
             <li>
+              <Link href={href("/faq")} className="hover:text-white">
+                {messages.faq.title}
+              </Link>
+            </li>
+            <li>
               <Link href={href("/terms")} className="hover:text-white">
                 {messages.terms.title}
               </Link>

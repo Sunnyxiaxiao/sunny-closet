@@ -64,10 +64,10 @@ describe("运费：满 $99 或 full look 包邮，否则按州收", () => {
     expect(qualifiesForFreeShipping([line("jacket", 5000, ["helmet_cover", "gloves"], 1800)])).toBe(false);
   });
 
-  it("包邮：近区 0，远区补 $15", () => {
+  it("包邮：近区、远区都是 0", () => {
     const free = [line("suit", 7900, ["helmet_cover", "gloves"], 1800)];
     expect(shippingFeeCents(free, "NY")).toBe(0);
-    expect(shippingFeeCents(free, "CA")).toBe(1500);
+    expect(shippingFeeCents(free, "CA")).toBe(0);
   });
 
   it("不包邮：东北部等 $15，远区（如 WA、CA）$30；还没选州按近区", () => {

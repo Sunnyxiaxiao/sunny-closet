@@ -56,7 +56,10 @@ export default async function RentalInfoPage() {
           </section>
         ))}
       </div>
-      <p className="mt-6 text-sm">
+      <p className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+        <Link href={localePath(locale, "/faq")} className="underline underline-offset-2">
+          {getMessages(locale).faq.heading}
+        </Link>
         <Link href={localePath(locale, "/terms")} className="underline underline-offset-2">
           {t.termsLink}
         </Link>

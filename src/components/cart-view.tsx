@@ -1,7 +1,5 @@
 "use client";
 
-import { shop } from "@/config/shop";
-
 import Link from "@/components/storefront-link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { CHECKOUT_FORM_ID, CheckoutForm } from "@/components/checkout-form";
@@ -255,13 +253,7 @@ export function CartView({
               {shipping && (
                 <SummaryRow
                   label={t.shipping}
-                  value={
-                    !shippingCents
-                      ? t.freeShipping
-                      : freeShipping
-                        ? t.farFreeShipping(formatMoney(shippingCents))
-                        : formatMoney(shippingCents)
-                  }
+                  value={!shippingCents ? t.freeShipping : formatMoney(shippingCents)}
                 />
               )}
               {rushCents > 0 && <SummaryRow label={messages.checkout.rushFee} value={formatMoney(rushCents)} />}
@@ -276,7 +268,6 @@ export function CartView({
                   {showFullLookTip(forShipping)
                     ? t.fullLookTip
                     : t.freeShippingHint(formatMoney(freeSubtotal * 100, { whole: true }))}
-                  {" "}{t.shippingExtras(formatMoney(shop.shipping.farFreeFeeCents, { whole: true }))}
                 </p>
               )}
             </dl>

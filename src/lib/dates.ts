@@ -39,6 +39,44 @@ export function compareDates(a: IsoDate, b: IsoDate): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
+/** Day of the week, 0 = Sunday */
+function weekday(date: IsoDate): number {
+  return new Date(toUtcMs(date)).getUTCDay();
+}
+
+/** The nth (1-based) given weekday of a month, or the last one when n is -1 */
+function nthWeekday(year: number, month: number, day: number, n: number): IsoDate {
+  if (n === -1) {
+    const last = fromUtcMs(Date.UTC(year, month, 0));
+    return addDays(last, -((weekday(last) - day + 7) % 7));
+  }
+  const first = fromUtcMs(Date.UTC(year, month - 1, 1));
+  return addDays(first, ((day - weekday(first) + 7) % 7) + (n - 1) * 7);
+}
+
+/** Days USPS counters are closed for a holiday that year; a fixed-date holiday on a Sunday is observed on the Monday */
+function uspsHolidays(year: number): IsoDate[] {
+  const fixed = [`${year}-01-01`, `${year}-06-19`, `${year}-07-04`, `${year}-11-11`, `${year}-12-25`].map((d) =>
+    weekday(d) === 0 ? addDays(d, 1) : d,
+  );
+  return [
+    ...fixed,
+    nthWeekday(year, 1, 1, 3), // Martin Luther King Jr. Day
+    nthWeekday(year, 2, 1, 3), // Presidents' Day
+    nthWeekday(year, 5, 1, -1), // Memorial Day
+    nthWeekday(year, 9, 1, 1), // Labor Day
+    nthWeekday(year, 10, 1, 2), // Columbus Day
+    nthWeekday(year, 11, 4, 4), // Thanksgiving
+  ];
+}
+
+/** This date, or the next day USPS accepts packages when it falls on a Sunday or a USPS holiday */
+export function uspsOpenOnOrAfter(date: IsoDate): IsoDate {
+  let day = date;
+  while (weekday(day) === 0 || uspsHolidays(Number(day.slice(0, 4))).includes(day)) day = addDays(day, 1);
+  return day;
+}
+
 /** Today's date in the given time zone. The only place that touches the real clock. */
 export function todayIn(timeZone: string, now: Date = new Date()): IsoDate {
   const parts = new Intl.DateTimeFormat("en-CA", {

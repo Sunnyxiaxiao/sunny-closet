@@ -77,11 +77,11 @@ export function formatShippingAddress(a: { street: string; city: string; state: 
 
 /**
  * 文案（款式页、下单表单、租赁须知）里用到的数字：邮寄最短天数、提前几天下单、
- * 包邮门槛、近区运费、远区运费、远区包邮补的运费（金额是美元整数）
+ * 包邮门槛、近区运费、远区运费（金额是美元整数）
  */
-export function shippingPolicyArgs(minDays: number): [number, number, number, number, number, number, string] {
+export function shippingPolicyArgs(minDays: number): [number, number, number, number, number, string] {
   const s = shop.shipping;
-  return [minDays, s.orderAheadDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100, s.farFreeFeeCents / 100, s.farStates.join(", ")];
+  return [minDays, s.orderAheadDays, s.freeSubtotalCents / 100, s.feeCents / 100, s.farFeeCents / 100, s.farStates.join(", ")];
 }
 
 /** 算运费用到的每件信息：品类、租金、加购价合计、加购的是什么（头盔套 / 手套） */
@@ -116,10 +116,10 @@ export function isFarState(state: string): boolean {
   return (shop.shipping.farStates as readonly string[]).includes(state);
 }
 
-/** 这单邮寄到这个州的运费（分）：包邮时近区 0、远区补一点；不包邮按州收。还没选州时按近区算 */
+/** 这单邮寄到这个州的运费（分）：包邮就是 0；不包邮按州收。还没选州时按近区算 */
 export function shippingFeeCents(lines: readonly ShippingLine[], state: string): number {
   const s = shop.shipping;
-  if (qualifiesForFreeShipping(lines)) return isFarState(state) ? s.farFreeFeeCents : 0;
+  if (qualifiesForFreeShipping(lines)) return 0;
   return isFarState(state) ? s.farFeeCents : s.feeCents;
 }
 
